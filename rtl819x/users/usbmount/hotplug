@@ -1,0 +1,25 @@
+#!/bin/sh
+
+case "${ACTION}" in
+ add)
+  usbmount $1
+  ;;
+  *)
+   usbmount $1
+   ;;
+esac
+
+PID_FILE=/var/run/usbStorageD_pid
+if [ -e $PID_FILE ]; then
+        PID=`cat $PID_FILE`
+        kill -USR1 $PID
+fi      
+
+killall -9 minidlna
+minidlna -R -f etc/minidlna.conf
+
+
+
+
+
+

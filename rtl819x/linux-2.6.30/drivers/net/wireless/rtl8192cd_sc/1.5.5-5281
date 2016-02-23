@@ -1,0 +1,10383 @@
+	.file	1 "8192cd_profile.c"
+	.section .mdebug.abi32
+	.previous
+	.gnu_attribute 4, 3
+#APP
+	.macro _ssnop; sll $0, $0, 1; .endm
+	.macro _ehb; sll $0, $0, 3; .endm
+	.macro mtc0_tlbw_hazard; nop; nop; .endm
+	.macro tlbw_use_hazard; nop; nop; nop; .endm
+	.macro tlb_probe_hazard; nop; nop; nop; .endm
+	.macro irq_enable_hazard; _ssnop; _ssnop; _ssnop;; .endm
+	.macro irq_disable_hazard; nop; nop; nop; .endm
+	.macro back_to_back_c0_hazard; _ssnop; _ssnop; _ssnop;; .endm
+		.macro	raw_local_irq_enable				
+	.set	push						
+	.set	reorder						
+	.set	noat						
+	mfc0	$1,$12						
+	ori	$1,0x1f						
+	xori	$1,0x1e						
+	mtc0	$1,$12						
+	irq_enable_hazard					
+	.set	pop						
+	.endm
+		.macro	raw_local_irq_disable
+	.set	push						
+	.set	noat						
+	mfc0	$1,$12						
+	ori	$1,0x1f						
+	xori	$1,0x1f						
+	.set	noreorder					
+	mtc0	$1,$12						
+	irq_disable_hazard					
+	.set	pop						
+	.endm							
+
+		.macro	raw_local_save_flags flags			
+	.set	push						
+	.set	reorder						
+	mfc0	\flags, $12					
+	.set	pop						
+	.endm							
+
+		.macro	raw_local_irq_save result			
+	.set	push						
+	.set	reorder						
+	.set	noat						
+	mfc0	\result, $12					
+	ori	$1, \result, 0x1f				
+	xori	$1, 0x1f					
+	.set	noreorder					
+	mtc0	$1, $12						
+	irq_disable_hazard					
+	.set	pop						
+	.endm							
+
+		.macro	raw_local_irq_restore flags			
+	.set	push						
+	.set	noreorder					
+	.set	noat						
+	mfc0	$1, $12						
+	andi	\flags, 1					
+	ori	$1, 0x1f					
+	xori	$1, 0x1f					
+	or	\flags, $1					
+	mtc0	\flags, $12					
+	irq_disable_hazard					
+	.set	pop						
+	.endm							
+
+#NO_APP
+	.section	.text.bytecopy,"ax",@progbits
+	.align	2
+	.globl	bytecopy
+	.set	nomips16
+	.ent	bytecopy
+	.type	bytecopy, @function
+bytecopy:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	j	$L2
+	move	$2,$0
+
+$L3:
+	lbu	$3,0($8)
+	addiu	$2,$2,1
+	sb	$3,0($7)
+$L2:
+	sltu	$3,$2,$6
+	addu	$8,$4,$2
+	bne	$3,$0,$L3
+	addu	$7,$5,$2
+
+	j	$31
+	move	$2,$0
+
+	.set	macro
+	.set	reorder
+	.end	bytecopy
+	.size	bytecopy, .-bytecopy
+	.section	.text.get_bssid,"ax",@progbits
+	.align	2
+	.globl	get_bssid
+	.set	nomips16
+	.ent	get_bssid
+	.type	get_bssid, @function
+get_bssid:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lhu	$5,0($4)
+	andi	$6,$5,0x1
+	srl	$3,$5,1
+	li	$5,1			# 0x1
+	andi	$3,$3,0x1
+	sll	$6,$6,1
+	or	$3,$3,$6
+	beq	$3,$5,$L13
+	addiu	$2,$4,10
+
+	beq	$3,$0,$L13
+	addiu	$2,$4,16
+
+	addiu	$5,$4,4
+	xori	$3,$3,0x2
+	addiu	$2,$4,10
+	movz	$2,$5,$3
+$L13:
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	get_bssid
+	.size	get_bssid, .-get_bssid
+	.section	.text.rtk_sc_register_pattern,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_register_pattern
+	.set	nomips16
+	.ent	rtk_sc_register_pattern
+	.type	rtk_sc_register_pattern, @function
+rtk_sc_register_pattern:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lui	$3,%hi(g_sc_ctx)
+	addiu	$3,$3,%lo(g_sc_ctx)
+	lw	$2,2672($3)
+	addiu	$2,$2,604
+	sll	$2,$2,2
+	addu	$2,$2,$3
+	lw	$3,0($2)
+	bne	$3,$0,$L17
+	lui	$3,%hi(g_sc_ctx)
+
+	sw	$4,0($2)
+$L17:
+	move	$2,$0
+	addiu	$3,$3,%lo(g_sc_ctx)
+	lw	$4,2672($3)
+	addiu	$4,$4,1
+	j	$31
+	sw	$4,2672($3)
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_register_pattern
+	.size	rtk_sc_register_pattern, .-rtk_sc_register_pattern
+	.section	.text.CHECKSUM_OK,"ax",@progbits
+	.align	2
+	.globl	CHECKSUM_OK
+	.set	nomips16
+	.ent	CHECKSUM_OK
+	.type	CHECKSUM_OK, @function
+CHECKSUM_OK:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	move	$2,$0
+	j	$L19
+	move	$3,$0
+
+$L20:
+	lbu	$6,0($7)
+	addu	$2,$2,$6
+	andi	$2,$2,0x00ff
+$L19:
+	slt	$6,$3,$5
+	addu	$7,$4,$3
+	bne	$6,$0,$L20
+	addiu	$3,$3,1
+
+	j	$31
+	sltu	$2,$2,1
+
+	.set	macro
+	.set	reorder
+	.end	CHECKSUM_OK
+	.size	CHECKSUM_OK, .-CHECKSUM_OK
+	.section	.text.checksum,"ax",@progbits
+	.align	2
+	.globl	checksum
+	.set	nomips16
+	.ent	checksum
+	.type	checksum, @function
+checksum:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	j	$L23
+	move	$2,$0
+
+$L24:
+	lhu	$3,0($4)
+	addiu	$5,$5,-2
+	addiu	$4,$4,2
+	addu	$2,$2,$3
+$L23:
+	slt	$3,$5,2
+	beq	$3,$0,$L24
+	nop
+
+	beq	$5,$0,$L27
+	andi	$3,$2,0xffff
+
+	lbu	$3,0($4)
+	addu	$2,$3,$2
+	andi	$3,$2,0xffff
+$L27:
+	srl	$2,$2,16
+	addu	$2,$3,$2
+	srl	$3,$2,16
+	addu	$2,$3,$2
+	nor	$2,$0,$2
+	j	$31
+	andi	$2,$2,0xffff
+
+	.set	macro
+	.set	reorder
+	.end	checksum
+	.size	checksum, .-checksum
+	.section	.text.rtk_sc_set_ack_pkt,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_set_ack_pkt
+	.set	nomips16
+	.ent	rtk_sc_set_ack_pkt
+	.type	rtk_sc_set_ack_pkt, @function
+rtk_sc_set_ack_pkt:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_set_ack_pkt
+	.size	rtk_sc_set_ack_pkt, .-rtk_sc_set_ack_pkt
+	.section	.text.send_simple_config_ack,"ax",@progbits
+	.align	2
+	.globl	send_simple_config_ack
+	.set	nomips16
+	.ent	send_simple_config_ack
+	.type	send_simple_config_ack, @function
+send_simple_config_ack:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	j	$31
+	move	$2,$0
+
+	.set	macro
+	.set	reorder
+	.end	send_simple_config_ack
+	.size	send_simple_config_ack, .-send_simple_config_ack
+	.section	.text.rtk_sc_check_pattern,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_check_pattern
+	.set	nomips16
+	.ent	rtk_sc_check_pattern
+	.type	rtk_sc_check_pattern, @function
+rtk_sc_check_pattern:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lw	$25,40($4)
+	bne	$25,$0,$L33
+	move	$2,$0
+
+	j	$31
+	nop
+
+$L33:
+	jr	$25
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_check_pattern
+	.size	rtk_sc_check_pattern, .-rtk_sc_check_pattern
+	.section	.text.rtk_sc_generate_key,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_generate_key
+	.set	nomips16
+	.ent	rtk_sc_generate_key
+	.type	rtk_sc_generate_key, @function
+rtk_sc_generate_key:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lw	$25,48($4)
+	bne	$25,$0,$L39
+	move	$2,$0
+
+	j	$31
+	nop
+
+$L39:
+	jr	$25
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_generate_key
+	.size	rtk_sc_generate_key, .-rtk_sc_generate_key
+	.section	.text.rtk_sc_get_cipher_info,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_get_cipher_info
+	.set	nomips16
+	.ent	rtk_sc_get_cipher_info
+	.type	rtk_sc_get_cipher_info, @function
+rtk_sc_get_cipher_info:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lw	$25,44($4)
+	bne	$25,$0,$L45
+	move	$2,$0
+
+	j	$31
+	nop
+
+$L45:
+	jr	$25
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_get_cipher_info
+	.size	rtk_sc_get_cipher_info, .-rtk_sc_get_cipher_info
+	.section	.text.rtk_sc_decode_profile,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_decode_profile
+	.set	nomips16
+	.ent	rtk_sc_decode_profile
+	.type	rtk_sc_decode_profile, @function
+rtk_sc_decode_profile:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lw	$25,52($4)
+	bne	$25,$0,$L51
+	move	$2,$0
+
+	j	$31
+	nop
+
+$L51:
+	jr	$25
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_decode_profile
+	.size	rtk_sc_decode_profile, .-rtk_sc_decode_profile
+	.section	.text.rtk_sc_get_tlv_info,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_get_tlv_info
+	.set	nomips16
+	.ent	rtk_sc_get_tlv_info
+	.type	rtk_sc_get_tlv_info, @function
+rtk_sc_get_tlv_info:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lw	$25,56($4)
+	bne	$25,$0,$L57
+	move	$2,$0
+
+	j	$31
+	nop
+
+$L57:
+	jr	$25
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_get_tlv_info
+	.size	rtk_sc_get_tlv_info, .-rtk_sc_get_tlv_info
+	.section	.text.rtk_sc_set_ack_info,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_set_ack_info
+	.set	nomips16
+	.ent	rtk_sc_set_ack_info
+	.type	rtk_sc_set_ack_info, @function
+rtk_sc_set_ack_info:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lw	$25,60($4)
+	bne	$25,$0,$L63
+	move	$2,$0
+
+	j	$31
+	nop
+
+$L63:
+	jr	$25
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_set_ack_info
+	.size	rtk_sc_set_ack_info, .-rtk_sc_set_ack_info
+	.section	.text.mcast_udp_get_cipher_info,"ax",@progbits
+	.align	2
+	.globl	mcast_udp_get_cipher_info
+	.set	nomips16
+	.ent	mcast_udp_get_cipher_info
+	.type	mcast_udp_get_cipher_info, @function
+mcast_udp_get_cipher_info:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	move	$2,$0
+	lw	$4,1852($5)
+	j	$L69
+	move	$3,$5
+
+$L70:
+	lbu	$7,313($3)
+	addiu	$2,$2,1
+	sb	$7,2152($6)
+$L69:
+	addu	$6,$5,$2
+	bne	$2,$4,$L70
+	addiu	$3,$3,6
+
+	sw	$2,2408($5)
+	j	$31
+	move	$2,$0
+
+	.set	macro
+	.set	reorder
+	.end	mcast_udp_get_cipher_info
+	.size	mcast_udp_get_cipher_info, .-mcast_udp_get_cipher_info
+	.section	.text.mcast_udp_send_ack,"ax",@progbits
+	.align	2
+	.globl	mcast_udp_send_ack
+	.set	nomips16
+	.ent	mcast_udp_send_ack
+	.type	mcast_udp_send_ack, @function
+mcast_udp_send_ack:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	j	$31
+	move	$2,$0
+
+	.set	macro
+	.set	reorder
+	.end	mcast_udp_send_ack
+	.size	mcast_udp_send_ack, .-mcast_udp_send_ack
+	.section	.text.get_sc_sync_state,"ax",@progbits
+	.align	2
+	.globl	get_sc_sync_state
+	.set	nomips16
+	.ent	get_sc_sync_state
+	.type	get_sc_sync_state, @function
+get_sc_sync_state:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lui	$2,%hi(finish_sync)
+	lw	$2,%lo(finish_sync)($2)
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	get_sc_sync_state
+	.size	get_sc_sync_state, .-get_sc_sync_state
+	.section	.text.update_wlan_seq,"ax",@progbits
+	.align	2
+	.globl	update_wlan_seq
+	.set	nomips16
+	.ent	update_wlan_seq
+	.type	update_wlan_seq, @function
+update_wlan_seq:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lbu	$2,40($4)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L77
+	li	$3,1			# 0x1
+
+	lhu	$3,36($4)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$31
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L77:
+	bne	$2,$3,$L80
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($4)
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+$L80:
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	update_wlan_seq
+	.size	update_wlan_seq, .-update_wlan_seq
+	.section	.text.check_sync_pkt,"ax",@progbits
+	.align	2
+	.globl	check_sync_pkt
+	.set	nomips16
+	.ent	check_sync_pkt
+	.type	check_sync_pkt, @function
+check_sync_pkt:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lw	$2,12($4)
+	subu	$5,$2,$5
+	andi	$2,$5,0x3f0
+	sra	$2,$2,4
+	addiu	$3,$2,-1
+	sltu	$3,$3,15
+	beq	$3,$0,$L82
+	slt	$3,$5,512
+
+	beq	$3,$0,$L82
+	nop
+
+	addiu	$2,$2,-2
+	sltu	$3,$2,14
+	beq	$3,$0,$L82
+	andi	$5,$5,0xf
+
+	lui	$3,%hi($L97)
+	sll	$2,$2,2
+	addiu	$3,$3,%lo($L97)
+	addu	$2,$3,$2
+	lw	$2,0($2)
+	j	$2
+	nop
+
+	.rdata
+	.align	2
+	.align	2
+$L97:
+	.word	$L83
+	.word	$L84
+	.word	$L85
+	.word	$L86
+	.word	$L87
+	.word	$L88
+	.word	$L89
+	.word	$L90
+	.word	$L91
+	.word	$L92
+	.word	$L93
+	.word	$L94
+	.word	$L95
+	.word	$L96
+	.section	.text.check_sync_pkt
+$L83:
+	li	$3,3			# 0x3
+	beq	$5,$3,$L115
+	move	$2,$0
+
+	li	$2,1			# 0x1
+	j	$L102
+	li	$3,2			# 0x2
+
+$L84:
+	li	$2,2			# 0x2
+	j	$L102
+	li	$3,11			# 0xb
+
+$L85:
+	li	$2,3			# 0x3
+	j	$L102
+	li	$3,10			# 0xa
+
+$L86:
+	li	$2,4			# 0x4
+	j	$L102
+	li	$3,5			# 0x5
+
+$L87:
+	li	$2,5			# 0x5
+	j	$L102
+	li	$3,4			# 0x4
+
+$L88:
+	li	$2,6			# 0x6
+	j	$L102
+	li	$3,13			# 0xd
+
+$L89:
+	li	$2,7			# 0x7
+	j	$L102
+	li	$3,12			# 0xc
+
+$L90:
+	li	$2,8			# 0x8
+	j	$L102
+	li	$3,7			# 0x7
+
+$L91:
+	li	$2,9			# 0x9
+	j	$L102
+	li	$3,6			# 0x6
+
+$L92:
+	li	$2,10			# 0xa
+	j	$L102
+	li	$3,15			# 0xf
+
+$L93:
+	li	$2,11			# 0xb
+	j	$L102
+	li	$3,14			# 0xe
+
+$L94:
+	li	$2,12			# 0xc
+	j	$L102
+	li	$3,9			# 0x9
+
+$L95:
+	li	$2,13			# 0xd
+	j	$L102
+	li	$3,8			# 0x8
+
+$L96:
+	li	$2,14			# 0xe
+	li	$3,1			# 0x1
+$L102:
+	beq	$5,$3,$L115
+	nop
+
+$L82:
+	li	$2,-1			# 0xffffffff
+$L115:
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	check_sync_pkt
+	.size	check_sync_pkt, .-check_sync_pkt
+	.section	.text.add_polys,"ax",@progbits
+	.align	2
+	.globl	add_polys
+	.set	nomips16
+	.ent	add_polys
+	.type	add_polys, @function
+add_polys:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	move	$2,$0
+	li	$3,32			# 0x20
+$L117:
+	addu	$6,$5,$2
+	addiu	$2,$2,4
+	lw	$7,0($4)
+	lw	$6,0($6)
+	xor	$6,$7,$6
+	sw	$6,0($4)
+	bne	$2,$3,$L117
+	addiu	$4,$4,4
+
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	add_polys
+	.size	add_polys, .-add_polys
+	.section	.text.copy_poly,"ax",@progbits
+	.align	2
+	.globl	copy_poly
+	.set	nomips16
+	.ent	copy_poly
+	.type	copy_poly, @function
+copy_poly:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	move	$2,$0
+	li	$3,32			# 0x20
+$L121:
+	addu	$7,$5,$2
+	addu	$6,$4,$2
+	lw	$7,0($7)
+	addiu	$2,$2,4
+	bne	$2,$3,$L121
+	sw	$7,0($6)
+
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	copy_poly
+	.size	copy_poly, .-copy_poly
+	.section	.text.scale_poly,"ax",@progbits
+	.align	2
+	.globl	scale_poly
+	.set	nomips16
+	.ent	scale_poly
+	.type	scale_poly, @function
+scale_poly:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lui	$2,%hi(glog)
+	sll	$3,$4,2
+	lui	$6,%hi(gexp)
+	addiu	$2,$2,%lo(glog)
+	addiu	$6,$6,%lo(gexp)
+	addu	$3,$3,$2
+	move	$7,$0
+	li	$10,8			# 0x8
+$L127:
+	lw	$9,0($5)
+	beq	$4,$0,$L126
+	move	$8,$0
+
+	beq	$9,$0,$L126
+	sll	$11,$9,2
+
+	addu	$8,$11,$2
+	lw	$8,0($8)
+	lw	$9,0($3)
+	addu	$8,$9,$8
+	sll	$8,$8,2
+	addu	$8,$8,$6
+	lw	$8,0($8)
+$L126:
+	addiu	$7,$7,1
+	sw	$8,0($5)
+	bne	$7,$10,$L127
+	addiu	$5,$5,4
+
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	scale_poly
+	.size	scale_poly, .-scale_poly
+	.section	.text.zero_poly,"ax",@progbits
+	.align	2
+	.globl	zero_poly
+	.set	nomips16
+	.ent	zero_poly
+	.type	zero_poly, @function
+zero_poly:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	move	$2,$0
+	li	$3,32			# 0x20
+$L131:
+	addu	$5,$4,$2
+	addiu	$2,$2,4
+	bne	$2,$3,$L131
+	sw	$0,0($5)
+
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	zero_poly
+	.size	zero_poly, .-zero_poly
+	.section	.text.Find_Roots,"ax",@progbits
+	.align	2
+	.globl	Find_Roots
+	.set	nomips16
+	.ent	Find_Roots
+	.type	Find_Roots, @function
+Find_Roots:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lui	$13,%hi(Lambda)
+	lui	$12,%hi(Lambda+20)
+	lui	$9,%hi(gexp)
+	lui	$8,%hi(glog)
+	lui	$11,%hi(ErrorLocs)
+	addiu	$13,$13,%lo(Lambda)
+	addiu	$12,$12,%lo(Lambda+20)
+	addiu	$9,$9,%lo(gexp)
+	addiu	$8,$8,%lo(glog)
+	addiu	$11,$11,%lo(ErrorLocs)
+	move	$3,$0
+	li	$2,1			# 0x1
+	li	$6,255			# 0xff
+	j	$L135
+	li	$10,256			# 0x100
+
+$L138:
+	div	$0,$4,$6
+	lw	$24,0($5)
+	mfhi	$14
+	sll	$14,$14,2
+	addu	$14,$14,$9
+	lw	$14,0($14)
+	beq	$14,$0,$L137
+	move	$15,$0
+
+	beq	$24,$0,$L137
+	sll	$14,$14,2
+
+	sll	$24,$24,2
+	addu	$14,$14,$8
+	addu	$24,$24,$8
+	lw	$15,0($14)
+	lw	$14,0($24)
+	addu	$14,$15,$14
+	sll	$14,$14,2
+	addu	$14,$14,$9
+	lw	$15,0($14)
+$L137:
+	addiu	$5,$5,4
+	xor	$7,$7,$15
+	bne	$5,$12,$L138
+	addu	$4,$4,$2
+
+	bne	$7,$0,$L139
+	sll	$4,$3,2
+
+	subu	$5,$6,$2
+	addiu	$3,$3,1
+	addu	$4,$4,$11
+	sw	$5,0($4)
+$L139:
+	addiu	$2,$2,1
+	beq	$2,$10,$L140
+	nop
+
+$L135:
+	move	$5,$13
+	move	$4,$0
+	j	$L138
+	move	$7,$0
+
+$L140:
+	lui	$2,%hi(NErrors)
+	j	$31
+	sw	$3,%lo(NErrors)($2)
+
+	.set	macro
+	.set	reorder
+	.end	Find_Roots
+	.size	Find_Roots, .-Find_Roots
+	.section	.text.compute_next_omega,"ax",@progbits
+	.align	2
+	.globl	compute_next_omega
+	.set	nomips16
+	.ent	compute_next_omega
+	.type	compute_next_omega, @function
+compute_next_omega:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lui	$2,%hi(glog)
+	sll	$3,$4,2
+	lui	$8,%hi(gexp)
+	addiu	$2,$2,%lo(glog)
+	addiu	$8,$8,%lo(gexp)
+	addu	$3,$3,$2
+	move	$9,$0
+	li	$10,32			# 0x20
+$L146:
+	addu	$11,$5,$9
+	addu	$13,$7,$9
+	lw	$12,0($11)
+	lw	$13,0($13)
+	beq	$4,$0,$L145
+	move	$11,$0
+
+	beq	$12,$0,$L145
+	sll	$14,$12,2
+
+	addu	$11,$14,$2
+	lw	$11,0($11)
+	lw	$12,0($3)
+	addu	$11,$12,$11
+	sll	$11,$11,2
+	addu	$11,$11,$8
+	lw	$11,0($11)
+$L145:
+	addu	$12,$6,$9
+	xor	$11,$11,$13
+	addiu	$9,$9,4
+	bne	$9,$10,$L146
+	sw	$11,0($12)
+
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	compute_next_omega
+	.size	compute_next_omega, .-compute_next_omega
+	.section	.text.mult_polys,"ax",@progbits
+	.align	2
+	.globl	mult_polys
+	.set	nomips16
+	.ent	mult_polys
+	.type	mult_polys, @function
+mult_polys:
+	.frame	$sp,72,$31		# vars= 64, regs= 2/0, args= 0, gp= 0
+	.mask	0x00030000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-72
+	sw	$17,68($sp)
+	sw	$16,64($sp)
+	move	$2,$0
+	li	$3,64			# 0x40
+$L150:
+	addu	$7,$4,$2
+	addiu	$2,$2,4
+	bne	$2,$3,$L150
+	sw	$0,0($7)
+
+	lui	$11,%hi(glog)
+	lui	$16,%hi(gexp)
+	move	$10,$sp
+	addiu	$11,$11,%lo(glog)
+	addiu	$16,$16,%lo(gexp)
+	move	$2,$0
+	addiu	$25,$sp,32
+	addiu	$9,$sp,64
+	li	$24,32			# 0x20
+	li	$15,15			# 0xf
+	addiu	$14,$sp,60
+	j	$L151
+	li	$13,8			# 0x8
+
+$L152:
+	sw	$0,0($3)
+	addiu	$3,$3,4
+	bne	$3,$9,$L152
+	nop
+
+	lw	$7,0($5)
+	move	$3,$0
+	sll	$17,$7,2
+	addu	$17,$17,$11
+$L155:
+	addu	$12,$6,$3
+	lw	$12,0($12)
+	beq	$12,$0,$L154
+	move	$8,$0
+
+	beq	$7,$0,$L154
+	sll	$12,$12,2
+
+	addu	$12,$12,$11
+	lw	$8,0($12)
+	lw	$12,0($17)
+	addu	$8,$12,$8
+	sll	$8,$8,2
+	addu	$8,$8,$16
+	lw	$8,0($8)
+$L154:
+	addu	$12,$sp,$3
+	addiu	$3,$3,4
+	bne	$3,$24,$L155
+	sw	$8,0($12)
+
+	subu	$3,$15,$2
+	move	$8,$14
+	li	$7,15			# 0xf
+	sll	$3,$3,2
+	addu	$3,$sp,$3
+$L156:
+	lw	$17,0($3)
+	addiu	$7,$7,-1
+	slt	$12,$7,$2
+	addiu	$3,$3,-4
+	sw	$17,0($8)
+	beq	$12,$0,$L156
+	addiu	$8,$8,-4
+
+	move	$7,$10
+	move	$8,$0
+	j	$L157
+	move	$3,$10
+
+$L158:
+	sw	$0,0($3)
+	addiu	$3,$3,4
+$L157:
+	slt	$12,$8,$2
+	bne	$12,$0,$L158
+	addiu	$8,$8,1
+
+	move	$3,$4
+$L159:
+	lw	$12,0($3)
+	lw	$8,0($7)
+	addiu	$7,$7,4
+	xor	$8,$12,$8
+	sw	$8,0($3)
+	bne	$7,$9,$L159
+	addiu	$3,$3,4
+
+	addiu	$2,$2,1
+	beq	$2,$13,$L161
+	addiu	$5,$5,4
+
+$L151:
+	j	$L152
+	move	$3,$25
+
+$L161:
+	lw	$17,68($sp)
+	lw	$16,64($sp)
+	j	$31
+	addiu	$sp,$sp,72
+
+	.set	macro
+	.set	reorder
+	.end	mult_polys
+	.size	mult_polys, .-mult_polys
+	.section	.text.Modified_Berlekamp_Massey,"ax",@progbits
+	.align	2
+	.globl	Modified_Berlekamp_Massey
+	.set	nomips16
+	.ent	Modified_Berlekamp_Massey
+	.type	Modified_Berlekamp_Massey, @function
+Modified_Berlekamp_Massey:
+	.frame	$sp,232,$31		# vars= 192, regs= 5/0, args= 16, gp= 0
+	.mask	0x800f0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-232
+	sw	$31,228($sp)
+	sw	$19,224($sp)
+	sw	$18,220($sp)
+	sw	$17,216($sp)
+	sw	$16,212($sp)
+	addiu	$10,$sp,112
+	addiu	$11,$sp,144
+	move	$2,$10
+$L168:
+	sw	$0,0($2)
+	addiu	$2,$2,4
+	bne	$2,$11,$L168
+	addiu	$4,$sp,144
+
+	addiu	$12,$sp,176
+	move	$2,$4
+$L169:
+	sw	$0,0($2)
+	addiu	$2,$2,4
+	bne	$2,$12,$L169
+	lui	$6,%hi(ErasureLocs)
+
+	li	$2,1			# 0x1
+	sw	$2,112($sp)
+	lui	$9,%hi(gexp)
+	lui	$2,%hi(NErasures)
+	lui	$8,%hi(glog)
+	addiu	$6,$6,%lo(ErasureLocs)
+	addiu	$9,$9,%lo(gexp)
+	lw	$2,%lo(NErasures)($2)
+	addiu	$8,$8,%lo(glog)
+	move	$5,$0
+	addiu	$31,$sp,144
+	addiu	$25,$sp,112
+	li	$24,32			# 0x20
+	j	$L170
+	addiu	$15,$sp,172
+
+$L177:
+$L171:
+	addu	$13,$25,$3
+	addu	$7,$31,$3
+	lw	$13,0($13)
+	addiu	$3,$3,4
+	bne	$3,$24,$L171
+	sw	$13,0($7)
+
+	lw	$7,0($6)
+	move	$3,$4
+	sll	$7,$7,2
+	addu	$7,$7,$9
+	lw	$7,0($7)
+	sll	$16,$7,2
+	addu	$16,$16,$8
+$L174:
+	lw	$14,0($3)
+	beq	$7,$0,$L173
+	move	$13,$0
+
+	beq	$14,$0,$L173
+	sll	$17,$14,2
+
+	addu	$13,$17,$8
+	lw	$13,0($13)
+	lw	$14,0($16)
+	addu	$13,$14,$13
+	sll	$13,$13,2
+	addu	$13,$13,$9
+	lw	$13,0($13)
+$L173:
+	sw	$13,0($3)
+	addiu	$3,$3,4
+	bne	$3,$12,$L174
+	nop
+
+	move	$3,$15
+$L175:
+	lw	$7,-4($3)
+	sw	$7,0($3)
+	addiu	$3,$3,-4
+	bne	$3,$4,$L175
+	move	$7,$4
+
+	sw	$0,144($sp)
+	move	$3,$10
+$L176:
+	lw	$14,0($3)
+	lw	$13,0($7)
+	xor	$13,$14,$13
+	sw	$13,0($3)
+	addiu	$3,$3,4
+	bne	$3,$11,$L176
+	addiu	$7,$7,4
+
+	addiu	$5,$5,1
+	addiu	$6,$6,4
+$L170:
+	slt	$3,$5,$2
+	bne	$3,$0,$L177
+	move	$3,$0
+
+	addiu	$12,$sp,80
+	addiu	$5,$sp,112
+	li	$4,32			# 0x20
+$L178:
+	addu	$7,$5,$3
+	addu	$6,$12,$3
+	lw	$7,0($7)
+	addiu	$3,$3,4
+	bne	$3,$4,$L178
+	sw	$7,0($6)
+
+	addiu	$25,$sp,108
+	move	$3,$25
+$L179:
+	lw	$4,-4($3)
+	sw	$4,0($3)
+	addiu	$3,$3,-4
+	bne	$12,$3,$L179
+	li	$4,32			# 0x20
+
+	sw	$0,80($sp)
+	move	$3,$0
+	addiu	$6,$sp,16
+	addiu	$5,$sp,112
+$L180:
+	addu	$8,$5,$3
+	addu	$7,$6,$3
+	lw	$8,0($8)
+	addiu	$3,$3,4
+	bne	$3,$4,$L180
+	sw	$8,0($7)
+
+	lui	$11,%hi(synBytes)
+	sll	$3,$2,2
+	lui	$8,%hi(gexp)
+	addiu	$11,$11,%lo(synBytes)
+	move	$4,$2
+	addiu	$8,$8,%lo(gexp)
+	addu	$11,$11,$3
+	lui	$3,%hi(glog)
+	addiu	$3,$3,%lo(glog)
+	li	$24,-1			# 0xffffffff
+	addiu	$7,$sp,16
+	addiu	$15,$sp,80
+	addiu	$14,$sp,48
+	li	$10,32			# 0x20
+	j	$L181
+	li	$16,255			# 0xff
+
+$L184:
+	lw	$17,0($13)
+	lw	$18,0($5)
+	beq	$17,$0,$L183
+	nop
+
+	beq	$18,$0,$L183
+	sll	$19,$18,2
+
+	sll	$17,$17,2
+	addu	$31,$19,$3
+	addu	$17,$17,$3
+	lw	$18,0($31)
+	lw	$31,0($17)
+	addu	$31,$18,$31
+	sll	$31,$31,2
+	addu	$31,$31,$8
+	lw	$31,0($31)
+$L183:
+	xor	$6,$6,$31
+	addiu	$9,$9,1
+	addiu	$13,$13,4
+	addiu	$5,$5,-4
+$L198:
+	slt	$17,$4,$9
+	beq	$17,$0,$L184
+	move	$31,$0
+
+	move	$5,$0
+	beq	$6,$0,$L186
+	move	$9,$4
+
+	sll	$31,$6,2
+	addu	$31,$31,$3
+$L202:
+	addu	$9,$15,$5
+	addu	$18,$7,$5
+	lw	$13,0($9)
+	addu	$17,$14,$5
+	move	$9,$0
+	addiu	$5,$5,4
+	sll	$19,$13,2
+	lw	$18,0($18)
+	beq	$13,$0,$L188
+	addu	$19,$19,$3
+
+	lw	$9,0($19)
+	lw	$13,0($31)
+	addu	$9,$13,$9
+	sll	$9,$9,2
+	addu	$9,$9,$8
+	lw	$9,0($9)
+$L188:
+	xor	$9,$9,$18
+	bne	$5,$10,$L202
+	sw	$9,0($17)
+
+	subu	$9,$2,$24
+	slt	$5,$4,$9
+	bne	$5,$0,$L190
+	sll	$6,$6,2
+
+	j	$L191
+	move	$9,$4
+
+$L190:
+	move	$5,$0
+	addu	$6,$6,$3
+	lw	$6,0($6)
+	subu	$6,$16,$6
+	sll	$6,$6,2
+	addu	$6,$6,$8
+	lw	$6,0($6)
+	sll	$31,$6,2
+	addu	$31,$31,$3
+$L194:
+	addu	$24,$7,$5
+	lw	$24,0($24)
+	beq	$24,$0,$L193
+	move	$13,$0
+
+	beq	$6,$0,$L193
+	sll	$24,$24,2
+
+	addu	$24,$24,$3
+	lw	$13,0($24)
+	lw	$24,0($31)
+	addu	$13,$24,$13
+	sll	$13,$13,2
+	addu	$13,$13,$8
+	lw	$13,0($13)
+$L193:
+	addu	$24,$15,$5
+	addiu	$5,$5,4
+	bne	$5,$10,$L194
+	sw	$13,0($24)
+
+	subu	$24,$2,$4
+$L191:
+	move	$4,$0
+$L195:
+	addu	$6,$14,$4
+	addu	$5,$7,$4
+	lw	$6,0($6)
+	addiu	$4,$4,4
+	bne	$4,$10,$L195
+	sw	$6,0($5)
+
+$L186:
+	move	$4,$25
+$L196:
+	lw	$5,-4($4)
+	sw	$5,0($4)
+	addiu	$4,$4,-4
+	bne	$12,$4,$L196
+	nop
+
+	sw	$0,80($sp)
+	addiu	$2,$2,1
+	move	$4,$9
+	addiu	$11,$11,4
+$L181:
+	slt	$5,$2,4
+	beq	$5,$0,$L197
+	move	$13,$7
+
+	move	$6,$0
+	move	$9,$0
+	j	$L198
+	move	$5,$11
+
+$L197:
+	lui	$5,%hi(Lambda)
+	move	$2,$0
+	addiu	$5,$5,%lo(Lambda)
+	addiu	$4,$sp,16
+	li	$3,32			# 0x20
+$L199:
+	addu	$7,$4,$2
+	addu	$6,$5,$2
+	lw	$7,0($7)
+	addiu	$2,$2,4
+	bne	$2,$3,$L199
+	sw	$7,0($6)
+
+	lui	$6,%hi(synBytes)
+	addiu	$4,$sp,144
+	jal	mult_polys
+	addiu	$6,$6,%lo(synBytes)
+
+	lui	$2,%hi(Omega)
+	addiu	$2,$2,%lo(Omega)
+	addiu	$3,$2,32
+$L200:
+	sw	$0,0($2)
+	addiu	$2,$2,4
+	bne	$2,$3,$L200
+	nop
+
+	lw	$4,144($sp)
+	lui	$3,%hi(Omega)
+	addiu	$2,$3,%lo(Omega)
+	sw	$4,%lo(Omega)($3)
+	lw	$3,156($sp)
+	sw	$3,12($2)
+	lw	$3,148($sp)
+	sw	$3,4($2)
+	lw	$3,152($sp)
+	sw	$3,8($2)
+	lw	$31,228($sp)
+	lw	$19,224($sp)
+	lw	$18,220($sp)
+	lw	$17,216($sp)
+	lw	$16,212($sp)
+	j	$31
+	addiu	$sp,$sp,232
+
+	.set	macro
+	.set	reorder
+	.end	Modified_Berlekamp_Massey
+	.size	Modified_Berlekamp_Massey, .-Modified_Berlekamp_Massey
+	.section	.text.init_galois_tables,"ax",@progbits
+	.align	2
+	.globl	init_galois_tables
+	.set	nomips16
+	.ent	init_galois_tables
+	.type	init_galois_tables, @function
+init_galois_tables:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lui	$2,%hi(gexp)
+	li	$4,1			# 0x1
+	addiu	$3,$2,%lo(gexp)
+	lui	$5,%hi(glog)
+	sw	$4,1020($3)
+	lui	$13,%hi(gexp+1024)
+	lui	$3,%hi(gexp+4)
+	addiu	$13,$13,%lo(gexp+1024)
+	sw	$4,%lo(gexp)($2)
+	addiu	$3,$3,%lo(gexp+4)
+	sw	$0,%lo(glog)($5)
+	li	$9,1			# 0x1
+	move	$8,$0
+	move	$7,$0
+	move	$6,$0
+	move	$10,$0
+	move	$5,$0
+	move	$2,$0
+	move	$4,$0
+$L220:
+	sll	$12,$6,1
+	addu	$12,$12,$7
+	xor	$11,$2,$4
+	sll	$12,$12,1
+	addu	$12,$12,$8
+	xor	$4,$5,$2
+	sll	$12,$12,1
+	addu	$12,$12,$11
+	xor	$5,$10,$2
+	sll	$12,$12,1
+	addu	$12,$12,$4
+	move	$10,$9
+	sll	$12,$12,1
+	addu	$12,$12,$5
+	sll	$12,$12,1
+	addu	$12,$12,$9
+	move	$9,$2
+	sll	$12,$12,1
+	addu	$12,$12,$2
+	move	$2,$6
+	sw	$12,1020($3)
+	move	$6,$7
+	sw	$12,0($3)
+	addiu	$3,$3,4
+	beq	$3,$13,$L219
+	move	$7,$8
+
+	j	$L220
+	move	$8,$11
+
+$L219:
+	lui	$4,%hi(glog+4)
+	lui	$7,%hi(gexp)
+	addiu	$4,$4,%lo(glog+4)
+	addiu	$7,$7,%lo(gexp)
+	li	$2,1			# 0x1
+	j	$L221
+	li	$6,256			# 0x100
+
+$L224:
+	lw	$8,0($5)
+	bne	$8,$2,$L222
+	addiu	$5,$5,4
+
+	j	$L223
+	sw	$3,0($4)
+
+$L222:
+	addiu	$3,$3,1
+	bne	$3,$6,$L224
+	nop
+
+$L223:
+	addiu	$2,$2,1
+	beq	$2,$6,$L228
+	addiu	$4,$4,4
+
+$L221:
+	move	$5,$7
+	j	$L224
+	move	$3,$0
+
+$L228:
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	init_galois_tables
+	.size	init_galois_tables, .-init_galois_tables
+	.section	.text.gmult,"ax",@progbits
+	.align	2
+	.globl	gmult
+	.set	nomips16
+	.ent	gmult
+	.type	gmult, @function
+gmult:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	beq	$4,$0,$L230
+	nop
+
+	beq	$5,$0,$L230
+	nop
+
+	lui	$2,%hi(glog)
+	sll	$5,$5,2
+	addiu	$2,$2,%lo(glog)
+	sll	$4,$4,2
+	addu	$4,$4,$2
+	addu	$2,$5,$2
+	lw	$3,0($2)
+	lw	$2,0($4)
+	addu	$2,$3,$2
+	lui	$3,%hi(gexp)
+	sll	$2,$2,2
+	addiu	$3,$3,%lo(gexp)
+	addu	$2,$2,$3
+	lw	$2,0($2)
+	j	$31
+	nop
+
+$L230:
+	j	$31
+	move	$2,$0
+
+	.set	macro
+	.set	reorder
+	.end	gmult
+	.size	gmult, .-gmult
+	.section	.text.ginv,"ax",@progbits
+	.align	2
+	.globl	ginv
+	.set	nomips16
+	.ent	ginv
+	.type	ginv, @function
+ginv:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lui	$2,%hi(glog)
+	sll	$4,$4,2
+	li	$3,255			# 0xff
+	addiu	$2,$2,%lo(glog)
+	addu	$4,$4,$2
+	lw	$2,0($4)
+	subu	$2,$3,$2
+	lui	$3,%hi(gexp)
+	addiu	$3,$3,%lo(gexp)
+	sll	$2,$2,2
+	addu	$2,$2,$3
+	lw	$2,0($2)
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	ginv
+	.size	ginv, .-ginv
+	.section	.text.crchware,"ax",@progbits
+	.align	2
+	.globl	crchware
+	.set	nomips16
+	.ent	crchware
+	.type	crchware, @function
+crchware:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	sll	$4,$4,8
+	li	$3,8			# 0x8
+	andi	$5,$5,0xffff
+	andi	$2,$6,0xffff
+	andi	$4,$4,0xff00
+	xor	$7,$2,$4
+$L241:
+	addiu	$3,$3,-1
+	sll	$7,$7,16
+	sll	$6,$2,1
+	sll	$4,$4,1
+	sra	$7,$7,16
+	andi	$3,$3,0xffff
+	andi	$4,$4,0xffff
+	bgez	$7,$L237
+	andi	$2,$6,0xffff
+
+	xor	$2,$6,$5
+	andi	$2,$2,0xffff
+$L237:
+	bne	$3,$0,$L241
+	xor	$7,$2,$4
+
+	lui	$3,%hi(i.45907)
+	j	$31
+	sh	$0,%lo(i.45907)($3)
+
+	.set	macro
+	.set	reorder
+	.end	crchware
+	.size	crchware, .-crchware
+	.section	.text.rs_crc_ccitt,"ax",@progbits
+	.align	2
+	.globl	rs_crc_ccitt
+	.set	nomips16
+	.ent	rs_crc_ccitt
+	.type	rs_crc_ccitt, @function
+rs_crc_ccitt:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lui	$3,%hi(i.45907)
+	move	$2,$0
+	lhu	$3,%lo(i.45907)($3)
+	move	$6,$0
+	j	$L243
+	li	$9,8			# 0x8
+
+$L247:
+	addu	$3,$4,$6
+	move	$7,$0
+	lbu	$3,0($3)
+	sll	$3,$3,8
+	xor	$10,$2,$3
+$L250:
+	addiu	$7,$7,1
+	sll	$10,$10,16
+	sll	$8,$2,1
+	sll	$3,$3,1
+	sra	$10,$10,16
+	andi	$3,$3,0xffff
+	bgez	$10,$L245
+	andi	$2,$8,0xffff
+
+	xori	$2,$8,0x1021
+	andi	$2,$2,0xffff
+$L245:
+	bne	$7,$9,$L250
+	xor	$10,$2,$3
+
+	addiu	$6,$6,1
+	move	$3,$0
+$L243:
+	slt	$7,$6,$5
+	bne	$7,$0,$L247
+	nop
+
+	lui	$4,%hi(i.45907)
+	j	$31
+	sh	$3,%lo(i.45907)($4)
+
+	.set	macro
+	.set	reorder
+	.end	rs_crc_ccitt
+	.size	rs_crc_ccitt, .-rs_crc_ccitt
+	.section	.text.zero_fill_from,"ax",@progbits
+	.align	2
+	.globl	zero_fill_from
+	.set	nomips16
+	.ent	zero_fill_from
+	.type	zero_fill_from, @function
+zero_fill_from:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	j	$L252
+	addu	$4,$4,$5
+
+$L253:
+	sb	$0,0($4)
+	addiu	$4,$4,1
+$L252:
+	slt	$2,$5,$6
+	bne	$2,$0,$L253
+	addiu	$5,$5,1
+
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	zero_fill_from
+	.size	zero_fill_from, .-zero_fill_from
+	.section	.text.print_parity,"ax",@progbits
+	.align	2
+	.globl	print_parity
+	.set	nomips16
+	.ent	print_parity
+	.type	print_parity, @function
+print_parity:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	print_parity
+	.size	print_parity, .-print_parity
+	.section	.text.print_syndrome,"ax",@progbits
+	.align	2
+	.globl	print_syndrome
+	.set	nomips16
+	.ent	print_syndrome
+	.type	print_syndrome, @function
+print_syndrome:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	print_syndrome
+	.size	print_syndrome, .-print_syndrome
+	.section	.text.build_codeword,"ax",@progbits
+	.align	2
+	.globl	build_codeword
+	.set	nomips16
+	.ent	build_codeword
+	.type	build_codeword, @function
+build_codeword:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	j	$L260
+	move	$2,$0
+
+$L261:
+	lbu	$3,0($8)
+	addiu	$2,$2,1
+	sb	$3,0($7)
+$L260:
+	slt	$3,$2,$5
+	addu	$8,$4,$2
+	bne	$3,$0,$L261
+	addu	$7,$6,$2
+
+	lui	$2,%hi(pBytes+12)
+	lui	$3,%hi(pBytes-4)
+	addu	$5,$6,$5
+	addiu	$2,$2,%lo(pBytes+12)
+	addiu	$3,$3,%lo(pBytes-4)
+$L262:
+	lw	$4,0($2)
+	addiu	$2,$2,-4
+	sb	$4,0($5)
+	bne	$2,$3,$L262
+	addiu	$5,$5,1
+
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	build_codeword
+	.size	build_codeword, .-build_codeword
+	.section	.text.decode_data,"ax",@progbits
+	.align	2
+	.globl	decode_data
+	.set	nomips16
+	.ent	decode_data
+	.type	decode_data, @function
+decode_data:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lui	$8,%hi(gexp)
+	lui	$7,%hi(glog)
+	lui	$12,%hi(synBytes)
+	addiu	$8,$8,%lo(gexp)
+	addiu	$7,$7,%lo(glog)
+	addiu	$12,$12,%lo(synBytes)
+	move	$2,$0
+	j	$L266
+	li	$11,16			# 0x10
+
+$L269:
+	lw	$10,4($13)
+	lbu	$14,0($14)
+	beq	$10,$0,$L268
+	nop
+
+	beq	$6,$0,$L268
+	sll	$15,$6,2
+
+	sll	$10,$10,2
+	addu	$6,$15,$7
+	addu	$10,$10,$7
+	lw	$9,0($6)
+	lw	$6,0($10)
+	addu	$6,$9,$6
+	sll	$6,$6,2
+	addu	$6,$6,$8
+	lw	$9,0($6)
+$L268:
+	xor	$6,$9,$14
+	addiu	$3,$3,1
+$L271:
+	slt	$10,$3,$5
+	addu	$14,$4,$3
+	bne	$10,$0,$L269
+	move	$9,$0
+
+	addu	$3,$12,$2
+	addiu	$2,$2,4
+	beq	$2,$11,$L273
+	sw	$6,0($3)
+
+$L266:
+	move	$6,$0
+	move	$3,$0
+	j	$L271
+	addu	$13,$8,$2
+
+$L273:
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	decode_data
+	.size	decode_data, .-decode_data
+	.section	.text.check_syndrome,"ax",@progbits
+	.align	2
+	.globl	check_syndrome
+	.set	nomips16
+	.ent	check_syndrome
+	.type	check_syndrome, @function
+check_syndrome:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	lui	$2,%hi(synBytes)
+	lw	$3,%lo(synBytes)($2)
+	bne	$3,$0,$L275
+	nop
+
+	addiu	$2,$2,%lo(synBytes)
+	lw	$3,4($2)
+	bne	$3,$0,$L275
+	nop
+
+	lw	$3,8($2)
+	bne	$3,$0,$L275
+	nop
+
+	lw	$2,12($2)
+	j	$31
+	sltu	$2,$0,$2
+
+$L275:
+	j	$31
+	li	$2,1			# 0x1
+
+	.set	macro
+	.set	reorder
+	.end	check_syndrome
+	.size	check_syndrome, .-check_syndrome
+	.section	.text.debug_check_syndrome,"ax",@progbits
+	.align	2
+	.globl	debug_check_syndrome
+	.set	nomips16
+	.ent	debug_check_syndrome
+	.type	debug_check_syndrome, @function
+debug_check_syndrome:
+	.frame	$sp,0,$31		# vars= 0, regs= 0/0, args= 0, gp= 0
+	.mask	0x00000000,0
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	j	$31
+	nop
+
+	.set	macro
+	.set	reorder
+	.end	debug_check_syndrome
+	.size	debug_check_syndrome, .-debug_check_syndrome
+	.section	.text.encode_data,"ax",@progbits
+	.align	2
+	.globl	encode_data
+	.set	nomips16
+	.ent	encode_data
+	.type	encode_data, @function
+encode_data:
+	.frame	$sp,32,$31		# vars= 24, regs= 2/0, args= 0, gp= 0
+	.mask	0x00030000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-32
+	sw	$17,28($sp)
+	sw	$16,24($sp)
+	lui	$2,%hi(genPoly)
+	lw	$7,%lo(genPoly)($2)
+	lui	$3,%hi(glog)
+	addiu	$3,$3,%lo(glog)
+	lui	$25,%hi(genPoly+12)
+	sll	$24,$7,2
+	lui	$12,%hi(gexp)
+	addiu	$25,$25,%lo(genPoly+12)
+	sw	$0,0($sp)
+	addiu	$2,$2,%lo(genPoly)
+	sw	$0,4($sp)
+	addiu	$12,$12,%lo(gexp)
+	sw	$0,8($sp)
+	addu	$24,$24,$3
+	sw	$0,12($sp)
+	move	$8,$0
+	sw	$0,16($sp)
+	j	$L281
+	addiu	$15,$sp,8
+
+$L287:
+	move	$11,$15
+	lbu	$13,0($10)
+	move	$10,$25
+	xor	$9,$13,$9
+	sll	$16,$9,2
+	addu	$16,$16,$3
+$L284:
+	lw	$14,0($10)
+	lw	$17,0($11)
+	beq	$14,$0,$L283
+	move	$13,$0
+
+	beq	$9,$0,$L283
+	sll	$14,$14,2
+
+	addu	$14,$14,$3
+	lw	$13,0($14)
+	lw	$14,0($16)
+	addu	$13,$14,$13
+	sll	$13,$13,2
+	addu	$13,$13,$12
+	lw	$13,0($13)
+$L283:
+	xor	$13,$13,$17
+	addiu	$10,$10,-4
+	sw	$13,4($11)
+	bne	$10,$2,$L284
+	addiu	$11,$11,-4
+
+	beq	$7,$0,$L285
+	nop
+
+	beq	$9,$0,$L285
+	sll	$9,$9,2
+
+	lw	$10,0($24)
+	addu	$9,$9,$3
+	lw	$9,0($9)
+	addu	$9,$9,$10
+	sll	$9,$9,2
+	addu	$9,$9,$12
+	lw	$9,0($9)
+	j	$L294
+	sw	$9,0($sp)
+
+$L285:
+	move	$9,$0
+	sw	$9,0($sp)
+$L294:
+	addiu	$8,$8,1
+$L281:
+	slt	$10,$8,$5
+	lw	$9,12($sp)
+	bne	$10,$0,$L287
+	addu	$10,$4,$8
+
+	lw	$8,0($sp)
+	lui	$7,%hi(pBytes)
+	addiu	$3,$7,%lo(pBytes)
+	move	$2,$0
+	sw	$8,%lo(pBytes)($7)
+	lw	$7,4($sp)
+	sw	$9,12($3)
+	sw	$7,4($3)
+	lw	$7,8($sp)
+	j	$L288
+	sw	$7,8($3)
+
+$L289:
+	lbu	$3,0($8)
+	addiu	$2,$2,1
+	sb	$3,0($7)
+$L288:
+	slt	$3,$2,$5
+	addu	$8,$4,$2
+	bne	$3,$0,$L289
+	addu	$7,$6,$2
+
+	lui	$2,%hi(pBytes+12)
+	lui	$3,%hi(pBytes-4)
+	addu	$5,$6,$5
+	addiu	$2,$2,%lo(pBytes+12)
+	addiu	$3,$3,%lo(pBytes-4)
+$L290:
+	lw	$4,0($2)
+	addiu	$2,$2,-4
+	sb	$4,0($5)
+	bne	$2,$3,$L290
+	addiu	$5,$5,1
+
+	lw	$17,28($sp)
+	lw	$16,24($sp)
+	j	$31
+	addiu	$sp,$sp,32
+
+	.set	macro
+	.set	reorder
+	.end	encode_data
+	.size	encode_data, .-encode_data
+	.section	.rodata.str1.4,"aMS",@progbits,1
+	.align	2
+$LC0:
+	.ascii	"Uncorrectable codeword\012\000"
+	.section	.text.correct_errors_erasures,"ax",@progbits
+	.align	2
+	.globl	correct_errors_erasures
+	.set	nomips16
+	.ent	correct_errors_erasures
+	.type	correct_errors_erasures, @function
+correct_errors_erasures:
+	.frame	$sp,48,$31		# vars= 8, regs= 6/0, args= 16, gp= 0
+	.mask	0x801f0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-48
+	sw	$31,44($sp)
+	sw	$20,40($sp)
+	sw	$19,36($sp)
+	sw	$18,32($sp)
+	sw	$17,28($sp)
+	sw	$16,24($sp)
+	lui	$2,%hi(NErasures)
+	sw	$6,%lo(NErasures)($2)
+	lui	$2,%hi(ErasureLocs)
+	addiu	$2,$2,%lo(ErasureLocs)
+	j	$L296
+	move	$3,$0
+
+$L297:
+	lw	$8,0($7)
+	addiu	$7,$7,4
+	sw	$8,0($2)
+	addiu	$2,$2,4
+$L296:
+	slt	$8,$3,$6
+	bne	$8,$0,$L297
+	addiu	$3,$3,1
+
+	sw	$4,16($sp)
+	jal	Modified_Berlekamp_Massey
+	sw	$5,20($sp)
+
+	jal	Find_Roots
+	nop
+
+	lui	$2,%hi(NErrors)
+	lw	$25,%lo(NErrors)($2)
+	lw	$4,16($sp)
+	addiu	$2,$25,-1
+	sltu	$2,$2,4
+	lw	$5,20($sp)
+	beq	$2,$0,$L298
+	lui	$7,%hi(ErrorLocs)
+
+	move	$3,$0
+	addiu	$7,$7,%lo(ErrorLocs)
+	move	$2,$7
+$L300:
+	lw	$8,0($2)
+	addiu	$3,$3,1
+	slt	$6,$3,$25
+	slt	$8,$8,$5
+	beq	$8,$0,$L299
+	addiu	$2,$2,4
+
+	bne	$6,$0,$L300
+	lui	$24,%hi(Omega)
+
+	lui	$2,%hi(ErrorLocs)
+	sll	$25,$25,2
+	addiu	$2,$2,%lo(ErrorLocs)
+	lui	$15,%hi(Omega+32)
+	addu	$25,$2,$25
+	lui	$6,%hi(gexp)
+	lui	$2,%hi(glog)
+	lui	$14,%hi(Lambda+4)
+	lui	$13,%hi(Lambda+36)
+	addiu	$24,$24,%lo(Omega)
+	addiu	$15,$15,%lo(Omega+32)
+	addiu	$6,$6,%lo(gexp)
+	addiu	$2,$2,%lo(glog)
+	addiu	$14,$14,%lo(Lambda+4)
+	addiu	$13,$13,%lo(Lambda+36)
+	j	$L301
+	li	$3,255			# 0xff
+
+$L310:
+	lw	$12,0($7)
+	move	$9,$0
+	move	$8,$0
+	subu	$11,$3,$12
+$L304:
+	div	$0,$9,$3
+	lw	$18,0($10)
+	mfhi	$16
+	sll	$16,$16,2
+	addu	$16,$16,$6
+	lw	$16,0($16)
+	beq	$18,$0,$L303
+	move	$17,$0
+
+	beq	$16,$0,$L303
+	sll	$19,$16,2
+
+	sll	$18,$18,2
+	addu	$16,$19,$2
+	addu	$18,$18,$2
+	lw	$17,0($16)
+	lw	$16,0($18)
+	addu	$16,$17,$16
+	sll	$16,$16,2
+	addu	$16,$16,$6
+	lw	$17,0($16)
+$L303:
+	addiu	$10,$10,4
+	xor	$8,$8,$17
+	bne	$10,$15,$L304
+	addu	$9,$9,$11
+
+	sll	$16,$11,1
+	move	$10,$0
+	move	$11,$0
+	move	$9,$14
+$L307:
+	div	$0,$10,$3
+	lw	$19,0($9)
+	mfhi	$17
+	sll	$17,$17,2
+	addu	$17,$17,$6
+	lw	$17,0($17)
+	beq	$19,$0,$L306
+	move	$18,$0
+
+	beq	$17,$0,$L306
+	sll	$20,$17,2
+
+	sll	$19,$19,2
+	addu	$17,$20,$2
+	addu	$19,$19,$2
+	lw	$18,0($17)
+	lw	$17,0($19)
+	addu	$17,$18,$17
+	sll	$17,$17,2
+	addu	$17,$17,$6
+	lw	$18,0($17)
+$L306:
+	addiu	$9,$9,8
+	xor	$11,$11,$18
+	bne	$9,$13,$L307
+	addu	$10,$10,$16
+
+	sll	$11,$11,2
+	addu	$11,$11,$2
+	lw	$9,0($11)
+	subu	$9,$3,$9
+	sll	$9,$9,2
+	addu	$9,$9,$6
+	lw	$9,0($9)
+	beq	$8,$0,$L308
+	nop
+
+	beq	$9,$0,$L308
+	sll	$9,$9,2
+
+	sll	$8,$8,2
+	addu	$9,$9,$2
+	addu	$8,$8,$2
+	lw	$9,0($9)
+	lw	$8,0($8)
+	addu	$8,$9,$8
+	sll	$8,$8,2
+	addu	$8,$8,$6
+	lw	$8,0($8)
+	j	$L316
+	subu	$12,$5,$12
+
+$L308:
+	move	$8,$0
+	subu	$12,$5,$12
+$L316:
+	addiu	$7,$7,4
+	addiu	$12,$12,-1
+	addu	$12,$4,$12
+	lbu	$9,0($12)
+	xor	$8,$8,$9
+	sb	$8,0($12)
+$L301:
+	bne	$7,$25,$L310
+	move	$10,$24
+
+	j	$L311
+	li	$2,1			# 0x1
+
+$L298:
+	beq	$25,$0,$L311
+	move	$2,$0
+
+	lui	$4,%hi($LC0)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC0)
+
+$L299:
+	move	$2,$0
+$L311:
+	lw	$31,44($sp)
+	lw	$20,40($sp)
+	lw	$19,36($sp)
+	lw	$18,32($sp)
+	lw	$17,28($sp)
+	lw	$16,24($sp)
+	j	$31
+	addiu	$sp,$sp,48
+
+	.set	macro
+	.set	reorder
+	.end	correct_errors_erasures
+	.size	correct_errors_erasures, .-correct_errors_erasures
+	.section	.rodata.str1.4
+	.align	2
+$LC1:
+	.ascii	"this packet is not profile packet\012\000"
+	.section	.text.rtk_sc_valid_profile_packet,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_valid_profile_packet
+	.set	nomips16
+	.ent	rtk_sc_valid_profile_packet
+	.type	rtk_sc_valid_profile_packet, @function
+rtk_sc_valid_profile_packet:
+	.frame	$sp,24,$31		# vars= 0, regs= 1/0, args= 16, gp= 0
+	.mask	0x80000000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-24
+	sw	$31,20($sp)
+	lui	$2,%hi(g_sc_magic)
+	lw	$5,24($4)
+	move	$3,$0
+	lw	$7,12($4)
+	addiu	$2,$2,%lo(g_sc_magic)
+	lbu	$4,3($5)
+	li	$6,8			# 0x8
+$L320:
+	lw	$5,0($2)
+	addiu	$3,$3,1
+	addu	$5,$4,$5
+	bne	$7,$5,$L318
+	addiu	$2,$2,4
+
+	j	$L319
+	li	$2,1			# 0x1
+
+$L318:
+	bne	$3,$6,$L320
+	nop
+
+	lui	$2,%hi(g_sc_debug)
+	li	$3,2			# 0x2
+	lw	$4,%lo(g_sc_debug)($2)
+	bne	$4,$3,$L319
+	move	$2,$0
+
+	lui	$4,%hi($LC1)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC1)
+
+	move	$2,$0
+$L319:
+	lw	$31,20($sp)
+	j	$31
+	addiu	$sp,$sp,24
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_valid_profile_packet
+	.size	rtk_sc_valid_profile_packet, .-rtk_sc_valid_profile_packet
+	.section	.rodata.str1.4
+	.align	2
+$LC2:
+	.ascii	"    \000"
+	.align	2
+$LC3:
+	.ascii	"%02x\000"
+	.align	2
+$LC4:
+	.ascii	"\012\000"
+	.section	.text.bytedump,"ax",@progbits
+	.align	2
+	.globl	bytedump
+	.set	nomips16
+	.ent	bytedump
+	.type	bytedump, @function
+bytedump:
+	.frame	$sp,48,$31		# vars= 0, regs= 7/0, args= 16, gp= 0
+	.mask	0x803f0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-48
+	sw	$31,44($sp)
+	sw	$21,40($sp)
+	sw	$20,36($sp)
+	sw	$19,32($sp)
+	sw	$18,28($sp)
+	sw	$17,24($sp)
+	sw	$16,20($sp)
+	lui	$19,%hi($LC2)
+	move	$21,$4
+	lui	$18,%hi($LC3)
+	move	$20,$5
+	addiu	$19,$19,%lo($LC2)
+	addiu	$18,$18,%lo($LC3)
+	move	$16,$0
+	j	$L325
+	li	$17,6			# 0x6
+
+$L327:
+	div	$0,$16,$17
+	mfhi	$2
+	bne	$2,$0,$L329
+	addu	$2,$21,$16
+
+	beq	$16,$0,$L330
+	move	$4,$18
+
+	jal	panic_printk
+	move	$4,$19
+
+	addu	$2,$21,$16
+$L329:
+	move	$4,$18
+$L330:
+	lbu	$5,0($2)
+	jal	panic_printk
+	addiu	$16,$16,1
+
+$L325:
+	sltu	$2,$16,$20
+	bne	$2,$0,$L327
+	lui	$4,%hi($LC4)
+
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC4)
+
+	move	$2,$0
+	lw	$31,44($sp)
+	lw	$21,40($sp)
+	lw	$20,36($sp)
+	lw	$19,32($sp)
+	lw	$18,28($sp)
+	lw	$17,24($sp)
+	lw	$16,20($sp)
+	j	$31
+	addiu	$sp,$sp,48
+
+	.set	macro
+	.set	reorder
+	.end	bytedump
+	.size	bytedump, .-bytedump
+	.section	.rodata.str1.4
+	.align	2
+$LC5:
+	.ascii	" get cipher, the cipher info is: \000"
+	.section	.text.bcast_udp_get_cipher_info,"ax",@progbits
+	.align	2
+	.globl	bcast_udp_get_cipher_info
+	.set	nomips16
+	.ent	bcast_udp_get_cipher_info
+	.type	bcast_udp_get_cipher_info, @function
+bcast_udp_get_cipher_info:
+	.frame	$sp,32,$31		# vars= 8, regs= 2/0, args= 16, gp= 0
+	.mask	0x80010000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-32
+	sw	$31,28($sp)
+	sw	$16,24($sp)
+	lw	$3,1852($5)
+	j	$L332
+	move	$2,$0
+
+$L333:
+	sb	$0,2152($4)
+	addiu	$2,$2,1
+$L332:
+	bne	$2,$3,$L333
+	addu	$4,$5,$2
+
+	lw	$9,1852($5)
+	move	$3,$5
+	move	$2,$0
+	move	$4,$0
+	li	$7,2			# 0x2
+	li	$8,1			# 0x1
+	li	$10,8			# 0x8
+	li	$15,3			# 0x3
+	li	$14,4			# 0x4
+	li	$13,5			# 0x5
+	li	$12,6			# 0x6
+	j	$L334
+	li	$11,7			# 0x7
+
+$L345:
+	bne	$6,$7,$L335
+	nop
+
+	andi	$6,$4,0x7
+	bne	$6,$0,$L336
+	addu	$6,$5,$2
+
+	lbu	$24,2874($3)
+	lbu	$25,2152($6)
+	j	$L350
+	sll	$24,$24,5
+
+$L336:
+	div	$0,$4,$10
+	mfhi	$6
+	bne	$6,$8,$L338
+	nop
+
+	lbu	$24,2874($3)
+	addu	$6,$5,$2
+	lbu	$25,2152($6)
+	andi	$24,$24,0x7
+	j	$L350
+	sll	$24,$24,2
+
+$L338:
+	bne	$6,$7,$L339
+	nop
+
+	lbu	$24,2874($3)
+	addu	$6,$5,$2
+	lbu	$25,2152($6)
+	addiu	$2,$2,1
+	andi	$24,$24,0x7
+	j	$L350
+	sra	$24,$24,1
+
+$L339:
+	bne	$6,$15,$L340
+	nop
+
+	lbu	$16,2874($3)
+	addu	$6,$5,$2
+	lbu	$24,2873($3)
+	andi	$16,$16,0x7
+	lbu	$25,2152($6)
+	sll	$16,$16,4
+	j	$L352
+	sll	$24,$24,7
+
+$L340:
+	bne	$6,$14,$L341
+	nop
+
+	lbu	$24,2874($3)
+	addu	$6,$5,$2
+	lbu	$25,2152($6)
+	andi	$24,$24,0x7
+	j	$L350
+	sll	$24,$24,1
+
+$L341:
+	bne	$6,$13,$L342
+	nop
+
+	lbu	$24,2874($3)
+	addu	$6,$5,$2
+	lbu	$25,2152($6)
+	addiu	$2,$2,1
+	andi	$24,$24,0x7
+	j	$L350
+	sra	$24,$24,2
+
+$L342:
+	bne	$6,$12,$L343
+	nop
+
+	lbu	$16,2874($3)
+	addu	$6,$5,$2
+	lbu	$24,2873($3)
+	andi	$16,$16,0x7
+	lbu	$25,2152($6)
+	sll	$16,$16,3
+	sll	$24,$24,6
+$L352:
+	j	$L350
+	or	$24,$16,$24
+
+$L343:
+	bne	$6,$11,$L337
+	addu	$6,$5,$2
+
+	addiu	$2,$2,1
+	lbu	$24,2874($3)
+	lbu	$25,2152($6)
+	andi	$24,$24,0x7
+$L350:
+	or	$24,$25,$24
+	j	$L337
+	sb	$24,2152($6)
+
+$L335:
+	bne	$6,$8,$L337
+	nop
+
+	div	$0,$4,$7
+	mflo	$24
+	mfhi	$6
+	bne	$6,$8,$L344
+	addu	$24,$5,$24
+
+	lbu	$6,2874($3)
+	lbu	$25,2152($24)
+	j	$L351
+	andi	$6,$6,0xf
+
+$L344:
+	lbu	$6,2874($3)
+	lbu	$25,2152($24)
+	sll	$6,$6,4
+$L351:
+	or	$6,$25,$6
+	sb	$6,2152($24)
+$L337:
+	addiu	$4,$4,1
+	addiu	$3,$3,1
+$L334:
+	sltu	$24,$4,$9
+	lw	$6,10900($5)
+	bne	$24,$0,$L345
+	nop
+
+	li	$3,2			# 0x2
+	bne	$6,$3,$L346
+	nop
+
+	j	$L347
+	sw	$2,2408($5)
+
+$L346:
+	li	$2,1			# 0x1
+	bne	$6,$2,$L353
+	lui	$2,%hi(g_sc_debug)
+
+	srl	$9,$9,1
+	sw	$9,2408($5)
+$L347:
+	lui	$2,%hi(g_sc_debug)
+$L353:
+	lw	$3,%lo(g_sc_debug)($2)
+	li	$2,-1			# 0xffffffff
+	bne	$3,$2,$L348
+	lui	$4,%hi($LC5)
+
+	addiu	$4,$4,%lo($LC5)
+	jal	panic_printk
+	sw	$5,16($sp)
+
+	lw	$5,16($sp)
+	addiu	$4,$5,2152
+	lw	$5,2408($5)
+	jal	bytedump
+	nop
+
+$L348:
+	lw	$31,28($sp)
+	move	$2,$0
+	lw	$16,24($sp)
+	j	$31
+	addiu	$sp,$sp,32
+
+	.set	macro
+	.set	reorder
+	.end	bcast_udp_get_cipher_info
+	.size	bcast_udp_get_cipher_info, .-bcast_udp_get_cipher_info
+	.section	.text.get_sc_syn_stats,"ax",@progbits
+	.align	2
+	.globl	get_sc_syn_stats
+	.set	nomips16
+	.ent	get_sc_syn_stats
+	.type	get_sc_syn_stats, @function
+get_sc_syn_stats:
+	.frame	$sp,48,$31		# vars= 0, regs= 7/0, args= 16, gp= 0
+	.mask	0x803f0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-48
+	sw	$31,44($sp)
+	sw	$21,40($sp)
+	sw	$20,36($sp)
+	sw	$19,32($sp)
+	sw	$18,28($sp)
+	sw	$17,24($sp)
+	sw	$16,20($sp)
+	lui	$17,%hi(g_option_sa+24)
+	lui	$21,%hi(g_option_sa)
+	lui	$20,%hi(null_mac)
+	addiu	$17,$17,%lo(g_option_sa+24)
+	addiu	$21,$21,%lo(g_option_sa)
+	addiu	$20,$20,%lo(null_mac)
+	move	$16,$0
+	li	$19,28			# 0x1c
+	li	$18,5			# 0x5
+$L357:
+	mult	$16,$19
+	move	$5,$20
+	li	$6,6			# 0x6
+	addiu	$16,$16,1
+	mflo	$4
+	jal	memcmp
+	addu	$4,$21,$4
+
+	beq	$2,$0,$L355
+	nop
+
+	lbu	$2,1($17)
+	sltu	$2,$2,2
+	beq	$2,$0,$L358
+	li	$2,1			# 0x1
+
+	lbu	$2,0($17)
+	sltu	$2,$2,2
+	beq	$2,$0,$L356
+	li	$2,1			# 0x1
+
+$L355:
+	bne	$16,$18,$L357
+	addiu	$17,$17,28
+
+	move	$2,$0
+$L356:
+$L358:
+	lw	$31,44($sp)
+	lw	$21,40($sp)
+	lw	$20,36($sp)
+	lw	$19,32($sp)
+	lw	$18,28($sp)
+	lw	$17,24($sp)
+	lw	$16,20($sp)
+	j	$31
+	addiu	$sp,$sp,48
+
+	.set	macro
+	.set	reorder
+	.end	get_sc_syn_stats
+	.size	get_sc_syn_stats, .-get_sc_syn_stats
+	.section	.text.clean_sc_syn,"ax",@progbits
+	.align	2
+	.globl	clean_sc_syn
+	.set	nomips16
+	.ent	clean_sc_syn
+	.type	clean_sc_syn, @function
+clean_sc_syn:
+	.frame	$sp,48,$31		# vars= 0, regs= 7/0, args= 16, gp= 0
+	.mask	0x803f0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-48
+	sw	$31,44($sp)
+	sw	$21,40($sp)
+	sw	$20,36($sp)
+	sw	$19,32($sp)
+	sw	$18,28($sp)
+	sw	$17,24($sp)
+	sw	$16,20($sp)
+	lui	$21,%hi(g_option_sa)
+	lui	$20,%hi(null_mac)
+	addiu	$21,$21,%lo(g_option_sa)
+	addiu	$20,$20,%lo(null_mac)
+	move	$16,$0
+	li	$19,28			# 0x1c
+	li	$18,5			# 0x5
+	mult	$16,$19
+$L367:
+	move	$5,$20
+	li	$6,6			# 0x6
+	addiu	$16,$16,1
+	mflo	$17
+	addu	$17,$21,$17
+	jal	memcmp
+	move	$4,$17
+
+	beq	$2,$0,$L362
+	nop
+
+	sb	$0,24($17)
+	j	$L363
+	sb	$0,25($17)
+
+$L362:
+	bne	$16,$18,$L367
+	mult	$16,$19
+
+$L363:
+	lw	$31,44($sp)
+	move	$2,$0
+	lw	$21,40($sp)
+	lw	$20,36($sp)
+	lw	$19,32($sp)
+	lw	$18,28($sp)
+	lw	$17,24($sp)
+	lw	$16,20($sp)
+	j	$31
+	addiu	$sp,$sp,48
+
+	.set	macro
+	.set	reorder
+	.end	clean_sc_syn
+	.size	clean_sc_syn, .-clean_sc_syn
+	.section	.text.get_sc_smac,"ax",@progbits
+	.align	2
+	.globl	get_sc_smac
+	.set	nomips16
+	.ent	get_sc_smac
+	.type	get_sc_smac, @function
+get_sc_smac:
+	.frame	$sp,48,$31		# vars= 0, regs= 8/0, args= 16, gp= 0
+	.mask	0x807f0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-48
+	sw	$31,44($sp)
+	sw	$22,40($sp)
+	sw	$21,36($sp)
+	sw	$20,32($sp)
+	sw	$19,28($sp)
+	sw	$18,24($sp)
+	sw	$17,20($sp)
+	sw	$16,16($sp)
+	lui	$21,%hi(g_sc_ctx+12)
+	move	$22,$4
+	lui	$20,%hi(null_mac)
+	lui	$19,%hi(g_option_sa)
+	addiu	$21,$21,%lo(g_sc_ctx+12)
+	addiu	$20,$20,%lo(null_mac)
+	addiu	$19,$19,%lo(g_option_sa)
+	move	$16,$0
+	li	$18,28			# 0x1c
+	li	$17,5			# 0x5
+	move	$4,$21
+$L375:
+	li	$6,6			# 0x6
+	jal	memcmp
+	move	$5,$20
+
+	beq	$2,$0,$L369
+	mult	$16,$18
+
+	lw	$5,28($22)
+	li	$6,6			# 0x6
+	mflo	$4
+	jal	memcmp
+	addu	$4,$19,$4
+
+	bne	$2,$0,$L374
+	addiu	$16,$16,1
+
+	j	$L370
+	li	$2,1			# 0x1
+
+$L369:
+	addiu	$16,$16,1
+$L374:
+	bne	$16,$17,$L375
+	move	$4,$21
+
+	move	$2,$0
+$L370:
+	lw	$31,44($sp)
+	lw	$22,40($sp)
+	lw	$21,36($sp)
+	lw	$20,32($sp)
+	lw	$19,28($sp)
+	lw	$18,24($sp)
+	lw	$17,20($sp)
+	lw	$16,16($sp)
+	j	$31
+	addiu	$sp,$sp,48
+
+	.set	macro
+	.set	reorder
+	.end	get_sc_smac
+	.size	get_sc_smac, .-get_sc_smac
+	.section	.rodata.str1.4
+	.align	2
+$LC6:
+	.ascii	"Register Realtek Simple Config\012\000"
+	.section	.text.rtk_sc_init,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_init
+	.set	nomips16
+	.ent	rtk_sc_init
+	.type	rtk_sc_init, @function
+rtk_sc_init:
+	.frame	$sp,24,$31		# vars= 0, regs= 2/0, args= 16, gp= 0
+	.mask	0x80010000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-24
+	sw	$31,20($sp)
+	sw	$16,16($sp)
+	lui	$16,%hi(g_sc_ctx)
+	addiu	$4,$16,%lo(g_sc_ctx)
+	move	$5,$0
+	addiu	$16,$16,%lo(g_sc_ctx)
+	jal	memset
+	li	$6,10904			# 0x2a98
+
+	li	$3,256			# 0x100
+	lw	$2,2672($16)
+	sw	$3,2112($16)
+	addiu	$2,$2,604
+	sll	$2,$2,2
+	addu	$16,$2,$16
+	lw	$2,0($16)
+	bne	$2,$0,$L381
+	lui	$2,%hi(g_sc_ctx)
+
+	lui	$2,%hi(udp_mcast)
+	addiu	$2,$2,%lo(udp_mcast)
+	sw	$2,0($16)
+	lui	$2,%hi(g_sc_ctx)
+$L381:
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lw	$3,2672($2)
+	addiu	$4,$3,605
+	addiu	$3,$3,1
+	sll	$4,$4,2
+	sw	$3,2672($2)
+	addu	$2,$4,$2
+	lw	$3,0($2)
+	bne	$3,$0,$L378
+	lui	$3,%hi(udp_mcast_pin)
+
+	addiu	$3,$3,%lo(udp_mcast_pin)
+	sw	$3,0($2)
+$L378:
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lw	$3,2672($2)
+	addiu	$4,$3,605
+	addiu	$3,$3,1
+	sll	$4,$4,2
+	sw	$3,2672($2)
+	addu	$2,$4,$2
+	lw	$3,0($2)
+	bne	$3,$0,$L379
+	lui	$3,%hi(udp_bcast_pin)
+
+	addiu	$3,$3,%lo(udp_bcast_pin)
+	sw	$3,0($2)
+$L379:
+	lui	$2,%hi(g_sc_ctx)
+	lui	$4,%hi($LC6)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	addiu	$4,$4,%lo($LC6)
+	lw	$3,2672($2)
+	addiu	$3,$3,1
+	jal	panic_printk
+	sw	$3,2672($2)
+
+	move	$2,$0
+	lw	$31,20($sp)
+	lw	$16,16($sp)
+	j	$31
+	addiu	$sp,$sp,24
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_init
+	.size	rtk_sc_init, .-rtk_sc_init
+	.section	.rodata.str1.4
+	.align	2
+$LC7:
+	.ascii	"The simple config don't support this type in prifole now"
+	.ascii	"\012\000"
+	.align	2
+$LC8:
+	.ascii	"the profile MUST include IP\012\000"
+	.section	.text.parse_tlv_info,"ax",@progbits
+	.align	2
+	.globl	parse_tlv_info
+	.set	nomips16
+	.ent	parse_tlv_info
+	.type	parse_tlv_info, @function
+parse_tlv_info:
+	.frame	$sp,72,$31		# vars= 16, regs= 10/0, args= 16, gp= 0
+	.mask	0xc0ff0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-72
+	sw	$31,68($sp)
+	sw	$fp,64($sp)
+	sw	$23,60($sp)
+	sw	$22,56($sp)
+	sw	$21,52($sp)
+	sw	$20,48($sp)
+	sw	$19,44($sp)
+	sw	$18,40($sp)
+	sw	$17,36($sp)
+	sw	$16,32($sp)
+	li	$2,1			# 0x1
+	andi	$7,$7,0x00ff
+	move	$17,$4
+	move	$21,$5
+	bne	$7,$2,$L383
+	andi	$19,$6,0x00ff
+
+	addiu	$2,$4,30
+	addiu	$6,$17,256
+	move	$18,$5
+	addiu	$4,$4,94
+	move	$fp,$0
+	sw	$2,24($sp)
+	move	$20,$0
+	sw	$4,20($sp)
+	move	$23,$0
+	sw	$6,16($sp)
+	move	$16,$0
+	j	$L384
+	li	$22,4			# 0x4
+
+$L396:
+	lbu	$2,0($18)
+	andi	$3,$2,0x3
+	bne	$3,$4,$L385
+	li	$6,2			# 0x2
+
+	bne	$23,$0,$L386
+	srl	$23,$2,2
+
+	slt	$2,$23,33
+	beq	$2,$0,$L386
+	move	$5,$0
+
+	lw	$4,24($sp)
+	jal	memset
+	li	$6,64			# 0x40
+
+	addiu	$3,$18,1
+	j	$L387
+	move	$2,$0
+
+$L388:
+	lbu	$4,1($6)
+	addiu	$2,$2,1
+	sb	$4,30($5)
+$L387:
+	sltu	$4,$2,$23
+	addu	$6,$18,$2
+	bne	$4,$0,$L388
+	addu	$5,$17,$2
+
+	addiu	$16,$16,1
+	addu	$18,$3,$23
+	addu	$16,$16,$23
+	j	$L389
+	li	$23,1			# 0x1
+
+$L385:
+	bne	$3,$6,$L390
+	li	$4,3			# 0x3
+
+	bne	$20,$0,$L386
+	addiu	$3,$18,1
+
+	lw	$4,20($sp)
+	srl	$20,$2,2
+	li	$6,64			# 0x40
+	move	$5,$0
+	sw	$3,28($sp)
+	jal	memset
+	movz	$20,$6,$20
+
+	move	$2,$0
+	lw	$3,28($sp)
+$L392:
+	addu	$5,$18,$2
+	addu	$4,$17,$2
+	lbu	$5,1($5)
+	addiu	$2,$2,1
+	bne	$2,$20,$L392
+	sb	$5,94($4)
+
+	addiu	$16,$16,1
+	addu	$18,$3,$2
+	addu	$16,$16,$2
+	j	$L389
+	li	$20,1			# 0x1
+
+$L390:
+	bne	$3,$4,$L393
+	nop
+
+	bne	$fp,$0,$L386
+	srl	$2,$2,2
+
+	bne	$2,$22,$L386
+	addiu	$3,$18,1
+
+	move	$2,$0
+$L394:
+	addu	$5,$18,$2
+	lw	$6,16($sp)
+	lbu	$5,1($5)
+	addu	$4,$6,$2
+	addiu	$2,$2,1
+	bne	$2,$22,$L394
+	sb	$5,0($4)
+
+	addiu	$18,$3,4
+	addiu	$16,$16,5
+	j	$L389
+	li	$fp,1			# 0x1
+
+$L393:
+	beq	$2,$0,$L395
+	addu	$21,$21,$16
+
+	j	$L410
+	li	$2,-1			# 0xffffffff
+
+$L389:
+	slt	$2,$19,$16
+	bne	$2,$0,$L410
+	li	$2,-1			# 0xffffffff
+
+$L384:
+	slt	$2,$16,$19
+	bne	$2,$0,$L396
+	li	$4,1			# 0x1
+
+	j	$L419
+	addu	$21,$21,$16
+
+$L398:
+	lbu	$2,0($21)
+	beq	$2,$0,$L397
+	addiu	$21,$21,1
+
+	j	$L410
+	li	$2,-1			# 0xffffffff
+
+$L395:
+$L397:
+	slt	$2,$16,$19
+$L419:
+	bne	$2,$0,$L398
+	addiu	$16,$16,1
+
+	j	$L399
+	nop
+
+$L383:
+	bne	$7,$0,$L399
+	addiu	$2,$4,30
+
+	addiu	$4,$4,94
+	sw	$2,20($sp)
+	addiu	$fp,$17,256
+	sw	$4,16($sp)
+	move	$16,$0
+	li	$23,1			# 0x1
+	li	$22,2			# 0x2
+	j	$L416
+	li	$20,3			# 0x3
+
+$L411:
+	lbu	$2,0($21)
+	bne	$2,$23,$L401
+	addiu	$3,$21,2
+
+	lw	$4,20($sp)
+	move	$5,$0
+	li	$6,64			# 0x40
+	lbu	$18,1($21)
+	jal	memset
+	sw	$3,28($sp)
+
+	lw	$3,28($sp)
+	j	$L402
+	move	$2,$0
+
+$L403:
+	lbu	$4,2($6)
+	addiu	$2,$2,1
+	sb	$4,30($5)
+$L402:
+	sltu	$4,$2,$18
+	addu	$6,$21,$2
+	bne	$4,$0,$L403
+	addu	$5,$17,$2
+
+	j	$L420
+	addiu	$16,$16,2
+
+$L401:
+	bne	$2,$22,$L404
+	move	$5,$0
+
+	lw	$4,16($sp)
+	li	$6,64			# 0x40
+	lbu	$18,1($21)
+	jal	memset
+	sw	$3,28($sp)
+
+	lw	$3,28($sp)
+	j	$L405
+	move	$2,$0
+
+$L406:
+	lbu	$4,2($6)
+	addiu	$2,$2,1
+	sb	$4,94($5)
+$L405:
+	sltu	$4,$2,$18
+	addu	$6,$21,$2
+	bne	$4,$0,$L406
+	addu	$5,$17,$2
+
+	addiu	$16,$16,2
+$L420:
+	addu	$21,$3,$18
+	j	$L416
+	addu	$16,$16,$18
+
+$L404:
+	bne	$2,$20,$L407
+	addiu	$4,$21,2
+
+	lbu	$3,1($21)
+	j	$L408
+	move	$2,$0
+
+$L409:
+	lbu	$5,2($7)
+	addiu	$2,$2,1
+	sb	$5,0($6)
+$L408:
+	sltu	$5,$2,$3
+	addu	$7,$21,$2
+	bne	$5,$0,$L409
+	addu	$6,$fp,$2
+
+	addiu	$16,$16,2
+	addu	$21,$4,$3
+	j	$L416
+	addu	$16,$16,$3
+
+$L407:
+	beq	$2,$0,$L399
+	lui	$4,%hi($LC7)
+
+	j	$L418
+	addiu	$4,$4,%lo($LC7)
+
+$L416:
+	slt	$2,$16,$19
+	bne	$2,$0,$L411
+	nop
+
+$L399:
+	lw	$5,256($17)
+	bne	$5,$0,$L412
+	lui	$4,%hi($LC8)
+
+	addiu	$4,$4,%lo($LC8)
+$L418:
+	jal	panic_printk
+	nop
+
+	j	$L410
+	li	$2,-1			# 0xffffffff
+
+$L412:
+	jal	rtk_sc_set_value
+	li	$4,12			# 0xc
+
+	j	$L410
+	move	$2,$0
+
+$L386:
+	li	$2,-1			# 0xffffffff
+$L410:
+	lw	$31,68($sp)
+	lw	$fp,64($sp)
+	lw	$23,60($sp)
+	lw	$22,56($sp)
+	lw	$21,52($sp)
+	lw	$20,48($sp)
+	lw	$19,44($sp)
+	lw	$18,40($sp)
+	lw	$17,36($sp)
+	lw	$16,32($sp)
+	j	$31
+	addiu	$sp,$sp,72
+
+	.set	macro
+	.set	reorder
+	.end	parse_tlv_info
+	.size	parse_tlv_info, .-parse_tlv_info
+	.section	.rodata.str1.4
+	.align	2
+$LC9:
+	.ascii	"sc_mcast_udp\000"
+	.section	.text.mcast_udp_get_profile,"ax",@progbits
+	.align	2
+	.globl	mcast_udp_get_profile
+	.set	nomips16
+	.ent	mcast_udp_get_profile
+	.type	mcast_udp_get_profile, @function
+mcast_udp_get_profile:
+	.frame	$sp,32,$31		# vars= 0, regs= 3/0, args= 16, gp= 0
+	.mask	0x80030000,-4
+	.fmask	0x00000000,0
+	addiu	$sp,$sp,-32
+	sw	$31,28($sp)
+	sw	$17,24($sp)
+	sw	$16,20($sp)
+	lui	$2,%hi($LC9)
+	move	$17,$5
+	addiu	$3,$4,8
+	addiu	$6,$2,%lo($LC9)
+	addiu	$5,$5,1856
+#APP
+ # 75 "/home/kai_wang/release-3/3467/branch-rtl819x-sdk-v3.4.6.7-1/linux-2.6.30/arch/rlx/include/asm/string.h" 1
+	.set	noreorder
+	.set	noat
+	lbu	$2,($3)
+1:	lbu	$1,($6)
+	addiu	$3,1
+	bne	$1,$2,2f
+	addiu	$6,1
+	bnez	$2,1b
+	lbu	$2,($3)
+	move	$2,$1
+2:	subu	$2,$1
+3:	.set	at
+	.set	reorder
+ # 0 "" 2
+#NO_APP
+	lw	$16,2112($17)
+	.set	noreorder
+	.set	nomacro
+	bne	$2,$0,$L422
+	move	$4,$17
+	.set	macro
+	.set	reorder
+
+	move	$4,$5
+	lui	$5,%hi(default_key_iv)
+	li	$6,8			# 0x8
+	.set	noreorder
+	.set	nomacro
+	jal	memcmp
+	addiu	$5,$5,%lo(default_key_iv)
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	beq	$2,$0,$L423
+	li	$2,-1			# 0xffffffff
+	.set	macro
+	.set	reorder
+
+	lw	$31,28($sp)
+	lw	$17,24($sp)
+	lw	$16,20($sp)
+	.set	noreorder
+	.set	nomacro
+	j	$31
+	addiu	$sp,$sp,32
+	.set	macro
+	.set	reorder
+
+$L423:
+	addiu	$6,$16,-8
+	move	$4,$17
+	move	$7,$0
+	andi	$6,$6,0x00ff
+	.set	noreorder
+	.set	nomacro
+	j	$L426
+	addiu	$5,$17,1864
+	.set	macro
+	.set	reorder
+
+$L422:
+	li	$7,1			# 0x1
+	andi	$6,$16,0x00ff
+$L426:
+	lw	$31,28($sp)
+	lw	$17,24($sp)
+	lw	$16,20($sp)
+	.set	noreorder
+	.set	nomacro
+	j	parse_tlv_info
+	addiu	$sp,$sp,32
+	.set	macro
+	.set	reorder
+
+	.end	mcast_udp_get_profile
+	.size	mcast_udp_get_profile, .-mcast_udp_get_profile
+	.section	.text.rtk_sc_set_para,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_set_para
+	.set	nomips16
+	.ent	rtk_sc_set_para
+	.type	rtk_sc_set_para, @function
+rtk_sc_set_para:
+	.frame	$sp,24,$31		# vars= 0, regs= 2/0, args= 16, gp= 0
+	.mask	0x80010000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-24
+	sw	$31,20($sp)
+	sw	$16,16($sp)
+	jal	rtk_sc_get_value
+	li	$4,8			# 0x8
+
+	lui	$3,%hi(g_sc_debug)
+	li	$4,16			# 0x10
+	lui	$16,%hi(g_sc_check_level)
+	jal	rtk_sc_get_value
+	sw	$2,%lo(g_sc_debug)($3)
+
+	li	$4,17			# 0x11
+	jal	rtk_sc_get_value
+	sw	$2,%lo(g_sc_check_level)($16)
+
+	lui	$3,%hi(g_sc_ignore_overlap)
+	li	$4,29			# 0x1d
+	jal	rtk_sc_get_value
+	sw	$2,%lo(g_sc_ignore_overlap)($3)
+
+	lui	$4,%hi(g_sc_config_type)
+	lw	$3,%lo(g_sc_check_level)($16)
+	beq	$3,$0,$L428
+	sw	$2,%lo(g_sc_config_type)($4)
+
+	lui	$4,%hi(g_sc_magic)
+	li	$5,8			# 0x8
+	jal	rtk_sc_get_magic
+	addiu	$4,$4,%lo(g_sc_magic)
+
+$L428:
+	lw	$31,20($sp)
+	move	$2,$0
+	lw	$16,16($sp)
+	j	$31
+	addiu	$sp,$sp,24
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_set_para
+	.size	rtk_sc_set_para, .-rtk_sc_set_para
+	.section	.text.mcast_udp_decode_profile,"ax",@progbits
+	.align	2
+	.globl	mcast_udp_decode_profile
+	.set	nomips16
+	.ent	mcast_udp_decode_profile
+	.type	mcast_udp_decode_profile, @function
+mcast_udp_decode_profile:
+	.frame	$sp,32,$31		# vars= 0, regs= 2/0, args= 24, gp= 0
+	.mask	0x80010000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-32
+	sw	$31,28($sp)
+	sw	$16,24($sp)
+	move	$16,$5
+	lw	$7,2148($16)
+	addiu	$2,$16,1856
+	lw	$5,2408($5)
+	addiu	$4,$16,2152
+	addiu	$6,$16,2116
+	jal	AES_UnWRAP
+	sw	$2,16($sp)
+
+	move	$2,$0
+	lw	$3,2408($16)
+	sw	$3,2112($16)
+	lw	$31,28($sp)
+	lw	$16,24($sp)
+	j	$31
+	addiu	$sp,$sp,32
+
+	.set	macro
+	.set	reorder
+	.end	mcast_udp_decode_profile
+	.size	mcast_udp_decode_profile, .-mcast_udp_decode_profile
+	.section	.rodata.str1.4
+	.align	2
+$LC10:
+	.ascii	"the pin code is %s, the pin length is %d\012\000"
+	.section	.text.bcast_udp_get_pattern,"ax",@progbits
+	.align	2
+	.globl	bcast_udp_get_pattern
+	.set	nomips16
+	.ent	bcast_udp_get_pattern
+	.type	bcast_udp_get_pattern, @function
+bcast_udp_get_pattern:
+	.frame	$sp,248,$31		# vars= 200, regs= 7/0, args= 16, gp= 0
+	.mask	0x803f0000,-4
+	.fmask	0x00000000,0
+	addiu	$sp,$sp,-248
+	sw	$31,244($sp)
+	sw	$21,240($sp)
+	sw	$20,236($sp)
+	sw	$19,232($sp)
+	sw	$18,228($sp)
+	sw	$17,224($sp)
+	sw	$16,220($sp)
+	li	$4,6			# 0x6
+	move	$16,$5
+	addiu	$17,$sp,80
+	.set	noreorder
+	.set	nomacro
+	jal	rtk_sc_get_value
+	addiu	$19,$sp,148
+	.set	macro
+	.set	reorder
+
+	li	$4,21			# 0x15
+	move	$5,$17
+	.set	noreorder
+	.set	nomacro
+	jal	rtk_sc_get_string_value
+	move	$21,$2
+	.set	macro
+	.set	reorder
+
+	li	$4,20			# 0x14
+	move	$5,$19
+	lui	$18,%hi(g_sc_pin_len)
+	.set	noreorder
+	.set	nomacro
+	jal	rtk_sc_get_string_value
+	addiu	$20,$16,2676
+	.set	macro
+	.set	reorder
+
+	li	$4,23			# 0x17
+	.set	noreorder
+	.set	nomacro
+	jal	rtk_sc_get_string_value
+	addiu	$5,$sp,16
+	.set	macro
+	.set	reorder
+
+	li	$2,5			# 0x5
+	move	$4,$19
+	sw	$2,8($16)
+	lui	$2,%hi(g_sc_ctx+1852)
+	sb	$21,2806($16)
+	lw	$2,%lo(g_sc_ctx+1852)($2)
+	.set	noreorder
+	.set	nomacro
+	jal	strlen
+	sw	$2,1852($16)
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	bne	$21,$0,$L433
+	sw	$2,%lo(g_sc_pin_len)($18)
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	jal	strlen
+	move	$4,$17
+	.set	macro
+	.set	reorder
+
+	move	$5,$17
+	move	$6,$2
+	.set	noreorder
+	.set	nomacro
+	jal	memcpy
+	move	$4,$20
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	jal	strlen
+	move	$4,$17
+	.set	macro
+	.set	reorder
+
+	move	$5,$17
+	addiu	$4,$16,2741
+	.set	noreorder
+	.set	nomacro
+	jal	memcpy
+	move	$6,$2
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	jal	strlen
+	move	$4,$17
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	j	$L434
+	sw	$2,%lo(g_sc_pin_len)($18)
+	.set	macro
+	.set	reorder
+
+$L433:
+	move	$4,$20
+	move	$5,$19
+	.set	noreorder
+	.set	nomacro
+	jal	memcpy
+	move	$6,$2
+	.set	macro
+	.set	reorder
+
+$L434:
+	lui	$2,%hi(g_sc_pin_len)
+	lw	$3,%lo(g_sc_pin_len)($2)
+	addu	$3,$16,$3
+	sb	$0,2676($3)
+	lui	$3,%hi(g_sc_debug)
+	lw	$4,%lo(g_sc_debug)($3)
+	li	$3,2			# 0x2
+	.set	noreorder
+	.set	nomacro
+	bne	$4,$3,$L435
+	lui	$4,%hi($LC10)
+	.set	macro
+	.set	reorder
+
+	addiu	$5,$16,2676
+	lw	$6,%lo(g_sc_pin_len)($2)
+	.set	noreorder
+	.set	nomacro
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC10)
+	.set	macro
+	.set	reorder
+
+$L435:
+	.set	noreorder
+	.set	nomacro
+	jal	rtk_sc_get_value
+	li	$4,24			# 0x18
+	.set	macro
+	.set	reorder
+
+	addiu	$3,$16,2810
+	sh	$2,2808($16)
+	addiu	$2,$sp,16
+#APP
+ # 25 "/home/kai_wang/release-3/3467/branch-rtl819x-sdk-v3.4.6.7-1/linux-2.6.30/arch/rlx/include/asm/string.h" 1
+	.set	noreorder
+	.set	noat
+1:	lbu	$1,($2)
+	addiu	$2,1
+	sb	$1,($3)
+	bnez	$1,1b
+	addiu	$3,1
+	.set	at
+	.set	reorder
+ # 0 "" 2
+#NO_APP
+	lui	$4,%hi(radom_value)
+	li	$5,50			# 0x32
+	addiu	$3,$4,%lo(radom_value)
+	li	$2,53			# 0x35
+	sb	$5,%lo(radom_value)($4)
+	li	$4,51			# 0x33
+	sb	$4,1($3)
+	li	$4,52			# 0x34
+	sb	$2,3($3)
+	move	$2,$0
+	sb	$4,2($3)
+	lw	$31,244($sp)
+	lw	$21,240($sp)
+	lw	$20,236($sp)
+	lw	$19,232($sp)
+	lw	$18,228($sp)
+	lw	$17,224($sp)
+	lw	$16,220($sp)
+	.set	noreorder
+	.set	nomacro
+	j	$31
+	addiu	$sp,$sp,248
+	.set	macro
+	.set	reorder
+
+	.end	bcast_udp_get_pattern
+	.size	bcast_udp_get_pattern, .-bcast_udp_get_pattern
+	.section	.rodata.str1.4
+	.align	2
+$LC11:
+	.ascii	"It is not invalid pattern\012\000"
+	.align	2
+$LC12:
+	.ascii	"this client MUST have pin\012\000"
+	.section	.text.mcast_udp_get_pattern,"ax",@progbits
+	.align	2
+	.globl	mcast_udp_get_pattern
+	.set	nomips16
+	.ent	mcast_udp_get_pattern
+	.type	mcast_udp_get_pattern, @function
+mcast_udp_get_pattern:
+	.frame	$sp,248,$31		# vars= 200, regs= 7/0, args= 16, gp= 0
+	.mask	0x803f0000,-4
+	.fmask	0x00000000,0
+	addiu	$sp,$sp,-248
+	sw	$31,244($sp)
+	sw	$21,240($sp)
+	sw	$20,236($sp)
+	sw	$19,232($sp)
+	sw	$18,228($sp)
+	sw	$17,224($sp)
+	sw	$16,220($sp)
+	li	$4,6			# 0x6
+	move	$16,$5
+	addiu	$17,$sp,80
+	.set	noreorder
+	.set	nomacro
+	jal	rtk_sc_get_value
+	addiu	$20,$sp,148
+	.set	macro
+	.set	reorder
+
+	li	$4,21			# 0x15
+	move	$5,$17
+	.set	noreorder
+	.set	nomacro
+	jal	rtk_sc_get_string_value
+	move	$19,$2
+	.set	macro
+	.set	reorder
+
+	li	$4,20			# 0x14
+	.set	noreorder
+	.set	nomacro
+	jal	rtk_sc_get_string_value
+	move	$5,$20
+	.set	macro
+	.set	reorder
+
+	li	$4,23			# 0x17
+	.set	noreorder
+	.set	nomacro
+	jal	rtk_sc_get_string_value
+	addiu	$5,$sp,16
+	.set	macro
+	.set	reorder
+
+	lbu	$4,271($16)
+	lbu	$2,265($16)
+	sll	$4,$4,8
+	lbu	$3,277($16)
+	sll	$2,$2,16
+	addu	$2,$4,$2
+	li	$4,2			# 0x2
+	addu	$2,$2,$3
+	.set	noreorder
+	.set	nomacro
+	bne	$2,$4,$L438
+	li	$4,3			# 0x3
+	.set	macro
+	.set	reorder
+
+	lbu	$4,263($16)
+	lbu	$5,270($16)
+	addu	$3,$4,$3
+	lbu	$4,283($16)
+	addu	$3,$3,$5
+	lbu	$5,289($16)
+	addu	$3,$3,$4
+	andi	$3,$3,0xff
+	.set	noreorder
+	.set	nomacro
+	bne	$3,$5,$L439
+	addiu	$3,$4,-9
+	.set	macro
+	.set	reorder
+
+	move	$4,$17
+	sw	$3,1852($16)
+	.set	noreorder
+	.set	nomacro
+	jal	strlen
+	sw	$2,8($16)
+	.set	macro
+	.set	reorder
+
+	move	$5,$17
+	addiu	$4,$16,2741
+	.set	noreorder
+	.set	nomacro
+	jal	memcpy
+	move	$6,$2
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	jal	strlen
+	move	$4,$17
+	.set	macro
+	.set	reorder
+
+	lui	$4,%hi(g_sc_pin_len)
+	addu	$3,$16,$2
+	sw	$2,%lo(g_sc_pin_len)($4)
+	sb	$0,2741($3)
+	.set	noreorder
+	.set	nomacro
+	j	$L439
+	sb	$0,2806($16)
+	.set	macro
+	.set	reorder
+
+$L438:
+	bne	$2,$4,$L440
+	lbu	$4,263($16)
+	lbu	$5,270($16)
+	addu	$3,$4,$3
+	lbu	$4,283($16)
+	addu	$3,$3,$5
+	lbu	$5,289($16)
+	addu	$3,$3,$4
+	andi	$3,$3,0xff
+	.set	noreorder
+	.set	nomacro
+	bne	$3,$5,$L439
+	addiu	$3,$4,-9
+	.set	macro
+	.set	reorder
+
+	move	$4,$20
+	lui	$18,%hi(g_sc_pin_len)
+	sw	$2,8($16)
+	li	$2,1			# 0x1
+	sw	$3,1852($16)
+	addiu	$21,$16,2676
+	.set	noreorder
+	.set	nomacro
+	jal	strlen
+	sb	$2,2806($16)
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	bne	$2,$0,$L441
+	sw	$2,%lo(g_sc_pin_len)($18)
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	jal	strlen
+	move	$4,$17
+	.set	macro
+	.set	reorder
+
+	move	$4,$21
+	move	$5,$17
+	.set	noreorder
+	.set	nomacro
+	jal	memcpy
+	move	$6,$2
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	jal	strlen
+	move	$4,$17
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	j	$L442
+	sw	$2,%lo(g_sc_pin_len)($18)
+	.set	macro
+	.set	reorder
+
+$L441:
+	move	$4,$21
+	move	$5,$20
+	.set	noreorder
+	.set	nomacro
+	jal	memcpy
+	move	$6,$2
+	.set	macro
+	.set	reorder
+
+$L442:
+	lui	$2,%hi(g_sc_pin_len)
+	lw	$3,%lo(g_sc_pin_len)($2)
+	addu	$3,$16,$3
+	sb	$0,2676($3)
+	lui	$3,%hi(g_sc_debug)
+	lw	$4,%lo(g_sc_debug)($3)
+	li	$3,2			# 0x2
+	.set	noreorder
+	.set	nomacro
+	bne	$4,$3,$L439
+	lui	$4,%hi($LC10)
+	.set	macro
+	.set	reorder
+
+	lw	$6,%lo(g_sc_pin_len)($2)
+	addiu	$4,$4,%lo($LC10)
+	.set	noreorder
+	.set	nomacro
+	jal	panic_printk
+	addiu	$5,$16,2676
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	j	$L450
+	li	$2,1			# 0x1
+	.set	macro
+	.set	reorder
+
+$L440:
+	lui	$2,%hi(g_sc_debug)
+	lw	$2,%lo(g_sc_debug)($2)
+	.set	noreorder
+	.set	nomacro
+	beq	$2,$0,$L443
+	lui	$4,%hi($LC11)
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	j	$L449
+	addiu	$4,$4,%lo($LC11)
+	.set	macro
+	.set	reorder
+
+$L439:
+	li	$2,1			# 0x1
+$L450:
+	.set	noreorder
+	.set	nomacro
+	bne	$19,$2,$L451
+	lui	$2,%hi(radom_value)
+	.set	macro
+	.set	reorder
+
+	lbu	$2,2806($16)
+	.set	noreorder
+	.set	nomacro
+	bne	$2,$0,$L445
+	lui	$2,%hi(radom_value)
+	.set	macro
+	.set	reorder
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$2,%lo(g_sc_debug)($2)
+	.set	noreorder
+	.set	nomacro
+	beq	$2,$0,$L443
+	lui	$4,%hi($LC12)
+	.set	macro
+	.set	reorder
+
+	addiu	$4,$4,%lo($LC12)
+$L449:
+	jal	panic_printk
+	.set	noreorder
+	.set	nomacro
+	j	$L444
+	li	$2,-1			# 0xffffffff
+	.set	macro
+	.set	reorder
+
+$L445:
+$L451:
+	lui	$4,%hi(radom_value+4)
+	move	$3,$16
+	addiu	$2,$2,%lo(radom_value)
+	addiu	$4,$4,%lo(radom_value+4)
+$L446:
+	lbu	$5,295($3)
+	sb	$5,0($2)
+	addiu	$2,$2,1
+	.set	noreorder
+	.set	nomacro
+	bne	$2,$4,$L446
+	addiu	$3,$3,6
+	.set	macro
+	.set	reorder
+
+	.set	noreorder
+	.set	nomacro
+	jal	rtk_sc_get_value
+	li	$4,24			# 0x18
+	.set	macro
+	.set	reorder
+
+	addiu	$3,$16,2810
+	sh	$2,2808($16)
+	addiu	$2,$sp,16
+#APP
+ # 25 "/home/kai_wang/release-3/3467/branch-rtl819x-sdk-v3.4.6.7-1/linux-2.6.30/arch/rlx/include/asm/string.h" 1
+	.set	noreorder
+	.set	noat
+1:	lbu	$1,($2)
+	addiu	$2,1
+	sb	$1,($3)
+	bnez	$1,1b
+	addiu	$3,1
+	.set	at
+	.set	reorder
+ # 0 "" 2
+#NO_APP
+	.set	noreorder
+	.set	nomacro
+	j	$L444
+	move	$2,$0
+	.set	macro
+	.set	reorder
+
+$L443:
+	li	$2,-1			# 0xffffffff
+$L444:
+	lw	$31,244($sp)
+	lw	$21,240($sp)
+	lw	$20,236($sp)
+	lw	$19,232($sp)
+	lw	$18,228($sp)
+	lw	$17,224($sp)
+	lw	$16,220($sp)
+	.set	noreorder
+	.set	nomacro
+	j	$31
+	addiu	$sp,$sp,248
+	.set	macro
+	.set	reorder
+
+	.end	mcast_udp_get_pattern
+	.size	mcast_udp_get_pattern, .-mcast_udp_get_pattern
+	.section	.text.mcast_udp_generate_key,"ax",@progbits
+	.align	2
+	.globl	mcast_udp_generate_key
+	.set	nomips16
+	.ent	mcast_udp_generate_key
+	.type	mcast_udp_generate_key, @function
+mcast_udp_generate_key:
+	.frame	$sp,416,$31		# vars= 360, regs= 8/0, args= 24, gp= 0
+	.mask	0x807f0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-416
+	sw	$31,412($sp)
+	sw	$22,408($sp)
+	sw	$21,404($sp)
+	sw	$20,400($sp)
+	sw	$19,396($sp)
+	sw	$18,392($sp)
+	sw	$17,388($sp)
+	sw	$16,384($sp)
+	addiu	$17,$sp,128
+	move	$19,$4
+	li	$6,256			# 0x100
+	move	$16,$5
+	move	$5,$0
+	jal	memset
+	move	$4,$17
+
+	lui	$2,%hi(use_ios7_mac)
+	lw	$2,%lo(use_ios7_mac)($2)
+	beq	$2,$0,$L453
+	lui	$5,%hi(g_ios_mac)
+
+	move	$4,$17
+	li	$6,6			# 0x6
+	j	$L458
+	addiu	$5,$5,%lo(g_ios_mac)
+
+$L453:
+	move	$4,$17
+	addiu	$5,$16,12
+	li	$6,6			# 0x6
+$L458:
+	jal	memcpy
+	nop
+
+	addiu	$4,$sp,134
+	lbu	$3,2806($16)
+	beq	$3,$0,$L455
+	lui	$2,%hi(g_sc_pin_len)
+
+	lw	$6,%lo(g_sc_pin_len)($2)
+	j	$L459
+	addiu	$5,$16,2676
+
+$L455:
+	lw	$6,%lo(g_sc_pin_len)($2)
+	addiu	$5,$16,2741
+$L459:
+	jal	memcpy
+	lui	$21,%hi(mcast_udp_buffer)
+
+	lui	$2,%hi(g_sc_pin_len)
+	addiu	$21,$21,%lo(mcast_udp_buffer)
+	lw	$18,%lo(g_sc_pin_len)($2)
+	move	$4,$21
+	jal	strlen
+	addiu	$17,$sp,128
+
+	move	$5,$21
+	addiu	$20,$sp,40
+	addiu	$18,$18,6
+	move	$6,$2
+	addiu	$22,$sp,24
+	addu	$4,$17,$18
+	jal	memcpy
+	addiu	$19,$19,8
+
+	jal	strlen
+	move	$4,$21
+
+	lui	$5,%hi(radom_value)
+	addu	$18,$2,$18
+	addiu	$5,$5,%lo(radom_value)
+	addu	$4,$17,$18
+	jal	memcpy
+	li	$6,4			# 0x4
+
+	addiu	$18,$18,4
+	jal	wlan_MD5_Init
+	move	$4,$20
+
+	move	$6,$18
+	move	$4,$20
+	jal	wlan_MD5_Update
+	move	$5,$17
+
+	move	$5,$20
+	jal	wlan_MD5_Final
+	move	$4,$22
+
+	jal	strlen
+	move	$4,$19
+
+	move	$5,$19
+	addu	$4,$17,$18
+	jal	memcpy
+	move	$6,$2
+
+	jal	strlen
+	move	$4,$19
+
+	addiu	$3,$16,2116
+	move	$4,$17
+	addu	$5,$18,$2
+	move	$6,$22
+	li	$7,16			# 0x10
+	jal	hmac_sha1
+	sw	$3,16($sp)
+
+	li	$2,16			# 0x10
+	sw	$2,2148($16)
+	move	$2,$0
+	lw	$31,412($sp)
+	lw	$22,408($sp)
+	lw	$21,404($sp)
+	lw	$20,400($sp)
+	lw	$19,396($sp)
+	lw	$18,392($sp)
+	lw	$17,388($sp)
+	lw	$16,384($sp)
+	j	$31
+	addiu	$sp,$sp,416
+
+	.set	macro
+	.set	reorder
+	.end	mcast_udp_generate_key
+	.size	mcast_udp_generate_key, .-mcast_udp_generate_key
+	.section	.text.T.739,"ax",@progbits
+	.align	2
+	.set	nomips16
+	.ent	T.739
+	.type	T.739, @function
+T.739:
+	.frame	$sp,2104,$31		# vars= 2048, regs= 9/0, args= 16, gp= 0
+	.mask	0x80ff0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-2104
+	sw	$31,2100($sp)
+	sw	$23,2096($sp)
+	sw	$22,2092($sp)
+	sw	$21,2088($sp)
+	sw	$20,2084($sp)
+	sw	$19,2080($sp)
+	sw	$18,2076($sp)
+	sw	$17,2072($sp)
+	sw	$16,2068($sp)
+	addiu	$2,$sp,1040
+	addiu	$3,$sp,1072
+$L461:
+	sw	$0,0($2)
+	addiu	$2,$2,4
+	bne	$2,$3,$L461
+	lui	$16,%hi(gexp+4)
+
+	li	$2,1			# 0x1
+	lui	$23,%hi(gexp+20)
+	lui	$19,%hi(genPoly)
+	sw	$2,1040($sp)
+	addiu	$16,$16,%lo(gexp+4)
+	addiu	$23,$23,%lo(gexp+20)
+	addiu	$19,$19,%lo(genPoly)
+	addiu	$18,$sp,16
+	addiu	$22,$sp,48
+	li	$21,1			# 0x1
+	addiu	$17,$sp,1040
+	j	$L462
+	li	$20,32			# 0x20
+
+$L463:
+	sw	$0,0($2)
+	addiu	$2,$2,4
+	bne	$2,$22,$L463
+	move	$4,$19
+
+	lw	$2,0($16)
+	move	$5,$18
+	sw	$21,20($sp)
+	move	$6,$17
+	jal	mult_polys
+	sw	$2,16($sp)
+
+	move	$2,$0
+$L464:
+	addu	$4,$19,$2
+	addu	$3,$17,$2
+	lw	$4,0($4)
+	addiu	$2,$2,4
+	bne	$2,$20,$L464
+	sw	$4,0($3)
+
+	addiu	$16,$16,4
+	beq	$16,$23,$L466
+	nop
+
+$L462:
+	j	$L463
+	move	$2,$18
+
+$L466:
+	lw	$31,2100($sp)
+	lw	$23,2096($sp)
+	lw	$22,2092($sp)
+	lw	$21,2088($sp)
+	lw	$20,2084($sp)
+	lw	$19,2080($sp)
+	lw	$18,2076($sp)
+	lw	$17,2072($sp)
+	lw	$16,2068($sp)
+	j	$31
+	addiu	$sp,$sp,2104
+
+	.set	macro
+	.set	reorder
+	.end	T.739
+	.size	T.739, .-T.739
+	.section	.text.initialize_ecc,"ax",@progbits
+	.align	2
+	.globl	initialize_ecc
+	.set	nomips16
+	.ent	initialize_ecc
+	.type	initialize_ecc, @function
+initialize_ecc:
+	.frame	$sp,24,$31		# vars= 0, regs= 1/0, args= 16, gp= 0
+	.mask	0x80000000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-24
+	sw	$31,20($sp)
+	jal	init_galois_tables
+	nop
+
+	lw	$31,20($sp)
+	j	T.739
+	addiu	$sp,$sp,24
+
+	.set	macro
+	.set	reorder
+	.end	initialize_ecc
+	.size	initialize_ecc, .-initialize_ecc
+	.section	.text.rtk_sc_clean_profile_value,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_clean_profile_value
+	.set	nomips16
+	.ent	rtk_sc_clean_profile_value
+	.type	rtk_sc_clean_profile_value, @function
+rtk_sc_clean_profile_value:
+	.frame	$sp,56,$31		# vars= 0, regs= 10/0, args= 16, gp= 0
+	.mask	0xc0ff0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-56
+	sw	$31,52($sp)
+	sw	$fp,48($sp)
+	sw	$23,44($sp)
+	sw	$22,40($sp)
+	sw	$21,36($sp)
+	sw	$20,32($sp)
+	sw	$19,28($sp)
+	sw	$18,24($sp)
+	sw	$17,20($sp)
+	sw	$16,16($sp)
+	li	$2,-1			# 0xffffffff
+	lui	$3,%hi(g_p4_group_index_ToDS)
+	lui	$16,%hi(g_sc_ctx)
+	sw	$2,%lo(g_p4_group_index_ToDS)($3)
+	lui	$3,%hi(fix_sa)
+	sw	$0,%lo(fix_sa)($3)
+	lui	$3,%hi(finish_sync)
+	sw	$0,%lo(finish_sync)($3)
+	lui	$3,%hi(g_p4_magic_1)
+	sw	$0,%lo(g_p4_magic_1)($3)
+	lui	$3,%hi(g_p4_magic_2)
+	sw	$0,%lo(g_p4_magic_2)($3)
+	lui	$3,%hi(sync_pkt_index)
+	sw	$0,%lo(sync_pkt_index)($3)
+	lui	$3,%hi(profile_pkt_index)
+	sw	$0,%lo(profile_pkt_index)($3)
+	lui	$3,%hi(g_p4_group)
+	sw	$2,%lo(g_p4_group)($3)
+	lui	$3,%hi(g_pkt_type)
+	sw	$0,%lo(g_pkt_type)($3)
+	lui	$3,%hi(g_p4_last_seq)
+	sw	$0,%lo(g_p4_last_seq)($3)
+	lui	$3,%hi(g_p4_to_ds_hrate)
+	sw	$0,%lo(g_p4_to_ds_hrate)($3)
+	lui	$4,%hi(g_sc_ctx+12)
+	lui	$3,%hi(g_p4_option_num)
+	addiu	$16,$16,%lo(g_sc_ctx)
+	addiu	$4,$4,%lo(g_sc_ctx+12)
+	move	$5,$0
+	move	$17,$16
+	li	$6,6			# 0x6
+	lui	$21,%hi(g_sc_ctx+5520)
+	move	$19,$16
+	sw	$0,%lo(g_p4_option_num)($3)
+	lui	$3,%hi(g_p4_group_index_FromDS)
+	sw	$2,%lo(g_p4_group_index_FromDS)($3)
+	lui	$20,%hi(g_sc_ctx+8692)
+	sw	$0,8($16)
+	move	$18,$0
+	sw	$0,2112($16)
+	addiu	$fp,$16,8177
+	sw	$0,2148($16)
+	addiu	$23,$16,3917
+	sw	$0,2408($16)
+	li	$22,512			# 0x200
+	sw	$0,2412($16)
+	jal	memset
+	addiu	$21,$21,%lo(g_sc_ctx+5520)
+
+	lui	$4,%hi(g_sc_ctx+18)
+	addiu	$4,$4,%lo(g_sc_ctx+18)
+	move	$5,$0
+	li	$6,6			# 0x6
+	jal	memset
+	addiu	$20,$20,%lo(g_sc_ctx+8692)
+
+	lui	$4,%hi(g_sc_ctx+24)
+	addiu	$4,$4,%lo(g_sc_ctx+24)
+	move	$5,$0
+	jal	memset
+	li	$6,6			# 0x6
+
+	lui	$4,%hi(g_sc_ctx+30)
+	addiu	$4,$4,%lo(g_sc_ctx+30)
+	move	$5,$0
+	jal	memset
+	li	$6,64			# 0x40
+
+	lui	$4,%hi(g_sc_ctx+94)
+	addiu	$4,$4,%lo(g_sc_ctx+94)
+	move	$5,$0
+	jal	memset
+	li	$6,64			# 0x40
+
+	lui	$4,%hi(g_sc_ctx+2741)
+	addiu	$4,$4,%lo(g_sc_ctx+2741)
+	move	$5,$0
+	jal	memset
+	li	$6,65			# 0x41
+
+	lui	$4,%hi(g_sc_ctx+2676)
+	addiu	$4,$4,%lo(g_sc_ctx+2676)
+	move	$5,$0
+	jal	memset
+	li	$6,65			# 0x41
+
+	lui	$4,%hi(g_sc_ctx+2810)
+	addiu	$4,$4,%lo(g_sc_ctx+2810)
+	move	$5,$0
+	jal	memset
+	li	$6,65			# 0x41
+
+	lui	$4,%hi(g_sc_ctx+260)
+	addiu	$4,$4,%lo(g_sc_ctx+260)
+	move	$5,$0
+	jal	memset
+	li	$6,54			# 0x36
+
+	lui	$4,%hi(g_sc_ctx+314)
+	addiu	$4,$4,%lo(g_sc_ctx+314)
+	move	$5,$0
+	jal	memset
+	li	$6,1536			# 0x600
+
+	lui	$4,%hi(g_sc_ctx+2874)
+	addiu	$4,$4,%lo(g_sc_ctx+2874)
+	move	$5,$0
+	jal	memset
+	li	$6,256			# 0x100
+
+	lui	$4,%hi(g_sc_ctx+3130)
+	addiu	$4,$4,%lo(g_sc_ctx+3130)
+	move	$5,$0
+	jal	memset
+	li	$6,256			# 0x100
+
+	lui	$4,%hi(g_option_sa)
+	addiu	$4,$4,%lo(g_option_sa)
+	move	$5,$0
+	jal	memset
+	li	$6,140			# 0x8c
+
+	sb	$0,3386($16)
+	sb	$0,3387($16)
+	sb	$0,3404($16)
+	sb	$0,4461($16)
+	sb	$0,10804($16)
+	sb	$0,10805($16)
+	sw	$0,10896($16)
+	sw	$0,10900($16)
+	sb	$0,10806($16)
+	sb	$0,4462($16)
+	sb	$0,7632($16)
+$L473:
+	lui	$2,%hi(g_sc_ctx+3405)
+	move	$5,$0
+	addiu	$2,$2,%lo(g_sc_ctx+3405)
+	li	$6,32			# 0x20
+	jal	memset
+	addu	$4,$2,$18
+
+	lui	$2,%hi(g_sc_ctx+4495)
+	addiu	$2,$2,%lo(g_sc_ctx+4495)
+	move	$5,$0
+	addu	$4,$2,$18
+	jal	memset
+	li	$6,32			# 0x20
+
+	lui	$2,%hi(g_sc_ctx+7665)
+	addiu	$2,$2,%lo(g_sc_ctx+7665)
+	move	$5,$0
+	addu	$4,$2,$18
+	jal	memset
+	li	$6,32			# 0x20
+
+	lui	$2,%hi(g_sc_ctx+5007)
+	addiu	$2,$2,%lo(g_sc_ctx+5007)
+	move	$5,$0
+	addu	$4,$2,$18
+	jal	memset
+	li	$6,32			# 0x20
+
+	addu	$4,$fp,$18
+	move	$5,$0
+	jal	memset
+	li	$6,32			# 0x20
+
+	addu	$4,$23,$18
+	move	$5,$0
+	jal	memset
+	li	$6,32			# 0x20
+
+	move	$4,$21
+	move	$5,$0
+	li	$6,32			# 0x20
+	jal	memset
+	addiu	$18,$18,32
+
+	move	$4,$20
+	move	$5,$0
+	li	$6,32			# 0x20
+	jal	memset
+	addiu	$21,$21,128
+
+	addiu	$20,$20,128
+	sw	$0,7568($19)
+	sw	$0,10740($19)
+	sb	$0,3388($17)
+	sb	$0,4429($17)
+	sb	$0,4463($17)
+	sb	$0,7633($17)
+	sb	$0,4445($17)
+	sb	$0,7649($17)
+	sb	$0,4479($17)
+	addiu	$17,$17,1
+	sw	$0,10812($19)
+	bne	$18,$22,$L473
+	addiu	$19,$19,4
+
+	jal	initialize_ecc
+	nop
+
+	lui	$3,%hi(g_sc_ctx)
+	addiu	$3,$3,%lo(g_sc_ctx)
+	li	$4,-1			# 0xffffffff
+	sw	$4,10892($3)
+	move	$2,$0
+	sh	$0,10886($3)
+	sh	$0,10808($3)
+	sh	$0,10810($3)
+	sw	$0,10876($3)
+	sh	$0,10880($3)
+	sw	$4,10888($3)
+	sh	$0,10882($3)
+	sh	$0,10884($3)
+	lw	$31,52($sp)
+	lw	$fp,48($sp)
+	lw	$23,44($sp)
+	lw	$22,40($sp)
+	lw	$21,36($sp)
+	lw	$20,32($sp)
+	lw	$19,28($sp)
+	lw	$18,24($sp)
+	lw	$17,20($sp)
+	lw	$16,16($sp)
+	j	$31
+	addiu	$sp,$sp,56
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_clean_profile_value
+	.size	rtk_sc_clean_profile_value, .-rtk_sc_clean_profile_value
+	.section	.rodata.str1.4
+	.align	2
+$LC13:
+	.ascii	"try to clean profile!\012\000"
+	.align	2
+$LC14:
+	.ascii	"df*r43^fdjakfo\000"
+	.section	.text.rtk_sc_restart_simple_config,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_restart_simple_config
+	.set	nomips16
+	.ent	rtk_sc_restart_simple_config
+	.type	rtk_sc_restart_simple_config, @function
+rtk_sc_restart_simple_config:
+	.frame	$sp,24,$31		# vars= 0, regs= 2/0, args= 16, gp= 0
+	.mask	0x80010000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-24
+	sw	$31,20($sp)
+	sw	$16,16($sp)
+	lui	$2,%hi(g_sc_debug)
+	lw	$2,%lo(g_sc_debug)($2)
+	beq	$2,$0,$L477
+	move	$16,$4
+
+	lui	$4,%hi($LC13)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC13)
+
+$L477:
+	jal	rtk_sc_clean_profile_value
+	nop
+
+	lui	$5,%hi($LC14)
+	addiu	$5,$5,%lo($LC14)
+	jal	rtk_sc_set_string_value
+	li	$4,25			# 0x19
+
+	li	$4,13			# 0xd
+	jal	rtk_sc_set_value
+	li	$5,1			# 0x1
+
+	li	$4,7			# 0x7
+	jal	rtk_sc_set_value
+	li	$5,1			# 0x1
+
+	li	$4,5			# 0x5
+	jal	rtk_sc_set_value
+	li	$5,1000			# 0x3e8
+
+	li	$4,14			# 0xe
+	jal	rtk_sc_set_value
+	move	$5,$0
+
+	li	$4,18			# 0x12
+	jal	rtk_sc_set_value
+	move	$5,$0
+
+	move	$5,$0
+	jal	rtk_sc_set_value
+	li	$4,28			# 0x1c
+
+	move	$4,$16
+	jal	start_clnt_lookup
+	li	$5,1			# 0x1
+
+	move	$2,$0
+	lw	$31,20($sp)
+	lw	$16,16($sp)
+	j	$31
+	addiu	$sp,$sp,24
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_restart_simple_config
+	.size	rtk_sc_restart_simple_config, .-rtk_sc_restart_simple_config
+	.section	.rodata.str1.4
+	.align	2
+$LC15:
+	.ascii	"\012get the profile info fail! \000"
+	.align	2
+$LC16:
+	.ascii	"the crypt info is \000"
+	.align	2
+$LC17:
+	.ascii	" \000"
+	.align	2
+$LC18:
+	.ascii	"get the profile\012\000"
+	.align	2
+$LC19:
+	.ascii	"get the profile and encrypt info now, try to connect rem"
+	.ascii	"ote AP\012\000"
+	.section	.text.rtk_sc_check_profile,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_check_profile
+	.set	nomips16
+	.ent	rtk_sc_check_profile
+	.type	rtk_sc_check_profile, @function
+rtk_sc_check_profile:
+	.frame	$sp,48,$31		# vars= 0, regs= 7/0, args= 16, gp= 0
+	.mask	0x803f0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-48
+	sw	$31,44($sp)
+	sw	$21,40($sp)
+	sw	$20,36($sp)
+	sw	$19,32($sp)
+	sw	$18,28($sp)
+	sw	$17,24($sp)
+	sw	$16,20($sp)
+	lui	$18,%hi(pp)
+	move	$17,$4
+	lui	$16,%hi(g_sc_ctx)
+	lui	$2,%hi(use_ios7_mac)
+	lw	$4,%lo(pp)($18)
+	addiu	$5,$16,%lo(g_sc_ctx)
+	jal	rtk_sc_get_cipher_info
+	sw	$0,%lo(use_ios7_mac)($2)
+
+	lw	$4,%lo(pp)($18)
+	jal	rtk_sc_generate_key
+	addiu	$5,$16,%lo(g_sc_ctx)
+
+	bne	$2,$0,$L480
+	nop
+
+	lw	$4,%lo(pp)($18)
+	jal	rtk_sc_decode_profile
+	addiu	$5,$16,%lo(g_sc_ctx)
+
+	bne	$2,$0,$L480
+	nop
+
+	lw	$4,%lo(pp)($18)
+	jal	rtk_sc_get_tlv_info
+	addiu	$5,$16,%lo(g_sc_ctx)
+
+	beq	$2,$0,$L502
+	lui	$5,%hi(g_sc_ctx+94)
+
+$L480:
+	lui	$18,%hi(pp)
+	lui	$16,%hi(g_sc_ctx)
+	lw	$4,%lo(pp)($18)
+	li	$3,1			# 0x1
+	lui	$2,%hi(use_ios7_mac)
+	addiu	$5,$16,%lo(g_sc_ctx)
+	jal	rtk_sc_generate_key
+	sw	$3,%lo(use_ios7_mac)($2)
+
+	bne	$2,$0,$L503
+	lui	$3,%hi(use_ios7_mac)
+
+	lw	$4,%lo(pp)($18)
+	jal	rtk_sc_decode_profile
+	addiu	$5,$16,%lo(g_sc_ctx)
+
+	bne	$2,$0,$L503
+	lui	$3,%hi(use_ios7_mac)
+
+	lw	$4,%lo(pp)($18)
+	jal	rtk_sc_get_tlv_info
+	addiu	$5,$16,%lo(g_sc_ctx)
+
+	lui	$3,%hi(use_ios7_mac)
+$L503:
+	beq	$2,$0,$L481
+	sw	$0,%lo(use_ios7_mac)($3)
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$2,%lo(g_sc_debug)($2)
+	beq	$2,$0,$L504
+	lui	$2,%hi(pp)
+
+	lui	$4,%hi($LC15)
+	lui	$18,%hi(g_sc_ctx)
+	addiu	$4,$4,%lo($LC15)
+	jal	panic_printk
+	lui	$21,%hi($LC17)
+
+	lui	$4,%hi($LC16)
+	addiu	$4,$4,%lo($LC16)
+	lui	$20,%hi($LC3)
+	move	$16,$0
+	jal	panic_printk
+	li	$19,6			# 0x6
+
+	addiu	$18,$18,%lo(g_sc_ctx)
+	addiu	$21,$21,%lo($LC17)
+	j	$L484
+	addiu	$20,$20,%lo($LC3)
+
+$L486:
+	div	$0,$16,$19
+	mfhi	$2
+	bne	$2,$0,$L505
+	addu	$2,$18,$16
+
+	jal	panic_printk
+	move	$4,$21
+
+	addu	$2,$18,$16
+$L505:
+	move	$4,$20
+	lbu	$5,2152($2)
+	jal	panic_printk
+	addiu	$16,$16,1
+
+$L484:
+	lw	$2,2408($18)
+	sltu	$2,$16,$2
+	bne	$2,$0,$L486
+	lui	$2,%hi(pp)
+
+$L504:
+	lw	$2,%lo(pp)($2)
+	lw	$3,0($2)
+	li	$2,5			# 0x5
+	bne	$3,$2,$L487
+	li	$3,1			# 0x1
+
+	lui	$2,%hi(g_sc_ctx+10876)
+	j	$L501
+	sw	$3,%lo(g_sc_ctx+10876)($2)
+
+$L487:
+	jal	rtk_sc_restart_simple_config
+	move	$4,$17
+
+$L501:
+	j	$L488
+	li	$2,-1			# 0xffffffff
+
+$L481:
+	lui	$5,%hi(g_sc_ctx+94)
+$L502:
+	li	$4,22			# 0x16
+	jal	rtk_sc_set_string_value
+	addiu	$5,$5,%lo(g_sc_ctx+94)
+
+	jal	rtk_sc_get_value
+	li	$4,28			# 0x1c
+
+	li	$4,28			# 0x1c
+	move	$16,$2
+	jal	rtk_sc_set_value
+	move	$5,$0
+
+	bne	$16,$0,$L489
+	lui	$2,%hi(g_sc_debug)
+
+	lw	$2,%lo(g_sc_debug)($2)
+	beq	$2,$0,$L490
+	lui	$4,%hi($LC18)
+
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC18)
+
+$L490:
+	li	$4,13			# 0xd
+	jal	rtk_sc_set_value
+	li	$5,3			# 0x3
+
+	li	$4,7			# 0x7
+	jal	rtk_sc_set_value
+	li	$5,3			# 0x3
+
+	li	$4,14			# 0xe
+	jal	rtk_sc_set_value
+	move	$5,$0
+
+	lui	$2,%hi(g_sc_ctx+30)
+	lbu	$2,%lo(g_sc_ctx+30)($2)
+	beq	$2,$0,$L491
+	nop
+
+	lui	$5,%hi(g_sc_ctx+30)
+	li	$4,25			# 0x19
+	j	$L498
+	addiu	$5,$5,%lo(g_sc_ctx+30)
+
+$L491:
+	lui	$5,%hi(g_sc_ctx+24)
+	li	$4,26			# 0x1a
+	addiu	$5,$5,%lo(g_sc_ctx+24)
+$L498:
+	jal	rtk_sc_set_string_value
+	nop
+
+	move	$4,$17
+	jal	start_clnt_lookup
+	li	$5,1			# 0x1
+
+	j	$L488
+	move	$2,$0
+
+$L489:
+	blez	$16,$L488
+	move	$2,$0
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$2,%lo(g_sc_debug)($2)
+	beq	$2,$0,$L506
+	lui	$2,%hi(g_sc_ctx+30)
+
+	lui	$4,%hi($LC19)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC19)
+
+	lui	$2,%hi(g_sc_ctx+30)
+$L506:
+	lbu	$2,%lo(g_sc_ctx+30)($2)
+	beq	$2,$0,$L495
+	nop
+
+	lui	$5,%hi(g_sc_ctx+30)
+	li	$4,25			# 0x19
+	j	$L499
+	addiu	$5,$5,%lo(g_sc_ctx+30)
+
+$L495:
+	lui	$5,%hi(g_sc_ctx+24)
+	li	$4,26			# 0x1a
+	addiu	$5,$5,%lo(g_sc_ctx+24)
+$L499:
+	jal	rtk_sc_set_string_value
+	nop
+
+	jal	rtk_sc_set_passwd
+	move	$4,$17
+
+	li	$4,13			# 0xd
+	jal	rtk_sc_set_value
+	li	$5,4			# 0x4
+
+	li	$5,4			# 0x4
+	jal	rtk_sc_set_value
+	li	$4,7			# 0x7
+
+	jal	rtk_sc_sync_vxd_to_root
+	move	$4,$17
+
+	li	$4,14			# 0xe
+	jal	rtk_sc_set_value
+	move	$5,$0
+
+	jal	rtk_sc_start_connect_target
+	move	$4,$17
+
+	move	$2,$0
+$L488:
+	lw	$31,44($sp)
+	lw	$21,40($sp)
+	lw	$20,36($sp)
+	lw	$19,32($sp)
+	lw	$18,28($sp)
+	lw	$17,24($sp)
+	lw	$16,20($sp)
+	j	$31
+	addiu	$sp,$sp,48
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_check_profile
+	.size	rtk_sc_check_profile, .-rtk_sc_check_profile
+	.section	.rodata.str1.4
+	.align	2
+$LC20:
+	.ascii	"index is %d, received packet number is %d\012\000"
+	.align	2
+$LC21:
+	.ascii	"sync index is %d\012\000"
+	.align	2
+$LC22:
+	.ascii	"the BSSID is \000"
+	.align	2
+$LC23:
+	.ascii	"the Control Device MAC is \000"
+	.align	2
+$LC24:
+	.ascii	"2, length is %d, smac is \000"
+	.align	2
+$LC25:
+	.ascii	"the option Control Device MAC is \000"
+	.align	2
+$LC26:
+	.ascii	"the option Control Device number is %d, the pkt len is %"
+	.ascii	"d\012\000"
+	.align	2
+$LC27:
+	.ascii	"the magic number 1 is %d, the magic number 2 is %d\012\000"
+	.align	2
+$LC28:
+	.ascii	"equal, %d\012\000"
+	.align	2
+$LC29:
+	.ascii	"null, %d, \000"
+	.align	2
+$LC30:
+	.ascii	"The Option Control Device MAC is \000"
+	.align	2
+$LC31:
+	.ascii	"%d The Option Control Device MAC is \000"
+	.align	2
+$LC32:
+	.ascii	"The Magic Number 1 is %d, the Magic Number 2 is %d\012\000"
+	.align	2
+$LC33:
+	.ascii	"R2 %d-X %d the BSSID is \000"
+	.align	2
+$LC34:
+	.ascii	"R2 X-%d %d the BSSID is \000"
+	.align	2
+$LC35:
+	.ascii	"R2 %d-%d %d the BSSID is \000"
+	.align	2
+$LC36:
+	.ascii	"the total profile packet num is %d\012\000"
+	.align	2
+$LC37:
+	.ascii	"The Profile Pkt Num is %d\012\000"
+	.align	2
+$LC38:
+	.ascii	"index is %d, total is %d, received %d now!\012\000"
+	.align	2
+$LC39:
+	.ascii	"seq %d is over max length\012\000"
+	.align	2
+$LC40:
+	.ascii	"Index is %d, Tatal is %d, Received %d now!\012\000"
+	.align	2
+$LC41:
+	.ascii	"seq %d is NULL\012\000"
+	.align	2
+$LC42:
+	.ascii	"don't add this data to profile\012\000"
+	.align	2
+$LC43:
+	.ascii	"index is %d, tatal is %d, received %d now!\012\000"
+	.align	2
+$LC44:
+	.ascii	"check file fail\012\000"
+	.align	2
+$LC45:
+	.ascii	"block is %d, location_index is %d, data is %d, fr_or_to "
+	.ascii	"is %d\012\000"
+	.align	2
+$LC46:
+	.ascii	" -!%d.<-%d \000"
+	.align	2
+$LC47:
+	.ascii	"\012%d block %d Got decode ERROR\012\000"
+	.align	2
+$LC48:
+	.ascii	" F+-%d.<-%d\000"
+	.align	2
+$LC49:
+	.ascii	" !%d.<-%d\000"
+	.align	2
+$LC50:
+	.ascii	"%d %d Got decode ERROR\012\000"
+	.align	2
+$LC51:
+	.ascii	" T+-%d.<-%d\000"
+	.align	2
+$LC52:
+	.ascii	"before check profile, the cipher info is \000"
+	.align	2
+$LC53:
+	.ascii	"Re-Collect!\012\000"
+	.section	.text.rtk_sc_start_parse_packet,"ax",@progbits
+	.align	2
+	.globl	rtk_sc_start_parse_packet
+	.set	nomips16
+	.ent	rtk_sc_start_parse_packet
+	.type	rtk_sc_start_parse_packet, @function
+rtk_sc_start_parse_packet:
+	.frame	$sp,80,$31		# vars= 16, regs= 10/0, args= 24, gp= 0
+	.mask	0xc0ff0000,-4
+	.fmask	0x00000000,0
+	.set	noreorder
+	.set	nomacro
+	
+	addiu	$sp,$sp,-80
+	sw	$31,76($sp)
+	sw	$fp,72($sp)
+	sw	$23,68($sp)
+	sw	$22,64($sp)
+	sw	$21,60($sp)
+	sw	$20,56($sp)
+	sw	$19,52($sp)
+	sw	$18,48($sp)
+	sw	$17,44($sp)
+	sw	$16,40($sp)
+	move	$16,$5
+	move	$18,$4
+	jal	rtk_sc_get_value
+	li	$4,13			# 0xd
+
+	lw	$3,0($16)
+	lw	$3,188($3)
+	lhu	$4,0($3)
+	li	$3,8			# 0x8
+	srl	$4,$4,8
+	andi	$4,$4,0xc
+	bne	$4,$3,$L507
+	li	$4,1			# 0x1
+
+	lw	$3,24($16)
+	lbu	$5,0($3)
+	bne	$5,$4,$L509
+	nop
+
+	lbu	$4,1($3)
+	bne	$4,$0,$L509
+	li	$4,94			# 0x5e
+
+	lbu	$5,2($3)
+	bne	$5,$4,$L509
+	nop
+
+	lbu	$4,3($3)
+	bne	$4,$0,$L509
+	nop
+
+	lbu	$4,5($3)
+	beq	$4,$0,$L509
+	li	$4,-128			# 0xffffff80
+
+	sb	$4,3($3)
+$L509:
+	addiu	$3,$2,-1
+	sltu	$3,$3,2
+	beq	$3,$0,$L507
+	lui	$3,%hi(finish_sync)
+
+	lw	$3,%lo(finish_sync)($3)
+	bne	$3,$0,$L510
+	li	$4,2			# 0x2
+
+	lw	$2,24($16)
+	li	$4,1			# 0x1
+	lbu	$3,0($2)
+	bne	$3,$4,$L511
+	li	$4,255			# 0xff
+
+	lbu	$3,1($2)
+	bne	$3,$0,$L507
+	li	$3,94			# 0x5e
+
+	lbu	$4,2($2)
+	bne	$4,$3,$L507
+	move	$4,$0
+
+	move	$3,$0
+	li	$5,6			# 0x6
+$L512:
+	addu	$6,$2,$3
+	addiu	$3,$3,1
+	lbu	$6,0($6)
+	addu	$4,$4,$6
+	bne	$3,$5,$L512
+	andi	$4,$4,0x00ff
+
+	bne	$4,$0,$L507
+	lui	$3,%hi(g_pkt_type)
+
+	li	$2,2			# 0x2
+	lw	$3,%lo(g_pkt_type)($3)
+	beq	$3,$2,$L507
+	lui	$3,%hi(g_sc_config_type)
+
+	lw	$3,%lo(g_sc_config_type)($3)
+	andi	$3,$3,0x1
+	beq	$3,$0,$L507
+	lui	$3,%hi(g_sc_check_level)
+
+	lw	$3,%lo(g_sc_check_level)($3)
+	bne	$3,$2,$L886
+	lui	$2,%hi(fix_sa)
+
+	jal	rtk_sc_valid_profile_packet
+	move	$4,$16
+
+	beq	$2,$0,$L507
+	lui	$2,%hi(fix_sa)
+
+$L886:
+	lw	$3,%lo(fix_sa)($2)
+	li	$2,1			# 0x1
+	bne	$3,$2,$L887
+	lui	$2,%hi(fix_sa)
+
+	lui	$4,%hi(g_sc_ctx+12)
+	li	$6,6			# 0x6
+	lw	$5,28($16)
+	jal	memcmp
+	addiu	$4,$4,%lo(g_sc_ctx+12)
+
+	bne	$2,$0,$L514
+	lui	$2,%hi(fix_sa)
+
+	lw	$2,24($16)
+	li	$3,6			# 0x6
+	lbu	$5,3($2)
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	mult	$5,$3
+	mflo	$4
+	addu	$6,$4,$2
+	lbu	$6,260($6)
+	bne	$6,$0,$L507
+	slt	$6,$5,9
+
+	bne	$6,$0,$L515
+	nop
+
+	addiu	$4,$5,-9
+	mult	$4,$3
+	mflo	$3
+	addu	$4,$3,$2
+	lbu	$4,314($4)
+	bne	$4,$0,$L507
+	addu	$2,$2,$3
+
+	li	$3,6			# 0x6
+	addiu	$2,$2,314
+$L516:
+	lw	$6,24($16)
+	addu	$6,$6,$4
+	addiu	$4,$4,1
+	lbu	$6,0($6)
+	sb	$6,0($2)
+	bne	$4,$3,$L516
+	addiu	$2,$2,1
+
+	lui	$2,%hi(profile_pkt_index)
+	lui	$3,%hi(g_sc_debug)
+	lw	$6,%lo(profile_pkt_index)($2)
+	lw	$3,%lo(g_sc_debug)($3)
+	addiu	$6,$6,1
+	sw	$6,%lo(profile_pkt_index)($2)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L876
+	lui	$2,%hi(sync_pkt_index)
+
+	li	$2,10			# 0xa
+	div	$0,$6,$2
+	mfhi	$2
+	bne	$2,$0,$L518
+	li	$3,8388608			# 0x800000
+
+	li	$2,-1207959552			# 0xb8000000
+	ori	$2,$2,0x311c
+	lw	$4,0($2)
+	or	$3,$4,$3
+	sw	$3,0($2)
+$L518:
+	lui	$4,%hi($LC20)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC20)
+
+	j	$L876
+	lui	$2,%hi(sync_pkt_index)
+
+$L515:
+	addu	$2,$2,$4
+	move	$3,$0
+	addiu	$2,$2,260
+	li	$4,6			# 0x6
+$L519:
+	lw	$6,24($16)
+	addu	$6,$6,$3
+	addiu	$3,$3,1
+	lbu	$6,0($6)
+	sb	$6,0($2)
+	bne	$3,$4,$L519
+	addiu	$2,$2,1
+
+	lui	$2,%hi(sync_pkt_index)
+	li	$3,1			# 0x1
+	lw	$4,%lo(sync_pkt_index)($2)
+	sll	$5,$3,$5
+	lui	$3,%hi(g_sc_debug)
+	lw	$3,%lo(g_sc_debug)($3)
+	or	$5,$5,$4
+	sw	$5,%lo(sync_pkt_index)($2)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L876
+	lui	$2,%hi(sync_pkt_index)
+
+	lui	$4,%hi($LC21)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC21)
+
+	lui	$2,%hi(sync_pkt_index)
+$L876:
+	lw	$3,%lo(sync_pkt_index)($2)
+	li	$2,511			# 0x1ff
+	andi	$3,$3,0x1ff
+	bne	$3,$2,$L507
+	lui	$19,%hi(g_sc_ctx+2416)
+
+	lui	$16,%hi(g_sc_ctx)
+	addiu	$19,$19,%lo(g_sc_ctx+2416)
+	addiu	$16,$16,%lo(g_sc_ctx)
+	move	$17,$0
+	j	$L520
+	lui	$20,%hi(pp)
+
+$L525:
+	lw	$4,0($19)
+	beq	$4,$0,$L521
+	sw	$4,%lo(pp)($20)
+
+	lw	$2,4($4)
+	andi	$2,$2,0x2
+	beq	$2,$0,$L521
+	move	$5,$16
+
+	jal	rtk_sc_check_pattern
+	move	$6,$18
+
+	bne	$2,$0,$L888
+	addiu	$17,$17,1
+
+	addiu	$17,$17,-1
+	li	$3,1			# 0x1
+	li	$4,14			# 0xe
+	lui	$2,%hi(finish_sync)
+	move	$5,$0
+	jal	rtk_sc_set_value
+	sw	$3,%lo(finish_sync)($2)
+
+	lui	$2,%hi(profile_pkt_index)
+	lw	$3,1852($16)
+	lui	$4,%hi(sync_pkt_index)
+	lw	$2,%lo(profile_pkt_index)($2)
+	sltu	$2,$2,$3
+	bne	$2,$0,$L507
+	sw	$0,%lo(sync_pkt_index)($4)
+
+	lui	$4,%hi(g_sc_ctx+368)
+	li	$2,9			# 0x9
+	j	$L522
+	addiu	$4,$4,%lo(g_sc_ctx+368)
+
+$L524:
+	beq	$4,$0,$L523
+	nop
+
+	addiu	$2,$2,1
+	addiu	$4,$4,6
+$L522:
+	sltu	$5,$2,$3
+	bne	$5,$0,$L524
+	nop
+
+$L523:
+	bne	$2,$3,$L507
+	nop
+
+	jal	rtk_sc_check_profile
+	move	$4,$18
+
+	j	$L507
+	nop
+
+$L521:
+	addiu	$17,$17,1
+$L888:
+	addiu	$19,$19,4
+$L520:
+	lw	$2,2672($16)
+	slt	$2,$17,$2
+	bne	$2,$0,$L525
+	move	$4,$18
+
+	lui	$2,%hi(fix_sa)
+	jal	rtk_sc_restart_simple_config
+	sw	$0,%lo(fix_sa)($2)
+
+	j	$L507
+	nop
+
+$L514:
+$L887:
+	lw	$3,%lo(fix_sa)($2)
+	li	$2,1			# 0x1
+	bne	$3,$2,$L889
+	lui	$2,%hi(g_sc_check_level)
+
+	lui	$2,%hi(g_sc_ignore_overlap)
+	lw	$2,%lo(g_sc_ignore_overlap)($2)
+	bne	$2,$0,$L507
+	lui	$2,%hi(g_sc_check_level)
+
+$L889:
+	lw	$2,%lo(g_sc_check_level)($2)
+	beq	$2,$0,$L527
+	nop
+
+	jal	rtk_sc_valid_profile_packet
+	move	$4,$16
+
+	beq	$2,$0,$L507
+	nop
+
+$L527:
+	lw	$5,28($16)
+	lui	$17,%hi(g_sc_ctx+12)
+	addiu	$4,$17,%lo(g_sc_ctx+12)
+	jal	memcpy
+	li	$6,6			# 0x6
+
+	lui	$4,%hi(g_smac)
+	lw	$5,28($16)
+	li	$6,6			# 0x6
+	addiu	$4,$4,%lo(g_smac)
+	jal	memcpy
+	lui	$19,%hi(g_sc_ctx+24)
+
+	lui	$21,%hi(g_sc_bssid)
+	lw	$2,0($16)
+	lw	$4,188($2)
+	jal	get_bssid
+	lui	$20,%hi(null_mac)
+
+	addiu	$4,$19,%lo(g_sc_ctx+24)
+	move	$18,$2
+	li	$6,6			# 0x6
+	jal	memcpy
+	move	$5,$2
+
+	li	$6,6			# 0x6
+	move	$5,$18
+	jal	memcpy
+	addiu	$4,$21,%lo(g_sc_bssid)
+
+	addiu	$5,$21,%lo(g_sc_bssid)
+	jal	rtk_sc_set_string_value
+	li	$4,26			# 0x1a
+
+	move	$4,$18
+	addiu	$5,$20,%lo(null_mac)
+	jal	memcmp
+	li	$6,6			# 0x6
+
+	beq	$2,$0,$L890
+	lui	$2,%hi(sync_pkt_index)
+
+	addiu	$5,$20,%lo(null_mac)
+	addiu	$4,$17,%lo(g_sc_ctx+12)
+	jal	memcmp
+	li	$6,6			# 0x6
+
+	beq	$2,$0,$L890
+	lui	$2,%hi(sync_pkt_index)
+
+	move	$4,$18
+	addiu	$5,$17,%lo(g_sc_ctx+12)
+	jal	memcmp
+	li	$6,6			# 0x6
+
+	beq	$2,$0,$L528
+	lui	$2,%hi(g_sc_debug)
+
+	lui	$3,%hi(finish_sync)
+	lw	$2,%lo(g_sc_debug)($2)
+	beq	$2,$0,$L529
+	sw	$0,%lo(finish_sync)($3)
+
+	lui	$4,%hi($LC22)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC22)
+
+	li	$5,6			# 0x6
+	jal	bytedump
+	addiu	$4,$19,%lo(g_sc_ctx+24)
+
+	lui	$4,%hi($LC23)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC23)
+
+	addiu	$4,$17,%lo(g_sc_ctx+12)
+	jal	bytedump
+	li	$5,6			# 0x6
+
+$L529:
+	lbu	$5,40($16)
+	jal	rtk_sc_set_value
+	li	$4,19			# 0x13
+
+	li	$4,13			# 0xd
+	jal	rtk_sc_set_value
+	li	$5,2			# 0x2
+
+	li	$4,7			# 0x7
+	jal	rtk_sc_set_value
+	li	$5,2			# 0x2
+
+	li	$4,5			# 0x5
+	jal	rtk_sc_set_value
+	li	$5,1			# 0x1
+
+	lui	$5,%hi(g_sc_ctx+24)
+	addiu	$5,$5,%lo(g_sc_ctx+24)
+	jal	rtk_sc_set_string_value
+	li	$4,26			# 0x1a
+
+	li	$2,1			# 0x1
+	lui	$3,%hi(g_pkt_type)
+	sw	$2,%lo(g_pkt_type)($3)
+	lui	$3,%hi(fix_sa)
+	sw	$2,%lo(fix_sa)($3)
+$L528:
+	lui	$2,%hi(sync_pkt_index)
+$L890:
+	li	$4,14			# 0xe
+	sw	$0,%lo(sync_pkt_index)($2)
+	lui	$2,%hi(profile_pkt_index)
+	move	$5,$0
+	sw	$0,%lo(profile_pkt_index)($2)
+	lui	$2,%hi(sequence)
+	jal	rtk_sc_set_value
+	sw	$0,%lo(sequence)($2)
+
+	j	$L507
+	nop
+
+$L511:
+	bne	$3,$4,$L507
+	nop
+
+	lbu	$4,1($2)
+	bne	$4,$3,$L507
+	nop
+
+	lbu	$3,2($2)
+	bne	$3,$4,$L507
+	nop
+
+	lbu	$4,3($2)
+	bne	$4,$3,$L507
+	nop
+
+	lbu	$3,4($2)
+	bne	$3,$4,$L507
+	nop
+
+	lbu	$2,5($2)
+	bne	$2,$3,$L507
+	nop
+
+	lbu	$2,40($16)
+	addiu	$2,$2,-1
+	andi	$2,$2,0x00ff
+	sltu	$2,$2,2
+	beq	$2,$0,$L507
+	lui	$2,%hi(g_pkt_type)
+
+	lw	$3,%lo(g_pkt_type)($2)
+	li	$2,1			# 0x1
+	beq	$3,$2,$L507
+	lui	$2,%hi(g_sc_config_type)
+
+	lw	$2,%lo(g_sc_config_type)($2)
+	andi	$2,$2,0x2
+	beq	$2,$0,$L507
+	lui	$2,%hi(g_sc_debug)
+
+	lw	$3,%lo(g_sc_debug)($2)
+	li	$2,-1			# 0xffffffff
+	bne	$3,$2,$L891
+	lui	$20,%hi(g_option_sa)
+
+	jal	net_ratelimit
+	nop
+
+	beq	$2,$0,$L892
+	lui	$22,%hi(g_sc_magic)
+
+	lw	$5,12($16)
+	lui	$4,%hi($LC24)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC24)
+
+	lw	$4,28($16)
+	jal	bytedump
+	li	$5,6			# 0x6
+
+	lui	$20,%hi(g_option_sa)
+$L891:
+	lui	$22,%hi(g_sc_magic)
+$L892:
+	addiu	$20,$20,%lo(g_option_sa)
+	addiu	$22,$22,%lo(g_sc_magic)
+	move	$21,$0
+	li	$23,1			# 0x1
+$L562:
+	lw	$2,0($22)
+	lw	$3,12($16)
+	addiu	$4,$2,3
+	bne	$3,$4,$L531
+	addiu	$4,$2,35
+
+	move	$19,$0
+	li	$2,28			# 0x1c
+$L893:
+	li	$6,6			# 0x6
+	mult	$19,$2
+	lw	$5,28($16)
+	mflo	$fp
+	addu	$fp,$20,$fp
+	jal	memcmp
+	move	$4,$fp
+
+	bne	$2,$0,$L532
+	lui	$5,%hi(null_mac)
+
+	lbu	$2,40($16)
+	li	$3,1			# 0x1
+	bne	$2,$3,$L533
+	nop
+
+	lw	$2,8($fp)
+	bne	$2,$0,$L507
+	lui	$2,%hi(g_sc_magic)
+
+	sll	$21,$21,2
+	addiu	$2,$2,%lo(g_sc_magic)
+	addu	$21,$21,$2
+	lw	$2,0($21)
+	j	$L507
+	sw	$2,8($fp)
+
+$L533:
+	li	$4,2			# 0x2
+	bne	$2,$4,$L507
+	nop
+
+	lw	$2,12($fp)
+	bne	$2,$0,$L507
+	lui	$4,%hi(g_sc_magic)
+
+	sll	$21,$21,2
+	lui	$2,%hi(g_p4_to_ds_hrate)
+	addiu	$4,$4,%lo(g_sc_magic)
+	addu	$21,$21,$4
+	lw	$5,0($21)
+	lw	$4,%lo(g_p4_to_ds_hrate)($2)
+	bne	$4,$0,$L507
+	sw	$5,12($fp)
+
+	lbu	$4,56($16)
+	sltu	$4,$4,55
+	bne	$4,$0,$L507
+	nop
+
+	j	$L507
+	sw	$3,%lo(g_p4_to_ds_hrate)($2)
+
+$L532:
+	move	$4,$fp
+	li	$6,6			# 0x6
+	jal	memcmp
+	addiu	$5,$5,%lo(null_mac)
+
+	bne	$2,$0,$L534
+	li	$2,5			# 0x5
+
+	lbu	$2,40($16)
+	li	$3,1			# 0x1
+	bne	$2,$3,$L535
+	li	$4,2			# 0x2
+
+	lui	$2,%hi(g_sc_magic)
+	sll	$21,$21,2
+	addiu	$2,$2,%lo(g_sc_magic)
+	addu	$21,$21,$2
+	lw	$2,0($21)
+	j	$L536
+	sw	$2,8($fp)
+
+$L535:
+	bne	$2,$4,$L536
+	lui	$4,%hi(g_sc_magic)
+
+	sll	$21,$21,2
+	lui	$2,%hi(g_p4_to_ds_hrate)
+	addiu	$4,$4,%lo(g_sc_magic)
+	addu	$21,$21,$4
+	lw	$5,0($21)
+	lw	$4,%lo(g_p4_to_ds_hrate)($2)
+	bne	$4,$0,$L536
+	sw	$5,12($fp)
+
+	lbu	$4,56($16)
+	sltu	$4,$4,55
+	bne	$4,$0,$L536
+	nop
+
+	sw	$3,%lo(g_p4_to_ds_hrate)($2)
+$L536:
+	lw	$5,28($16)
+	move	$4,$fp
+	lui	$17,%hi(g_p4_option_num)
+	jal	memcpy
+	li	$6,6			# 0x6
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$3,%lo(g_p4_option_num)($17)
+	li	$5,2			# 0x2
+	lw	$2,%lo(g_sc_debug)($2)
+	lui	$4,%hi(g_sc_ctx+10896)
+	addiu	$3,$3,1
+	sw	$5,%lo(g_sc_ctx+10896)($4)
+	beq	$2,$0,$L507
+	sw	$3,%lo(g_p4_option_num)($17)
+
+	lui	$4,%hi($LC25)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC25)
+
+	li	$2,28			# 0x1c
+	mult	$19,$2
+	lui	$2,%hi(g_option_sa)
+	addiu	$2,$2,%lo(g_option_sa)
+	li	$5,6			# 0x6
+	mflo	$19
+	addu	$19,$2,$19
+	jal	bytedump
+	move	$4,$19
+
+	lui	$4,%hi($LC26)
+	lw	$5,%lo(g_p4_option_num)($17)
+	lw	$6,12($16)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC26)
+
+	lui	$4,%hi($LC27)
+	lw	$6,12($19)
+	lw	$5,8($19)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC27)
+
+	j	$L507
+	nop
+
+$L534:
+	addiu	$19,$19,1
+	bne	$19,$2,$L893
+	li	$2,28			# 0x1c
+
+	lbu	$2,40($16)
+	bne	$2,$23,$L538
+	li	$3,2			# 0x2
+
+	lui	$2,%hi(g_p4_option_num)
+	lui	$4,%hi(g_option_sa)
+	lw	$3,%lo(g_p4_option_num)($2)
+	addiu	$4,$4,%lo(g_option_sa)
+	lw	$2,0($22)
+	divu	$0,$3,$19
+	li	$3,28			# 0x1c
+	mfhi	$19
+	mult	$19,$3
+	mflo	$19
+	addu	$19,$19,$4
+	j	$L539
+	sw	$2,8($19)
+
+$L538:
+	bne	$2,$3,$L894
+	lui	$fp,%hi(g_p4_option_num)
+
+	lui	$2,%hi(g_p4_option_num)
+	lui	$4,%hi(g_option_sa)
+	lw	$3,%lo(g_p4_option_num)($2)
+	addiu	$4,$4,%lo(g_option_sa)
+	lw	$2,0($22)
+	divu	$0,$3,$19
+	li	$3,28			# 0x1c
+	mfhi	$19
+	mult	$19,$3
+	mflo	$19
+	addu	$19,$4,$19
+	sw	$2,12($19)
+$L539:
+	lui	$fp,%hi(g_p4_option_num)
+$L894:
+	li	$19,5			# 0x5
+	lw	$4,%lo(g_p4_option_num)($fp)
+	li	$2,28			# 0x1c
+	lw	$5,28($16)
+	li	$6,6			# 0x6
+	divu	$0,$4,$19
+	mfhi	$4
+	mult	$4,$2
+	mflo	$4
+	jal	memcpy
+	addu	$4,$20,$4
+
+	lui	$4,%hi(g_sc_debug)
+	lw	$3,%lo(g_p4_option_num)($fp)
+	lui	$11,%hi(g_sc_ctx)
+	lw	$2,%lo(g_sc_debug)($4)
+	addiu	$11,$11,%lo(g_sc_ctx)
+	addiu	$3,$3,1
+	sw	$3,%lo(g_p4_option_num)($fp)
+	li	$3,2			# 0x2
+	beq	$2,$0,$L540
+	sw	$3,10896($11)
+
+	lui	$4,%hi($LC25)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC25)
+
+	li	$2,28			# 0x1c
+	lw	$4,%lo(g_p4_option_num)($fp)
+	li	$5,6			# 0x6
+	divu	$0,$4,$19
+	mfhi	$4
+	mult	$4,$2
+	mflo	$4
+	jal	bytedump
+	addu	$4,$20,$4
+
+	lui	$4,%hi($LC26)
+	lw	$5,%lo(g_p4_option_num)($fp)
+	lw	$6,12($16)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC26)
+
+	lui	$4,%hi($LC27)
+	lw	$2,%lo(g_p4_option_num)($fp)
+	divu	$0,$2,$19
+	li	$2,28			# 0x1c
+	mfhi	$19
+	mult	$19,$2
+	mflo	$19
+	addu	$19,$19,$20
+	lw	$6,12($19)
+	lw	$5,8($19)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC27)
+
+	j	$L877
+	addiu	$21,$21,1
+
+$L531:
+	bne	$3,$4,$L540
+	subu	$2,$3,$2
+
+	li	$3,2			# 0x2
+	andi	$4,$2,0x3f0
+	sra	$4,$4,4
+	bne	$4,$3,$L540
+	andi	$2,$2,0xf
+
+	li	$4,3			# 0x3
+	bne	$2,$4,$L540
+	lui	$fp,%hi(g_option_sa+8)
+
+	move	$19,$0
+	addiu	$fp,$fp,%lo(g_option_sa+8)
+$L557:
+	li	$3,28			# 0x1c
+	li	$6,6			# 0x6
+	mult	$19,$3
+	lw	$5,28($16)
+	mflo	$4
+	addu	$4,$20,$4
+	jal	memcmp
+	sw	$4,24($sp)
+
+	bne	$2,$0,$L541
+	lui	$5,%hi(null_mac)
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$3,%lo(g_sc_debug)($2)
+	li	$2,-1			# 0xffffffff
+	bne	$3,$2,$L542
+	nop
+
+	jal	net_ratelimit
+	nop
+
+	beq	$2,$0,$L542
+	li	$2,-1207959552			# 0xb8000000
+
+	li	$3,8388608			# 0x800000
+	move	$5,$19
+	ori	$2,$2,0x311c
+	lui	$4,%hi($LC28)
+	lw	$6,0($2)
+	addiu	$4,$4,%lo($LC28)
+	or	$3,$6,$3
+	sw	$3,0($2)
+	jal	panic_printk
+	nop
+
+$L542:
+	lbu	$2,40($16)
+	li	$3,1			# 0x1
+	bne	$2,$3,$L543
+	li	$3,2			# 0x2
+
+	li	$2,28			# 0x1c
+	mult	$19,$2
+	lui	$2,%hi(g_option_sa)
+	addiu	$2,$2,%lo(g_option_sa)
+	mflo	$19
+	addu	$19,$19,$2
+	lw	$2,8($19)
+	bne	$2,$0,$L895
+	lui	$2,%hi(g_p4_to_ds_hrate)
+
+	lui	$2,%hi(g_sc_magic)
+	sll	$21,$21,2
+	addiu	$2,$2,%lo(g_sc_magic)
+	addu	$21,$21,$2
+	lw	$2,0($21)
+	j	$L544
+	sw	$2,8($19)
+
+$L543:
+	bne	$2,$3,$L895
+	lui	$2,%hi(g_p4_to_ds_hrate)
+
+	li	$2,28			# 0x1c
+	mult	$19,$2
+	lui	$2,%hi(g_option_sa)
+	addiu	$2,$2,%lo(g_option_sa)
+	mflo	$19
+	addu	$19,$2,$19
+	lw	$2,12($19)
+	bne	$2,$0,$L895
+	lui	$2,%hi(g_p4_to_ds_hrate)
+
+	lui	$2,%hi(g_sc_magic)
+	sll	$21,$21,2
+	addiu	$2,$2,%lo(g_sc_magic)
+	addu	$21,$21,$2
+	lw	$2,0($21)
+	sw	$2,12($19)
+$L544:
+	lui	$2,%hi(g_p4_to_ds_hrate)
+$L895:
+	lw	$3,%lo(g_p4_to_ds_hrate)($2)
+	bne	$3,$0,$L545
+	nop
+
+	lbu	$3,56($16)
+	sltu	$3,$3,55
+	bne	$3,$0,$L545
+	li	$3,1			# 0x1
+
+	sw	$3,%lo(g_p4_to_ds_hrate)($2)
+$L545:
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L546
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L546:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L541:
+	li	$6,6			# 0x6
+	lw	$4,24($sp)
+	jal	memcmp
+	addiu	$5,$5,%lo(null_mac)
+
+	bne	$2,$0,$L547
+	lui	$3,%hi(g_sc_debug)
+
+	li	$4,-1			# 0xffffffff
+	lw	$2,%lo(g_sc_debug)($3)
+	bne	$2,$4,$L548
+	nop
+
+	jal	net_ratelimit
+	nop
+
+	beq	$2,$0,$L548
+	li	$11,-1207959552			# 0xb8000000
+
+	li	$3,8388608			# 0x800000
+	move	$5,$19
+	ori	$11,$11,0x311c
+	lui	$4,%hi($LC29)
+	lw	$2,0($11)
+	addiu	$4,$4,%lo($LC29)
+	or	$2,$2,$3
+	sw	$2,0($11)
+	jal	panic_printk
+	nop
+
+$L548:
+	lbu	$2,40($16)
+	bne	$2,$23,$L549
+	li	$4,2			# 0x2
+
+	lw	$2,0($fp)
+	j	$L856
+	nop
+
+$L549:
+	bne	$2,$4,$L551
+	move	$3,$0
+
+	lw	$2,4($fp)
+$L856:
+	bne	$2,$0,$L550
+	li	$3,1			# 0x1
+
+	lw	$2,0($22)
+	j	$L551
+	sw	$2,0($fp)
+
+$L550:
+	move	$3,$0
+$L551:
+	lui	$11,%hi(g_p4_to_ds_hrate)
+	lw	$2,%lo(g_p4_to_ds_hrate)($11)
+	bne	$2,$0,$L552
+	nop
+
+	lbu	$2,56($16)
+	sltu	$2,$2,55
+	bne	$2,$0,$L552
+	li	$2,1			# 0x1
+
+	sw	$2,%lo(g_p4_to_ds_hrate)($11)
+$L552:
+	bne	$3,$23,$L547
+	li	$6,6			# 0x6
+
+	lw	$5,28($16)
+	lw	$4,24($sp)
+	jal	memcpy
+	sw	$3,32($sp)
+
+	lui	$4,%hi(g_p4_option_num)
+	lw	$6,%lo(g_p4_option_num)($4)
+	lui	$2,%hi(g_sc_debug)
+	lw	$3,32($sp)
+	lw	$5,%lo(g_sc_debug)($2)
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	addiu	$6,$6,1
+	sw	$3,10896($2)
+	sw	$6,%lo(g_p4_option_num)($4)
+	sb	$3,10805($2)
+	beq	$5,$0,$L553
+	sb	$19,10806($2)
+
+	lui	$4,%hi($LC30)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC30)
+
+	li	$2,28			# 0x1c
+	mult	$19,$2
+	lui	$4,%hi(g_option_sa)
+	addiu	$4,$4,%lo(g_option_sa)
+	li	$5,6			# 0x6
+	mflo	$19
+	jal	bytedump
+	addu	$4,$4,$19
+
+$L553:
+	lw	$5,28($16)
+	lui	$4,%hi(g_sc_ctx+12)
+	addiu	$4,$4,%lo(g_sc_ctx+12)
+	jal	memcpy
+	li	$6,6			# 0x6
+
+	lui	$4,%hi(g_smac)
+	lw	$5,28($16)
+	li	$6,6			# 0x6
+	addiu	$4,$4,%lo(g_smac)
+	jal	memcpy
+	lui	$17,%hi(g_sc_bssid)
+
+	lw	$2,0($16)
+	lw	$4,188($2)
+	jal	get_bssid
+	nop
+
+	lui	$4,%hi(g_sc_ctx+24)
+	move	$18,$2
+	addiu	$4,$4,%lo(g_sc_ctx+24)
+	li	$6,6			# 0x6
+	jal	memcpy
+	move	$5,$2
+
+	li	$6,6			# 0x6
+	move	$5,$18
+	jal	memcpy
+	addiu	$4,$17,%lo(g_sc_bssid)
+
+	addiu	$5,$17,%lo(g_sc_bssid)
+	jal	rtk_sc_set_string_value
+	li	$4,26			# 0x1a
+
+	li	$4,5			# 0x5
+	jal	rtk_sc_set_value
+	li	$5,1			# 0x1
+
+	li	$3,2			# 0x2
+	lbu	$2,40($16)
+	bne	$2,$3,$L554
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L554:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L547:
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L555
+	lui	$4,%hi(g_sc_ctx)
+
+	lhu	$2,36($16)
+	addiu	$4,$4,%lo(g_sc_ctx)
+	j	$L556
+	sh	$2,10810($4)
+
+$L555:
+	bne	$2,$23,$L556
+	lui	$11,%hi(g_sc_ctx)
+
+	lhu	$2,36($16)
+	addiu	$11,$11,%lo(g_sc_ctx)
+	sh	$2,10808($11)
+$L556:
+	addiu	$19,$19,1
+	li	$2,5			# 0x5
+	bne	$19,$2,$L557
+	addiu	$fp,$fp,28
+
+	lbu	$2,40($16)
+	bne	$2,$23,$L558
+	li	$3,2			# 0x2
+
+	lui	$2,%hi(g_p4_option_num)
+	lw	$3,%lo(g_p4_option_num)($2)
+	lw	$2,0($22)
+	divu	$0,$3,$19
+	li	$19,28			# 0x1c
+	mfhi	$3
+	mult	$3,$19
+	mflo	$3
+	addu	$3,$3,$20
+	j	$L559
+	sw	$2,8($3)
+
+$L558:
+	bne	$2,$3,$L896
+	lui	$3,%hi(g_p4_option_num)
+
+	lui	$2,%hi(g_p4_option_num)
+	lw	$3,%lo(g_p4_option_num)($2)
+	lw	$2,0($22)
+	divu	$0,$3,$19
+	li	$19,28			# 0x1c
+	mfhi	$3
+	mult	$3,$19
+	mflo	$3
+	addu	$3,$20,$3
+	sw	$2,12($3)
+$L559:
+	lui	$3,%hi(g_p4_option_num)
+$L896:
+	li	$19,5			# 0x5
+	lw	$4,%lo(g_p4_option_num)($3)
+	li	$fp,28			# 0x1c
+	lw	$5,28($16)
+	li	$6,6			# 0x6
+	divu	$0,$4,$19
+	sw	$3,32($sp)
+	mfhi	$4
+	mult	$4,$fp
+	mflo	$4
+	jal	memcpy
+	addu	$4,$20,$4
+
+	lw	$3,32($sp)
+	lw	$2,%lo(g_p4_option_num)($3)
+	divu	$0,$2,$19
+	mfhi	$19
+	mult	$19,$fp
+	mflo	$19
+	addu	$19,$19,$20
+	lw	$2,8($19)
+	bne	$2,$0,$L560
+	nop
+
+	lw	$2,12($19)
+	beq	$2,$0,$L897
+	lui	$2,%hi(g_p4_option_num)
+
+$L560:
+	lui	$4,%hi($LC31)
+	lui	$3,%hi(g_p4_option_num)
+	addiu	$4,$4,%lo($LC31)
+	li	$5,2091			# 0x82b
+	sw	$3,32($sp)
+	jal	panic_printk
+	li	$19,5			# 0x5
+
+	li	$fp,28			# 0x1c
+	lw	$3,32($sp)
+	li	$5,6			# 0x6
+	lw	$4,%lo(g_p4_option_num)($3)
+	divu	$0,$4,$19
+	mfhi	$4
+	mult	$4,$fp
+	mflo	$4
+	jal	bytedump
+	addu	$4,$20,$4
+
+	lui	$4,%hi($LC32)
+	lw	$3,32($sp)
+	lw	$2,%lo(g_p4_option_num)($3)
+	divu	$0,$2,$19
+	mfhi	$19
+	mult	$19,$fp
+	mflo	$fp
+	addu	$fp,$fp,$20
+	lw	$6,12($fp)
+	lw	$5,8($fp)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC32)
+
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	sw	$23,10896($2)
+	lui	$2,%hi(g_p4_option_num)
+$L897:
+	lw	$3,%lo(g_p4_option_num)($2)
+	addiu	$3,$3,1
+	sw	$3,%lo(g_p4_option_num)($2)
+$L540:
+	addiu	$21,$21,1
+$L877:
+	li	$2,8			# 0x8
+	bne	$21,$2,$L562
+	addiu	$22,$22,4
+
+	lui	$19,%hi(g_sc_ctx)
+	lui	$21,%hi(g_option_sa+12)
+	addiu	$19,$19,%lo(g_sc_ctx)
+	lui	$23,%hi(g_sc_ctx+24)
+	move	$fp,$19
+	addiu	$21,$21,%lo(g_option_sa+12)
+	addiu	$23,$23,%lo(g_sc_ctx+24)
+	sw	$0,24($sp)
+	li	$20,1			# 0x1
+	li	$22,1			# 0x1
+$L619:
+	lw	$2,24($sp)
+	li	$4,28			# 0x1c
+	lui	$3,%hi(g_option_sa)
+	li	$6,6			# 0x6
+	mult	$2,$4
+	addiu	$3,$3,%lo(g_option_sa)
+	lw	$5,28($16)
+	mflo	$4
+	jal	memcmp
+	addu	$4,$3,$4
+
+	bne	$2,$0,$L563
+	nop
+
+	lw	$2,-4($21)
+	bne	$2,$0,$L564
+	nop
+
+	lw	$3,0($21)
+	beq	$3,$0,$L563
+	nop
+
+$L564:
+	lw	$5,10896($19)
+	lw	$4,0($21)
+	bne	$5,$20,$L565
+	li	$3,2			# 0x2
+
+	lbu	$3,40($16)
+	bne	$3,$20,$L566
+	nop
+
+	beq	$2,$0,$L567
+	nop
+
+	lw	$3,12($16)
+	subu	$3,$3,$2
+	addiu	$4,$3,-497
+	sltu	$4,$4,15
+	beq	$4,$0,$L567
+	nop
+
+	srl	$17,$3,4
+	andi	$17,$17,0x1f
+	xori	$17,$17,0x1f
+	j	$L567
+	sltu	$17,$17,1
+
+$L566:
+	li	$5,2			# 0x2
+	bne	$3,$5,$L567
+	nop
+
+	beq	$4,$0,$L567
+	nop
+
+	lw	$3,12($16)
+	subu	$4,$3,$4
+	addiu	$3,$4,-497
+	sltu	$3,$3,15
+	beq	$3,$0,$L567
+	srl	$4,$4,4
+
+	li	$3,31			# 0x1f
+	andi	$4,$4,0x1f
+	bne	$4,$3,$L563
+	move	$17,$0
+
+	j	$L569
+	li	$17,1			# 0x1
+
+$L567:
+	beq	$17,$0,$L563
+	nop
+
+$L569:
+	lw	$4,0($21)
+	lui	$3,%hi(g_p4_magic_1)
+	sw	$2,%lo(g_p4_magic_1)($3)
+	lui	$3,%hi(g_p4_magic_2)
+	beq	$2,$0,$L570
+	sw	$4,%lo(g_p4_magic_2)($3)
+
+	beq	$4,$0,$L570
+	nop
+
+	beq	$4,$2,$L570
+	sltu	$3,$4,$2
+
+	beq	$3,$0,$L898
+	sltu	$3,$2,$4
+
+	subu	$5,$2,$4
+	li	$3,2			# 0x2
+	beq	$5,$3,$L571
+	move	$5,$0
+
+	lui	$4,%hi(g_option_sa)
+	addiu	$4,$4,%lo(g_option_sa)
+	li	$6,140			# 0x8c
+	jal	memset
+	sw	$3,32($sp)
+
+	lbu	$2,40($16)
+	lw	$3,32($sp)
+	bne	$2,$3,$L572
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L572:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L571:
+	sltu	$3,$2,$4
+$L898:
+	beq	$3,$0,$L570
+	subu	$4,$4,$2
+
+	li	$3,2			# 0x2
+	beq	$4,$3,$L570
+	lui	$4,%hi(g_option_sa)
+
+	move	$5,$0
+	addiu	$4,$4,%lo(g_option_sa)
+	li	$6,140			# 0x8c
+	jal	memset
+	sw	$3,32($sp)
+
+	lbu	$2,40($16)
+	lw	$3,32($sp)
+	bne	$2,$3,$L573
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L573:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L570:
+	lbu	$3,40($16)
+	bne	$3,$20,$L899
+	nop
+
+	beq	$2,$0,$L900
+	li	$2,2			# 0x2
+
+	lw	$2,10896($19)
+	bne	$2,$20,$L900
+	li	$2,2			# 0x2
+
+	bne	$17,$20,$L900
+	nop
+
+	lw	$3,12($16)
+	lw	$2,-4($21)
+	subu	$2,$3,$2
+	andi	$2,$2,0xf
+	addiu	$2,$2,1
+	sll	$2,$2,4
+	sw	$2,1852($19)
+	lbu	$3,40($16)
+$L899:
+	li	$2,2			# 0x2
+$L900:
+	bne	$3,$2,$L575
+	lui	$2,%hi(g_p4_magic_2)
+
+	lw	$2,%lo(g_p4_magic_2)($2)
+	beq	$2,$0,$L575
+	nop
+
+	lw	$2,10896($19)
+	bne	$2,$20,$L901
+	lui	$2,%hi(g_p4_to_ds_hrate)
+
+	bne	$17,$20,$L901
+	nop
+
+	lw	$3,12($16)
+	lw	$2,0($21)
+	subu	$2,$3,$2
+	andi	$2,$2,0xf
+	addiu	$2,$2,1
+	sll	$2,$2,4
+	sw	$2,1852($19)
+	lui	$2,%hi(g_p4_to_ds_hrate)
+$L901:
+	lw	$3,%lo(g_p4_to_ds_hrate)($2)
+	bne	$3,$0,$L575
+	nop
+
+	lbu	$3,56($16)
+	sltu	$3,$3,55
+	bne	$3,$0,$L575
+	nop
+
+	sw	$22,%lo(g_p4_to_ds_hrate)($2)
+$L575:
+	lw	$2,1852($19)
+	sltu	$3,$2,257
+	bne	$3,$0,$L577
+	nop
+
+	jal	rtk_sc_restart_simple_config
+	move	$4,$18
+
+	li	$3,2			# 0x2
+	lbu	$2,40($16)
+	bne	$2,$3,$L578
+	li	$3,1			# 0x1
+
+	lhu	$2,36($16)
+	j	$L507
+	sh	$2,10810($19)
+
+$L578:
+	bne	$2,$3,$L507
+	nop
+
+	lhu	$2,36($16)
+	j	$L507
+	sh	$2,10808($19)
+
+$L577:
+	bne	$2,$0,$L579
+	lui	$4,%hi(g_sc_ctx+12)
+
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L580
+	li	$3,1			# 0x1
+
+	lhu	$2,36($16)
+	j	$L507
+	sh	$2,10810($19)
+
+$L580:
+	bne	$2,$3,$L507
+	nop
+
+	lhu	$2,36($16)
+	j	$L507
+	sh	$2,10808($19)
+
+$L579:
+	lw	$5,28($16)
+	li	$6,6			# 0x6
+	jal	memcpy
+	addiu	$4,$4,%lo(g_sc_ctx+12)
+
+	lui	$4,%hi(g_smac)
+	lw	$5,28($16)
+	li	$6,6			# 0x6
+	jal	memcpy
+	addiu	$4,$4,%lo(g_smac)
+
+	lw	$2,0($16)
+	lw	$4,188($2)
+	jal	get_bssid
+	nop
+
+	move	$4,$23
+	li	$6,6			# 0x6
+	move	$5,$2
+	jal	memcpy
+	sw	$2,32($sp)
+
+	lui	$4,%hi(g_sc_bssid)
+	lw	$3,32($sp)
+	addiu	$4,$4,%lo(g_sc_bssid)
+	li	$6,6			# 0x6
+	jal	memcpy
+	move	$5,$3
+
+	lui	$5,%hi(g_sc_bssid)
+	li	$4,26			# 0x1a
+	jal	rtk_sc_set_string_value
+	addiu	$5,$5,%lo(g_sc_bssid)
+
+	lui	$4,%hi(finish_sync)
+	lw	$3,1852($19)
+	move	$2,$0
+	sw	$22,%lo(finish_sync)($4)
+	srl	$4,$3,4
+	sw	$20,10900($19)
+	andi	$4,$4,0x00ff
+	andi	$3,$3,0xf
+	beq	$3,$0,$L582
+	sb	$4,3386($19)
+
+	addiu	$4,$4,1
+	move	$2,$3
+	sb	$4,3386($19)
+$L582:
+	lbu	$8,3386($19)
+	li	$7,24			# 0x18
+	lui	$5,%hi(g_sc_ctx+3388)
+	lui	$4,%hi(g_sc_ctx+10812)
+	mult	$8,$7
+	move	$6,$8
+	addiu	$9,$8,-1
+	addiu	$5,$5,%lo(g_sc_ctx+3388)
+	addiu	$4,$4,%lo(g_sc_ctx+10812)
+	move	$3,$0
+	li	$10,24			# 0x18
+	li	$8,16			# 0x10
+	mflo	$11
+	addiu	$7,$2,8
+	j	$L583
+	sb	$11,3387($19)
+
+$L586:
+	beq	$2,$0,$L584
+	nop
+
+	bne	$3,$9,$L584
+	nop
+
+	sb	$7,0($5)
+	j	$L585
+	sw	$2,0($4)
+
+$L584:
+	sb	$10,0($5)
+	sw	$8,0($4)
+$L585:
+	addiu	$3,$3,1
+	addiu	$5,$5,1
+	addiu	$4,$4,4
+$L583:
+	slt	$11,$3,$6
+	bne	$11,$0,$L586
+	nop
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$2,%lo(g_sc_debug)($2)
+	beq	$2,$0,$L587
+	lui	$2,%hi(g_p4_magic_1)
+
+	lw	$5,%lo(g_p4_magic_1)($2)
+	beq	$5,$0,$L902
+	lui	$2,%hi(g_p4_magic_2)
+
+	lw	$2,%lo(g_p4_magic_2)($2)
+	bne	$2,$0,$L902
+	lui	$2,%hi(g_p4_magic_2)
+
+	lui	$4,%hi($LC33)
+	lw	$6,1852($19)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC33)
+
+	lui	$2,%hi(g_p4_magic_2)
+$L902:
+	lw	$5,%lo(g_p4_magic_2)($2)
+	beq	$5,$0,$L903
+	lui	$2,%hi(g_p4_magic_1)
+
+	lw	$2,%lo(g_p4_magic_1)($2)
+	bne	$2,$0,$L903
+	lui	$2,%hi(g_p4_magic_1)
+
+	lui	$4,%hi($LC34)
+	lw	$6,1852($19)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC34)
+
+	lui	$2,%hi(g_p4_magic_1)
+$L903:
+	lw	$5,%lo(g_p4_magic_1)($2)
+	beq	$5,$0,$L590
+	lui	$2,%hi(g_p4_magic_2)
+
+	lw	$6,%lo(g_p4_magic_2)($2)
+	beq	$6,$0,$L590
+	nop
+
+	lui	$4,%hi($LC35)
+	lw	$7,1852($19)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC35)
+
+$L590:
+	li	$5,6			# 0x6
+	jal	bytedump
+	move	$4,$23
+
+	lui	$4,%hi($LC23)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC23)
+
+	lui	$4,%hi(g_sc_ctx+12)
+	addiu	$4,$4,%lo(g_sc_ctx+12)
+	jal	bytedump
+	li	$5,6			# 0x6
+
+$L587:
+	lbu	$5,40($16)
+	lui	$7,%hi(g_sc_ctx+2424)
+	addiu	$7,$7,%lo(g_sc_ctx+2424)
+	li	$3,2			# 0x2
+	li	$4,19			# 0x13
+	sw	$3,32($sp)
+	jal	rtk_sc_set_value
+	sw	$7,28($sp)
+
+	li	$4,13			# 0xd
+	jal	rtk_sc_set_value
+	li	$5,2			# 0x2
+
+	li	$4,7			# 0x7
+	jal	rtk_sc_set_value
+	li	$5,2			# 0x2
+
+	li	$4,26			# 0x1a
+	jal	rtk_sc_set_string_value
+	move	$5,$23
+
+	li	$4,14			# 0xe
+	jal	rtk_sc_set_value
+	move	$5,$0
+
+	lui	$2,%hi(fix_sa)
+	sw	$22,%lo(fix_sa)($2)
+	lui	$2,%hi(sync_pkt_index)
+	sw	$0,%lo(sync_pkt_index)($2)
+	lui	$2,%hi(profile_pkt_index)
+	sw	$0,%lo(profile_pkt_index)($2)
+	lui	$2,%hi(sequence)
+	sw	$0,%lo(sequence)($2)
+	lw	$3,32($sp)
+	lw	$7,28($sp)
+	j	$L591
+	nop
+
+$L595:
+	lw	$4,0($7)
+	beq	$4,$0,$L592
+	sw	$4,%lo(pp)($2)
+
+	lw	$2,4($4)
+	andi	$2,$2,0x2
+	beq	$2,$0,$L592
+	move	$5,$fp
+
+	sw	$3,32($sp)
+	move	$6,$18
+	jal	rtk_sc_check_pattern
+	sw	$7,28($sp)
+
+	lw	$3,32($sp)
+	lw	$7,28($sp)
+	bne	$2,$0,$L904
+	addiu	$3,$3,1
+
+	li	$17,1			# 0x1
+	lui	$2,%hi(finish_sync)
+	sw	$17,%lo(finish_sync)($2)
+	lui	$2,%hi(fix_sa)
+	sw	$17,%lo(fix_sa)($2)
+	li	$18,2			# 0x2
+	lui	$2,%hi(g_pkt_type)
+	jal	clean_sc_syn
+	sw	$18,%lo(g_pkt_type)($2)
+
+	lbu	$2,40($16)
+	bne	$2,$18,$L593
+	nop
+
+	lhu	$2,36($16)
+	j	$L594
+	sh	$2,10810($fp)
+
+$L593:
+	bne	$2,$17,$L905
+	lui	$2,%hi(g_p4_magic_len)
+
+	lhu	$2,36($16)
+	sh	$2,10808($fp)
+$L594:
+	lui	$2,%hi(g_p4_magic_len)
+$L905:
+	j	$L507
+	sw	$0,%lo(g_p4_magic_len)($2)
+
+$L592:
+	addiu	$3,$3,1
+$L904:
+	addiu	$7,$7,4
+$L591:
+	lw	$2,2672($19)
+	slt	$2,$3,$2
+	bne	$2,$0,$L595
+	lui	$2,%hi(pp)
+
+	j	$L563
+	nop
+
+$L565:
+	bne	$5,$3,$L563
+	sltu	$6,$4,$2
+
+	lw	$3,12($16)
+	movz	$2,$4,$6
+	addiu	$4,$2,1118
+	sltu	$4,$4,$3
+	beq	$4,$0,$L906
+	addiu	$4,$2,1094
+
+	addiu	$4,$2,1135
+	sltu	$4,$4,$3
+	bne	$4,$0,$L596
+	addiu	$4,$2,1094
+
+	sw	$5,10900($19)
+	j	$L597
+	li	$17,5			# 0x5
+
+$L596:
+$L906:
+	sltu	$4,$4,$3
+	beq	$4,$0,$L907
+	addiu	$4,$2,1070
+
+	addiu	$4,$2,1111
+	sltu	$4,$4,$3
+	bne	$4,$0,$L598
+	addiu	$4,$2,1070
+
+	sw	$20,10900($19)
+	j	$L597
+	li	$17,4			# 0x4
+
+$L598:
+$L907:
+	sltu	$4,$4,$3
+	beq	$4,$0,$L908
+	addiu	$4,$2,1046
+
+	addiu	$4,$2,1087
+	sltu	$4,$4,$3
+	bne	$4,$0,$L599
+	addiu	$4,$2,1046
+
+	sw	$20,10900($19)
+	j	$L597
+	li	$17,3			# 0x3
+
+$L599:
+$L908:
+	sltu	$4,$4,$3
+	beq	$4,$0,$L909
+	addiu	$4,$2,1022
+
+	addiu	$4,$2,1063
+	sltu	$4,$4,$3
+	bne	$4,$0,$L600
+	addiu	$4,$2,1022
+
+	sw	$20,10900($19)
+	j	$L597
+	li	$17,2			# 0x2
+
+$L600:
+$L909:
+	sltu	$4,$4,$3
+	beq	$4,$0,$L601
+	addiu	$2,$2,1039
+
+	sltu	$3,$2,$3
+	bne	$3,$0,$L601
+	nop
+
+	sw	$20,10900($19)
+	j	$L597
+	li	$17,1			# 0x1
+
+$L601:
+	sw	$0,10900($19)
+	j	$L563
+	move	$17,$0
+
+$L597:
+	lw	$2,-4($21)
+	lui	$4,%hi(g_p4_magic_1)
+	lw	$3,0($21)
+	sw	$2,%lo(g_p4_magic_1)($4)
+	lui	$4,%hi(g_p4_magic_2)
+	beq	$2,$0,$L602
+	sw	$3,%lo(g_p4_magic_2)($4)
+
+	beq	$3,$0,$L602
+	nop
+
+	beq	$3,$2,$L602
+	sltu	$4,$3,$2
+
+	beq	$4,$0,$L910
+	sltu	$4,$2,$3
+
+	addiu	$4,$2,-2
+	bne	$3,$4,$L507
+	sltu	$4,$2,$3
+
+$L910:
+	beq	$4,$0,$L602
+	addiu	$3,$3,-2
+
+	bne	$2,$3,$L507
+	nop
+
+$L602:
+	lbu	$3,40($16)
+	bne	$3,$20,$L911
+	nop
+
+	beq	$2,$0,$L911
+	nop
+
+	bne	$17,$20,$L605
+	li	$4,5			# 0x5
+
+	lw	$3,12($16)
+	lw	$2,-4($21)
+	subu	$2,$3,$2
+	sll	$2,$2,4
+	j	$L841
+	addiu	$2,$2,-16368
+
+$L605:
+	lw	$2,12($16)
+	lw	$3,-4($21)
+	bne	$17,$4,$L606
+	subu	$5,$20,$17
+
+	subu	$2,$2,$3
+	li	$3,1124			# 0x464
+	bne	$2,$3,$L607
+	li	$3,1125			# 0x465
+
+	j	$L841
+	li	$2,86			# 0x56
+
+$L607:
+	bne	$2,$3,$L604
+	li	$2,107			# 0x6b
+
+$L841:
+	j	$L604
+	sw	$2,1852($19)
+
+$L606:
+	li	$4,24			# 0x18
+	mult	$5,$4
+	addiu	$6,$17,-1
+	li	$5,63			# 0x3f
+	subu	$2,$2,$3
+	mflo	$4
+	mult	$6,$5
+	addu	$4,$2,$4
+	addiu	$5,$17,-16385
+	sll	$2,$4,4
+	mflo	$3
+	addu	$4,$5,$3
+	addu	$4,$4,$2
+	sw	$4,1852($19)
+$L604:
+	lbu	$3,40($16)
+$L911:
+	li	$2,2			# 0x2
+	bne	$3,$2,$L608
+	lui	$2,%hi(g_p4_magic_2)
+
+	lw	$2,%lo(g_p4_magic_2)($2)
+	beq	$2,$0,$L608
+	nop
+
+	bne	$17,$20,$L609
+	li	$4,5			# 0x5
+
+	lw	$3,12($16)
+	lw	$2,0($21)
+	subu	$2,$3,$2
+	sll	$2,$2,4
+	j	$L842
+	addiu	$2,$2,-16368
+
+$L609:
+	lw	$2,12($16)
+	lw	$3,0($21)
+	bne	$17,$4,$L611
+	subu	$5,$20,$17
+
+	subu	$2,$2,$3
+	li	$3,1124			# 0x464
+	bne	$2,$3,$L612
+	li	$3,1125			# 0x465
+
+	j	$L842
+	li	$2,86			# 0x56
+
+$L612:
+	bne	$2,$3,$L912
+	lui	$2,%hi(g_p4_to_ds_hrate)
+
+	li	$2,107			# 0x6b
+$L842:
+	j	$L610
+	sw	$2,1852($19)
+
+$L611:
+	li	$4,24			# 0x18
+	mult	$5,$4
+	addiu	$6,$17,-1
+	li	$5,63			# 0x3f
+	subu	$2,$2,$3
+	mflo	$4
+	mult	$6,$5
+	addu	$4,$2,$4
+	addiu	$5,$17,-16385
+	sll	$2,$4,4
+	mflo	$3
+	addu	$4,$5,$3
+	addu	$4,$4,$2
+	sw	$4,1852($19)
+$L610:
+	lui	$2,%hi(g_p4_to_ds_hrate)
+$L912:
+	lw	$3,%lo(g_p4_to_ds_hrate)($2)
+	bne	$3,$0,$L608
+	nop
+
+	lbu	$3,56($16)
+	sltu	$3,$3,55
+	bne	$3,$0,$L608
+	nop
+
+	sw	$22,%lo(g_p4_to_ds_hrate)($2)
+$L608:
+	lw	$5,1852($19)
+	sltu	$2,$5,257
+	bne	$2,$0,$L613
+	nop
+
+	jal	rtk_sc_restart_simple_config
+	move	$4,$18
+
+	j	$L507
+	nop
+
+$L613:
+	beq	$5,$0,$L507
+	lui	$2,%hi(g_sc_debug)
+
+	lw	$3,%lo(g_sc_debug)($2)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L614
+	nop
+
+	lui	$4,%hi($LC36)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC36)
+
+$L614:
+	lw	$5,28($16)
+	lui	$4,%hi(g_sc_ctx+12)
+	li	$6,6			# 0x6
+	jal	memcpy
+	addiu	$4,$4,%lo(g_sc_ctx+12)
+
+	lui	$4,%hi(g_smac)
+	lw	$5,28($16)
+	li	$6,6			# 0x6
+	jal	memcpy
+	addiu	$4,$4,%lo(g_smac)
+
+	lw	$2,0($16)
+	lw	$4,188($2)
+	jal	get_bssid
+	nop
+
+	move	$4,$23
+	li	$6,6			# 0x6
+	move	$5,$2
+	jal	memcpy
+	sw	$2,32($sp)
+
+	lui	$4,%hi(g_sc_bssid)
+	lw	$3,32($sp)
+	addiu	$4,$4,%lo(g_sc_bssid)
+	li	$6,6			# 0x6
+	jal	memcpy
+	move	$5,$3
+
+	lui	$5,%hi(g_sc_bssid)
+	li	$4,26			# 0x1a
+	jal	rtk_sc_set_string_value
+	addiu	$5,$5,%lo(g_sc_bssid)
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$2,%lo(g_sc_debug)($2)
+	lui	$4,%hi(finish_sync)
+	beq	$2,$0,$L615
+	sw	$22,%lo(finish_sync)($4)
+
+	lui	$4,%hi($LC22)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC22)
+
+	li	$5,6			# 0x6
+	jal	bytedump
+	move	$4,$23
+
+	lui	$4,%hi($LC23)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC23)
+
+	lui	$4,%hi(g_sc_ctx+12)
+	addiu	$4,$4,%lo(g_sc_ctx+12)
+	jal	bytedump
+	li	$5,6			# 0x6
+
+	li	$2,2			# 0x2
+	lw	$3,10900($19)
+	bne	$3,$2,$L615
+	lui	$4,%hi($LC37)
+
+	lw	$5,1852($19)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC37)
+
+$L615:
+	lbu	$5,40($16)
+	lui	$7,%hi(g_sc_ctx+2424)
+	addiu	$7,$7,%lo(g_sc_ctx+2424)
+	li	$3,2			# 0x2
+	li	$4,19			# 0x13
+	sw	$3,32($sp)
+	jal	rtk_sc_set_value
+	sw	$7,28($sp)
+
+	li	$4,13			# 0xd
+	jal	rtk_sc_set_value
+	li	$5,2			# 0x2
+
+	li	$4,7			# 0x7
+	jal	rtk_sc_set_value
+	li	$5,2			# 0x2
+
+	li	$4,5			# 0x5
+	jal	rtk_sc_set_value
+	li	$5,1			# 0x1
+
+	li	$4,26			# 0x1a
+	jal	rtk_sc_set_string_value
+	move	$5,$23
+
+	lui	$2,%hi(fix_sa)
+	sw	$22,%lo(fix_sa)($2)
+	lui	$2,%hi(sync_pkt_index)
+	sw	$0,%lo(sync_pkt_index)($2)
+	lui	$2,%hi(profile_pkt_index)
+	sw	$0,%lo(profile_pkt_index)($2)
+	li	$4,14			# 0xe
+	lui	$2,%hi(sequence)
+	move	$5,$0
+	jal	rtk_sc_set_value
+	sw	$0,%lo(sequence)($2)
+
+	lw	$3,32($sp)
+	lw	$7,28($sp)
+	j	$L616
+	nop
+
+$L618:
+	lw	$4,0($7)
+	beq	$4,$0,$L617
+	sw	$4,%lo(pp)($11)
+
+	lw	$2,4($4)
+	andi	$2,$2,0x2
+	beq	$2,$0,$L617
+	move	$5,$fp
+
+	sw	$3,32($sp)
+	move	$6,$18
+	jal	rtk_sc_check_pattern
+	sw	$7,28($sp)
+
+	lw	$3,32($sp)
+	lw	$7,28($sp)
+	bne	$2,$0,$L913
+	addiu	$3,$3,1
+
+	li	$2,1			# 0x1
+	lui	$3,%hi(fix_sa)
+	sw	$2,%lo(fix_sa)($3)
+	li	$4,2			# 0x2
+	lui	$3,%hi(g_pkt_type)
+	sw	$4,%lo(g_pkt_type)($3)
+	lui	$3,%hi(finish_sync)
+	j	$L507
+	sw	$2,%lo(finish_sync)($3)
+
+$L617:
+	addiu	$3,$3,1
+$L913:
+	addiu	$7,$7,4
+$L616:
+	lw	$2,2672($19)
+	slt	$2,$3,$2
+	bne	$2,$0,$L618
+	lui	$11,%hi(pp)
+
+$L563:
+	lw	$2,24($sp)
+	addiu	$2,$2,1
+	sw	$2,24($sp)
+	li	$2,5			# 0x5
+	lw	$3,24($sp)
+	bne	$3,$2,$L619
+	addiu	$21,$21,28
+
+	j	$L507
+	nop
+
+$L510:
+	bne	$2,$4,$L507
+	li	$2,1			# 0x1
+
+	bne	$3,$2,$L507
+	nop
+
+	lw	$2,24($16)
+	lbu	$4,0($2)
+	bne	$4,$3,$L914
+	li	$4,255			# 0xff
+
+	lbu	$3,1($2)
+	bne	$3,$0,$L914
+	li	$3,94			# 0x5e
+
+	lbu	$4,2($2)
+	bne	$4,$3,$L914
+	li	$4,255			# 0xff
+
+	move	$3,$0
+	move	$17,$0
+	li	$4,6			# 0x6
+$L621:
+	addu	$5,$2,$17
+	addiu	$17,$17,1
+	lbu	$5,0($5)
+	addu	$3,$3,$5
+	bne	$17,$4,$L621
+	andi	$3,$3,0x00ff
+
+	bne	$3,$0,$L620
+	lui	$4,%hi(g_sc_ctx+12)
+
+	li	$6,6			# 0x6
+	lw	$5,28($16)
+	jal	memcmp
+	addiu	$4,$4,%lo(g_sc_ctx+12)
+
+	bne	$2,$0,$L620
+	lui	$2,%hi(g_pkt_type)
+
+	lw	$3,%lo(g_pkt_type)($2)
+	li	$2,1			# 0x1
+	bne	$3,$2,$L620
+	nop
+
+	lw	$2,24($16)
+	lbu	$5,3($2)
+	slt	$2,$5,9
+	bne	$2,$0,$L507
+	addiu	$19,$5,-9
+
+	lui	$2,%hi(g_sc_ctx)
+	mult	$19,$17
+	addiu	$2,$2,%lo(g_sc_ctx)
+	mflo	$17
+	addu	$17,$17,$2
+	lbu	$2,314($17)
+	bne	$2,$0,$L507
+	lui	$2,%hi(g_sc_check_level)
+
+	lw	$3,%lo(g_sc_check_level)($2)
+	li	$2,2			# 0x2
+	beq	$3,$2,$L622
+	li	$2,6			# 0x6
+
+$L915:
+	lui	$3,%hi(g_sc_ctx)
+	mult	$19,$2
+	addiu	$3,$3,%lo(g_sc_ctx)
+	move	$2,$0
+	li	$4,6			# 0x6
+	mflo	$19
+	addu	$19,$3,$19
+	j	$L623
+	addiu	$19,$19,314
+
+$L622:
+	move	$4,$16
+	jal	rtk_sc_valid_profile_packet
+	sw	$5,28($sp)
+
+	lw	$5,28($sp)
+	bne	$2,$0,$L915
+	li	$2,6			# 0x6
+
+	j	$L507
+	nop
+
+$L623:
+	lw	$3,24($16)
+	addu	$3,$3,$2
+	addiu	$2,$2,1
+	lbu	$3,0($3)
+	sb	$3,0($19)
+	bne	$2,$4,$L623
+	addiu	$19,$19,1
+
+	lui	$2,%hi(profile_pkt_index)
+	lui	$3,%hi(g_sc_debug)
+	lw	$7,%lo(profile_pkt_index)($2)
+	lw	$3,%lo(g_sc_debug)($3)
+	addiu	$7,$7,1
+	sw	$7,%lo(profile_pkt_index)($2)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L916
+	lui	$2,%hi(g_sc_ctx+1852)
+
+	li	$2,10			# 0xa
+	div	$0,$7,$2
+	mfhi	$2
+	bne	$2,$0,$L917
+	lui	$2,%hi(g_sc_ctx+1852)
+
+	li	$2,-1207959552			# 0xb8000000
+	li	$3,8388608			# 0x800000
+	ori	$2,$2,0x311c
+	lw	$4,0($2)
+	or	$3,$4,$3
+	sw	$3,0($2)
+	lui	$2,%hi(g_sc_ctx+1852)
+$L917:
+	lui	$4,%hi($LC38)
+	lw	$6,%lo(g_sc_ctx+1852)($2)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC38)
+
+	lui	$2,%hi(g_sc_ctx+1852)
+$L916:
+	lw	$3,%lo(g_sc_ctx+1852)($2)
+	lui	$2,%hi(profile_pkt_index)
+	lw	$2,%lo(profile_pkt_index)($2)
+	sltu	$2,$2,$3
+	bne	$2,$0,$L507
+	lui	$4,%hi(g_sc_ctx+368)
+
+	li	$2,9			# 0x9
+	j	$L627
+	addiu	$4,$4,%lo(g_sc_ctx+368)
+
+$L629:
+	beq	$4,$0,$L628
+	nop
+
+	addiu	$2,$2,1
+	addiu	$4,$4,6
+$L627:
+	sltu	$5,$2,$3
+	bne	$5,$0,$L629
+	nop
+
+$L628:
+	bne	$2,$3,$L507
+	nop
+
+	jal	rtk_sc_check_profile
+	move	$4,$18
+
+	j	$L507
+	nop
+
+$L620:
+	lw	$2,24($16)
+	li	$4,255			# 0xff
+$L914:
+	lbu	$3,0($2)
+	bne	$3,$4,$L507
+	nop
+
+	lbu	$4,1($2)
+	bne	$4,$3,$L507
+	nop
+
+	lbu	$3,2($2)
+	bne	$3,$4,$L507
+	nop
+
+	lbu	$4,3($2)
+	bne	$4,$3,$L507
+	nop
+
+	lbu	$3,4($2)
+	bne	$3,$4,$L507
+	nop
+
+	lbu	$2,5($2)
+	bne	$2,$3,$L507
+	lui	$4,%hi(g_sc_ctx+12)
+
+	li	$6,6			# 0x6
+	lw	$5,28($16)
+	jal	memcmp
+	addiu	$4,$4,%lo(g_sc_ctx+12)
+
+	bne	$2,$0,$L507
+	nop
+
+	jal	rtk_sc_is_channel_fixed
+	move	$4,$18
+
+	beq	$2,$0,$L507
+	lui	$2,%hi(g_pkt_type)
+
+	lw	$3,%lo(g_pkt_type)($2)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L507
+	lui	$2,%hi(g_sc_ctx+10896)
+
+	lui	$4,%hi(g_p4_magic_len)
+	lw	$2,%lo(g_sc_ctx+10896)($2)
+	bne	$2,$3,$L630
+	sw	$0,%lo(g_p4_magic_len)($4)
+
+	lbu	$2,40($16)
+	li	$3,1			# 0x1
+	bne	$2,$3,$L631
+	nop
+
+	lui	$2,%hi(g_p4_magic_1)
+	lw	$2,%lo(g_p4_magic_1)($2)
+	bne	$2,$0,$L843
+	move	$3,$4
+
+	lui	$2,%hi(g_p4_to_ds_hrate)
+	lw	$2,%lo(g_p4_to_ds_hrate)($2)
+	beq	$2,$0,$L918
+	lui	$2,%hi(g_sc_magic)
+
+	lui	$2,%hi(g_sc_ctx+1852)
+	lw	$2,%lo(g_sc_ctx+1852)($2)
+	sltu	$3,$2,63
+	bne	$3,$0,$L634
+	li	$3,86			# 0x56
+
+	beq	$2,$3,$L634
+	li	$3,107			# 0x6b
+
+	bne	$2,$3,$L919
+	lui	$2,%hi(g_p4_magic_len)
+
+$L634:
+	lui	$2,%hi(g_sc_magic)
+$L918:
+	lui	$4,%hi(g_sc_magic+32)
+	lw	$5,12($16)
+	addiu	$2,$2,%lo(g_sc_magic)
+	addiu	$4,$4,%lo(g_sc_magic+32)
+$L636:
+	lw	$3,0($2)
+	addiu	$6,$3,3
+	bne	$5,$6,$L635
+	addiu	$2,$2,4
+
+	lui	$2,%hi(g_p4_magic_1)
+	j	$L507
+	sw	$3,%lo(g_p4_magic_1)($2)
+
+$L635:
+	bne	$2,$4,$L636
+	nop
+
+	j	$L507
+	nop
+
+$L631:
+	li	$4,2			# 0x2
+	bne	$2,$4,$L507
+	lui	$2,%hi(g_p4_magic_2)
+
+	lw	$2,%lo(g_p4_magic_2)($2)
+	beq	$2,$0,$L637
+	nop
+
+	lui	$3,%hi(g_p4_magic_len)
+$L843:
+	j	$L633
+	sw	$2,%lo(g_p4_magic_len)($3)
+
+$L637:
+	lui	$2,%hi(g_p4_to_ds_hrate)
+	lw	$4,%lo(g_p4_to_ds_hrate)($2)
+	bne	$4,$0,$L638
+	nop
+
+	lbu	$4,56($16)
+	sltu	$4,$4,55
+	bne	$4,$0,$L638
+	nop
+
+	sw	$3,%lo(g_p4_to_ds_hrate)($2)
+$L638:
+	lui	$2,%hi(g_sc_magic)
+	lui	$4,%hi(g_sc_magic+32)
+	lw	$5,12($16)
+	addiu	$2,$2,%lo(g_sc_magic)
+	addiu	$4,$4,%lo(g_sc_magic+32)
+$L640:
+	lw	$3,0($2)
+	addiu	$6,$3,3
+	bne	$5,$6,$L639
+	addiu	$2,$2,4
+
+	lui	$2,%hi(g_p4_magic_2)
+	j	$L507
+	sw	$3,%lo(g_p4_magic_2)($2)
+
+$L639:
+	bne	$2,$4,$L640
+	nop
+
+	j	$L507
+	nop
+
+$L633:
+	lui	$2,%hi(g_p4_magic_len)
+$L919:
+	lw	$2,%lo(g_p4_magic_len)($2)
+	beq	$2,$0,$L507
+	lui	$3,%hi(g_sc_ctx)
+
+	li	$4,2			# 0x2
+	addiu	$3,$3,%lo(g_sc_ctx)
+	lw	$5,12($16)
+	lw	$6,10900($3)
+	bne	$6,$4,$L641
+	subu	$2,$5,$2
+
+	andi	$5,$2,0x3f8
+	lw	$4,1852($3)
+	sra	$5,$5,3
+	sltu	$4,$4,$5
+	beq	$4,$0,$L642
+	nop
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$2,%lo(g_sc_debug)($2)
+	bne	$2,$6,$L920
+	lui	$2,%hi(g_sc_ctx+2874)
+
+	lui	$4,%hi($LC39)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC39)
+
+	lui	$2,%hi(g_sc_ctx+2874)
+$L920:
+	lui	$3,%hi(g_sc_ctx+3130)
+	addiu	$2,$2,%lo(g_sc_ctx+2874)
+	addiu	$3,$3,%lo(g_sc_ctx+3130)
+$L644:
+	sb	$0,0($2)
+	sb	$0,256($2)
+	addiu	$2,$2,1
+	bne	$2,$3,$L644
+	nop
+
+	lui	$2,%hi(profile_pkt_index)
+	j	$L507
+	sw	$0,%lo(profile_pkt_index)($2)
+
+$L642:
+	beq	$5,$0,$L507
+	slt	$4,$2,1121
+
+	beq	$4,$0,$L507
+	addiu	$5,$5,-1
+
+	addu	$3,$5,$3
+	lbu	$4,3130($3)
+	bne	$4,$0,$L646
+	lui	$4,%hi(profile_pkt_index)
+
+	lui	$8,%hi(g_sc_debug)
+	andi	$2,$2,0x7
+	lw	$7,%lo(profile_pkt_index)($4)
+	li	$9,1			# 0x1
+	lw	$8,%lo(g_sc_debug)($8)
+	addiu	$7,$7,1
+	sb	$9,3130($3)
+	sb	$2,2874($3)
+	bne	$8,$6,$L646
+	sw	$7,%lo(profile_pkt_index)($4)
+
+	li	$2,10			# 0xa
+	div	$0,$7,$2
+	mfhi	$2
+	bne	$2,$0,$L921
+	lui	$2,%hi(g_sc_ctx+1852)
+
+	li	$2,-1207959552			# 0xb8000000
+	li	$3,8388608			# 0x800000
+	ori	$2,$2,0x311c
+	lw	$4,0($2)
+	or	$3,$4,$3
+	sw	$3,0($2)
+	lui	$2,%hi(g_sc_ctx+1852)
+$L921:
+	lui	$4,%hi($LC40)
+	lw	$6,%lo(g_sc_ctx+1852)($2)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC40)
+
+$L646:
+	lui	$2,%hi(g_sc_ctx)
+	lui	$3,%hi(profile_pkt_index)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lw	$4,%lo(profile_pkt_index)($3)
+	lw	$3,1852($2)
+	sltu	$4,$4,$3
+	beq	$4,$0,$L648
+	move	$16,$0
+
+	j	$L507
+	nop
+
+$L652:
+	lbu	$4,3130($4)
+	bne	$4,$0,$L648
+	addiu	$16,$16,1
+
+	addiu	$16,$16,-1
+	lui	$2,%hi(g_sc_debug)
+	lw	$3,%lo(g_sc_debug)($2)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L922
+	lui	$2,%hi(profile_pkt_index)
+
+	lui	$4,%hi($LC41)
+	move	$5,$16
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC41)
+
+	lui	$2,%hi(profile_pkt_index)
+$L922:
+	j	$L651
+	sw	$0,%lo(profile_pkt_index)($2)
+
+$L648:
+	sltu	$4,$16,$3
+	bne	$4,$0,$L652
+	addu	$4,$2,$16
+
+$L651:
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lw	$3,1852($2)
+	bne	$16,$3,$L507
+	lui	$3,%hi(pp)
+
+	lw	$2,2424($2)
+	beq	$2,$0,$L653
+	sw	$2,%lo(pp)($3)
+
+	lw	$2,4($2)
+	andi	$2,$2,0x2
+	beq	$2,$0,$L923
+	lui	$3,%hi(profile_pkt_index)
+
+	jal	rtk_sc_check_profile
+	move	$4,$18
+
+	li	$3,-1			# 0xffffffff
+	bne	$2,$3,$L654
+	lui	$2,%hi(profile_pkt_index)
+
+$L653:
+	lui	$3,%hi(profile_pkt_index)
+$L923:
+	lui	$2,%hi(g_sc_ctx+2874)
+	sw	$0,%lo(profile_pkt_index)($3)
+	lui	$3,%hi(g_sc_ctx+3130)
+	addiu	$2,$2,%lo(g_sc_ctx+2874)
+	addiu	$3,$3,%lo(g_sc_ctx+3130)
+$L655:
+	sb	$0,0($2)
+	sb	$0,256($2)
+	addiu	$2,$2,1
+	bne	$2,$3,$L655
+	nop
+
+	j	$L507
+	nop
+
+$L654:
+	j	$L507
+	sw	$0,%lo(profile_pkt_index)($2)
+
+$L641:
+	li	$5,1			# 0x1
+	bne	$6,$5,$L507
+	andi	$6,$2,0x3f0
+
+	sra	$6,$6,4
+	beq	$6,$0,$L656
+	slt	$5,$2,1025
+
+	bne	$5,$0,$L657
+	lui	$5,%hi(g_p4_group)
+
+$L656:
+	lui	$3,%hi(g_p4_group)
+	li	$4,-1			# 0xffffffff
+	sw	$4,%lo(g_p4_group)($3)
+	li	$3,3			# 0x3
+	beq	$2,$3,$L658
+	nop
+
+	lui	$3,%hi(g_sc_ctx+1852)
+	lw	$3,%lo(g_sc_ctx+1852)($3)
+	srl	$4,$3,4
+	addiu	$4,$4,1023
+	bne	$2,$4,$L659
+	li	$4,2			# 0x2
+
+$L658:
+	lui	$2,%hi(g_p4_group)
+	j	$L507
+	sw	$0,%lo(g_p4_group)($2)
+
+$L659:
+	beq	$2,$4,$L660
+	addiu	$4,$3,-63
+
+	srl	$4,$4,4
+	addiu	$4,$4,1048
+	bne	$2,$4,$L661
+	li	$4,11			# 0xb
+
+$L660:
+	li	$3,1			# 0x1
+	lui	$2,%hi(g_p4_group)
+	j	$L507
+	sw	$3,%lo(g_p4_group)($2)
+
+$L661:
+	beq	$2,$4,$L662
+	addiu	$4,$3,-126
+
+	srl	$4,$4,4
+	addiu	$4,$4,1072
+	bne	$2,$4,$L663
+	li	$4,10			# 0xa
+
+$L662:
+	li	$3,2			# 0x2
+	lui	$2,%hi(g_p4_group)
+	j	$L507
+	sw	$3,%lo(g_p4_group)($2)
+
+$L663:
+	beq	$2,$4,$L664
+	addiu	$3,$3,-189
+
+	srl	$3,$3,4
+	addiu	$3,$3,1096
+	bne	$2,$3,$L507
+	nop
+
+$L664:
+	li	$3,3			# 0x3
+	lui	$2,%hi(g_p4_group)
+	j	$L507
+	sw	$3,%lo(g_p4_group)($2)
+
+$L657:
+	lw	$5,%lo(g_p4_group)($5)
+	bltz	$5,$L507
+	li	$7,63			# 0x3f
+
+	mult	$5,$7
+	lui	$7,%hi(g_p4_last_seq)
+	lw	$7,%lo(g_p4_last_seq)($7)
+	mflo	$5
+	addiu	$5,$5,-1
+	addu	$5,$5,$6
+	addiu	$6,$5,15
+	slt	$6,$6,$7
+	beq	$6,$0,$L665
+	slt	$6,$5,64
+
+	bne	$6,$0,$L665
+	nop
+
+	lw	$3,1852($3)
+	sltu	$3,$3,127
+	bne	$3,$0,$L924
+	lui	$3,%hi(g_sc_ctx)
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$2,%lo(g_sc_debug)($2)
+	bne	$2,$4,$L925
+	lui	$2,%hi(g_p4_group)
+
+	lui	$4,%hi($LC42)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC42)
+
+	lui	$2,%hi(g_p4_group)
+$L925:
+	li	$3,-1			# 0xffffffff
+	sw	$3,%lo(g_p4_group)($2)
+	lui	$2,%hi(g_p4_last_seq)
+	j	$L507
+	sw	$0,%lo(g_p4_last_seq)($2)
+
+$L665:
+	lui	$3,%hi(g_sc_ctx)
+$L924:
+	addiu	$3,$3,%lo(g_sc_ctx)
+	lw	$4,1852($3)
+	sltu	$4,$4,$5
+	beq	$4,$0,$L667
+	addu	$3,$5,$3
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$3,%lo(g_sc_debug)($2)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L926
+	lui	$2,%hi(g_sc_ctx+2874)
+
+	lui	$4,%hi($LC39)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC39)
+
+	lui	$2,%hi(g_sc_ctx+2874)
+$L926:
+	lui	$3,%hi(g_sc_ctx+3130)
+	addiu	$2,$2,%lo(g_sc_ctx+2874)
+	addiu	$3,$3,%lo(g_sc_ctx+3130)
+$L669:
+	sb	$0,0($2)
+	sb	$0,256($2)
+	addiu	$2,$2,1
+	bne	$2,$3,$L669
+	nop
+
+	lui	$2,%hi(g_p4_group)
+	li	$3,-1			# 0xffffffff
+	sw	$3,%lo(g_p4_group)($2)
+	lui	$2,%hi(profile_pkt_index)
+	sw	$0,%lo(profile_pkt_index)($2)
+	lui	$2,%hi(g_p4_last_seq)
+	j	$L507
+	sw	$0,%lo(g_p4_last_seq)($2)
+
+$L667:
+	lui	$6,%hi(g_p4_last_seq)
+	lbu	$4,3130($3)
+	bne	$4,$0,$L670
+	sw	$5,%lo(g_p4_last_seq)($6)
+
+	lui	$4,%hi(profile_pkt_index)
+	lui	$6,%hi(g_sc_debug)
+	andi	$2,$2,0xf
+	lw	$7,%lo(profile_pkt_index)($4)
+	li	$8,1			# 0x1
+	lw	$6,%lo(g_sc_debug)($6)
+	addiu	$7,$7,1
+	sb	$2,2874($3)
+	li	$2,2			# 0x2
+	sb	$8,3130($3)
+	bne	$6,$2,$L670
+	sw	$7,%lo(profile_pkt_index)($4)
+
+	li	$2,10			# 0xa
+	div	$0,$7,$2
+	mfhi	$2
+	bne	$2,$0,$L927
+	lui	$2,%hi(g_sc_ctx+1852)
+
+	li	$2,-1207959552			# 0xb8000000
+	li	$3,8388608			# 0x800000
+	ori	$2,$2,0x311c
+	lw	$4,0($2)
+	or	$3,$4,$3
+	sw	$3,0($2)
+	lui	$2,%hi(g_sc_ctx+1852)
+$L927:
+	lui	$4,%hi($LC43)
+	lw	$6,%lo(g_sc_ctx+1852)($2)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC43)
+
+$L670:
+	lui	$2,%hi(g_sc_ctx)
+	lui	$3,%hi(profile_pkt_index)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lw	$4,%lo(profile_pkt_index)($3)
+	lw	$3,1852($2)
+	sltu	$4,$4,$3
+	beq	$4,$0,$L673
+	move	$16,$0
+
+	j	$L878
+	lui	$2,%hi(g_p4_group)
+
+$L677:
+	lbu	$4,3130($4)
+	bne	$4,$0,$L673
+	addiu	$16,$16,1
+
+	addiu	$16,$16,-1
+	lui	$2,%hi(g_sc_debug)
+	lw	$3,%lo(g_sc_debug)($2)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L928
+	lui	$2,%hi(profile_pkt_index)
+
+	lui	$4,%hi($LC41)
+	move	$5,$16
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC41)
+
+	lui	$2,%hi(profile_pkt_index)
+$L928:
+	j	$L676
+	sw	$0,%lo(profile_pkt_index)($2)
+
+$L673:
+	sltu	$4,$16,$3
+	bne	$4,$0,$L677
+	addu	$4,$2,$16
+
+$L676:
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lw	$3,1852($2)
+	bne	$16,$3,$L672
+	lui	$3,%hi(pp)
+
+	lw	$2,2424($2)
+	beq	$2,$0,$L678
+	sw	$2,%lo(pp)($3)
+
+	lw	$2,4($2)
+	andi	$2,$2,0x2
+	beq	$2,$0,$L929
+	lui	$4,%hi($LC44)
+
+	jal	rtk_sc_check_profile
+	move	$4,$18
+
+	li	$3,-1			# 0xffffffff
+	bne	$2,$3,$L679
+	lui	$2,%hi(profile_pkt_index)
+
+$L678:
+	lui	$4,%hi($LC44)
+$L929:
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC44)
+
+	li	$3,-1			# 0xffffffff
+	lui	$2,%hi(g_p4_group)
+	sw	$3,%lo(g_p4_group)($2)
+	lui	$3,%hi(profile_pkt_index)
+	lui	$2,%hi(g_sc_ctx+2874)
+	sw	$0,%lo(profile_pkt_index)($3)
+	lui	$3,%hi(g_sc_ctx+3130)
+	addiu	$2,$2,%lo(g_sc_ctx+2874)
+	addiu	$3,$3,%lo(g_sc_ctx+3130)
+$L680:
+	sb	$0,0($2)
+	sb	$0,256($2)
+	addiu	$2,$2,1
+	bne	$2,$3,$L680
+	nop
+
+	j	$L507
+	nop
+
+$L679:
+	sw	$0,%lo(profile_pkt_index)($2)
+$L672:
+	lui	$2,%hi(g_p4_group)
+$L878:
+	lw	$3,%lo(g_p4_group)($2)
+	lui	$2,%hi(g_p4_last_group)
+	j	$L507
+	sw	$3,%lo(g_p4_last_group)($2)
+
+$L630:
+	li	$3,1			# 0x1
+	bne	$2,$3,$L507
+	nop
+
+	lbu	$3,40($16)
+	bne	$3,$2,$L681
+	li	$4,2			# 0x2
+
+	lui	$2,%hi(g_p4_magic_1)
+	lw	$2,%lo(g_p4_magic_1)($2)
+	beq	$2,$0,$L682
+	lui	$3,%hi(g_sc_magic)
+
+	lui	$3,%hi(g_p4_magic_len)
+	j	$L683
+	sw	$2,%lo(g_p4_magic_len)($3)
+
+$L682:
+	lui	$4,%hi(g_sc_magic+32)
+	lw	$2,12($16)
+	addiu	$3,$3,%lo(g_sc_magic)
+	addiu	$4,$4,%lo(g_sc_magic+32)
+$L688:
+	lw	$17,0($3)
+	addiu	$5,$17,35
+	beq	$2,$5,$L684
+	addiu	$5,$17,34
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,59
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,74
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,85
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,100
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,125
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,140
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,151
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,166
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,191
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,206
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,217
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,232
+
+	beq	$2,$5,$L684
+	addiu	$5,$17,241
+
+	bne	$2,$5,$L685
+	addiu	$3,$3,4
+
+$L684:
+	move	$4,$16
+	jal	check_sync_pkt
+	move	$5,$17
+
+	blez	$2,$L686
+	lui	$2,%hi(g_p4_magic_1)
+
+	sw	$17,%lo(g_p4_magic_1)($2)
+$L686:
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L687
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L687:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L685:
+	bne	$3,$4,$L688
+	nop
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10808)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L681:
+	bne	$3,$4,$L507
+	lui	$3,%hi(g_p4_magic_2)
+
+	lw	$3,%lo(g_p4_magic_2)($3)
+	beq	$3,$0,$L689
+	nop
+
+	lui	$2,%hi(g_p4_magic_len)
+	j	$L683
+	sw	$3,%lo(g_p4_magic_len)($2)
+
+$L689:
+	lui	$3,%hi(g_p4_to_ds_hrate)
+	lw	$4,%lo(g_p4_to_ds_hrate)($3)
+	bne	$4,$0,$L690
+	nop
+
+	lbu	$4,56($16)
+	sltu	$4,$4,55
+	bne	$4,$0,$L690
+	nop
+
+	sw	$2,%lo(g_p4_to_ds_hrate)($3)
+$L690:
+	lui	$3,%hi(g_sc_magic)
+	lui	$4,%hi(g_sc_magic+32)
+	lw	$2,12($16)
+	addiu	$3,$3,%lo(g_sc_magic)
+	addiu	$4,$4,%lo(g_sc_magic+32)
+$L695:
+	lw	$17,0($3)
+	addiu	$5,$17,35
+	beq	$2,$5,$L691
+	addiu	$5,$17,34
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,59
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,74
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,85
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,100
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,125
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,140
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,151
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,166
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,191
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,206
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,217
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,232
+
+	beq	$2,$5,$L691
+	addiu	$5,$17,241
+
+	bne	$2,$5,$L692
+	addiu	$3,$3,4
+
+$L691:
+	move	$4,$16
+	jal	check_sync_pkt
+	move	$5,$17
+
+	blez	$2,$L693
+	lui	$2,%hi(g_p4_magic_2)
+
+	sw	$17,%lo(g_p4_magic_2)($2)
+$L693:
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L694
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L694:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L692:
+	bne	$3,$4,$L695
+	nop
+
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L696
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L696:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L683:
+	lbu	$3,40($16)
+	li	$2,1			# 0x1
+	bne	$3,$2,$L697
+	li	$4,2			# 0x2
+
+	lui	$2,%hi(g_p4_magic_1)
+	lw	$2,%lo(g_p4_magic_1)($2)
+	bne	$2,$0,$L844
+	nop
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10808)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L697:
+	bne	$3,$4,$L699
+	move	$2,$0
+
+	lui	$2,%hi(g_p4_magic_2)
+	lw	$2,%lo(g_p4_magic_2)($2)
+	beq	$2,$0,$L701
+	nop
+
+$L844:
+	lw	$3,12($16)
+	j	$L699
+	subu	$2,$3,$2
+
+$L701:
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L699:
+	lui	$4,%hi(profile_pkt_index)
+	li	$5,5			# 0x5
+	lw	$3,%lo(profile_pkt_index)($4)
+	addiu	$3,$3,1
+	div	$0,$3,$5
+	mfhi	$5
+	bne	$5,$0,$L702
+	sw	$3,%lo(profile_pkt_index)($4)
+
+	li	$3,-1207959552			# 0xb8000000
+	li	$4,8388608			# 0x800000
+	ori	$3,$3,0x311c
+	lw	$5,0($3)
+	or	$4,$5,$4
+	sw	$4,0($3)
+$L702:
+	andi	$3,$2,0x400
+	beq	$3,$0,$L703
+	andi	$20,$2,0x3f0
+
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L704
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L704:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L703:
+	sra	$20,$20,4
+	addiu	$3,$20,-1
+	sltu	$3,$3,15
+	beq	$3,$0,$L705
+	andi	$17,$2,0xf
+
+	slt	$2,$2,512
+	beq	$2,$0,$L930
+	srl	$3,$20,5
+
+	addiu	$20,$20,-2
+	lui	$2,%hi(g_p4_group)
+	li	$3,-1			# 0xffffffff
+	sltu	$4,$20,14
+	beq	$4,$0,$L706
+	sw	$3,%lo(g_p4_group)($2)
+
+	lui	$2,%hi($L721)
+	sll	$20,$20,2
+	addiu	$2,$2,%lo($L721)
+	addu	$20,$2,$20
+	lw	$2,0($20)
+	j	$2
+	nop
+
+	.rdata
+	.align	2
+	.align	2
+$L721:
+	.word	$L707
+	.word	$L708
+	.word	$L709
+	.word	$L710
+	.word	$L711
+	.word	$L712
+	.word	$L713
+	.word	$L714
+	.word	$L715
+	.word	$L716
+	.word	$L717
+	.word	$L718
+	.word	$L719
+	.word	$L720
+	.section	.text.rtk_sc_start_parse_packet
+$L707:
+	li	$2,3			# 0x3
+	bne	$17,$2,$L722
+	li	$2,2			# 0x2
+
+	lui	$2,%hi(g_p4_group)
+	j	$L723
+	sw	$0,%lo(g_p4_group)($2)
+
+$L722:
+	bne	$17,$2,$L723
+	li	$3,1			# 0x1
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L708:
+	li	$2,11			# 0xb
+	bne	$17,$2,$L723
+	li	$3,2			# 0x2
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L709:
+	li	$2,10			# 0xa
+	bne	$17,$2,$L723
+	li	$3,3			# 0x3
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L710:
+	li	$2,5			# 0x5
+	bne	$17,$2,$L723
+	li	$3,4			# 0x4
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L711:
+	li	$2,4			# 0x4
+	bne	$17,$2,$L723
+	li	$3,5			# 0x5
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L712:
+	li	$2,13			# 0xd
+	bne	$17,$2,$L723
+	li	$3,6			# 0x6
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L713:
+	li	$2,12			# 0xc
+	bne	$17,$2,$L723
+	li	$3,7			# 0x7
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L714:
+	li	$2,7			# 0x7
+	bne	$17,$2,$L723
+	li	$3,8			# 0x8
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L715:
+	li	$2,6			# 0x6
+	bne	$17,$2,$L723
+	li	$3,9			# 0x9
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L716:
+	li	$2,15			# 0xf
+	bne	$17,$2,$L723
+	li	$3,10			# 0xa
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L717:
+	li	$2,14			# 0xe
+	bne	$17,$2,$L723
+	li	$3,11			# 0xb
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L718:
+	li	$2,9			# 0x9
+	bne	$17,$2,$L723
+	li	$3,12			# 0xc
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L719:
+	li	$2,8			# 0x8
+	bne	$17,$2,$L723
+	li	$3,13			# 0xd
+
+	j	$L706
+	lui	$2,%hi(g_p4_group)
+
+$L720:
+	li	$2,1			# 0x1
+	bne	$17,$2,$L723
+	li	$3,14			# 0xe
+
+	lui	$2,%hi(g_p4_group)
+$L706:
+	sw	$3,%lo(g_p4_group)($2)
+$L723:
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L724
+	li	$3,1			# 0x1
+
+	lui	$2,%hi(g_p4_group)
+	lw	$3,%lo(g_p4_group)($2)
+	lui	$2,%hi(g_p4_group_index_ToDS)
+	sw	$3,%lo(g_p4_group_index_ToDS)($2)
+	lui	$2,%hi(g_sc_ctx+10884)
+	lhu	$3,36($16)
+	j	$L725
+	sh	$3,%lo(g_sc_ctx+10884)($2)
+
+$L724:
+	bne	$2,$3,$L725
+	lui	$2,%hi(g_p4_group)
+
+	lw	$3,%lo(g_p4_group)($2)
+	lui	$2,%hi(g_p4_group_index_FromDS)
+	sw	$3,%lo(g_p4_group_index_FromDS)($2)
+	lui	$2,%hi(g_sc_ctx+10886)
+	lhu	$3,36($16)
+	sh	$3,%lo(g_sc_ctx+10886)($2)
+$L725:
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L726
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L726:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L705:
+	srl	$3,$20,5
+$L930:
+	bne	$3,$0,$L727
+	andi	$4,$20,0x1f
+
+	li	$2,31			# 0x1f
+	beq	$4,$2,$L728
+	andi	$2,$20,0x10
+
+	beq	$2,$0,$L727
+	nop
+
+$L728:
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L729
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L729:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L727:
+	lbu	$2,40($16)
+	li	$4,2			# 0x2
+	bne	$2,$4,$L730
+	lui	$21,%hi(g_sc_ctx)
+
+	lui	$2,%hi(g_p4_group_index_ToDS)
+	lw	$2,%lo(g_p4_group_index_ToDS)($2)
+	bgez	$2,$L731
+	addiu	$21,$21,%lo(g_sc_ctx)
+
+	lhu	$2,36($16)
+	j	$L507
+	sh	$2,10810($21)
+
+$L730:
+	li	$4,1			# 0x1
+	bne	$2,$4,$L732
+	lui	$2,%hi(g_p4_group_index_FromDS)
+
+	lui	$21,%hi(g_sc_ctx)
+	lw	$2,%lo(g_p4_group_index_FromDS)($2)
+	bgez	$2,$L733
+	addiu	$21,$21,%lo(g_sc_ctx)
+
+	lhu	$2,36($16)
+	j	$L507
+	sh	$2,10808($21)
+
+$L731:
+	j	$L732
+	sb	$2,7632($21)
+
+$L733:
+	sb	$2,4462($21)
+$L732:
+	lbu	$2,40($16)
+	bne	$3,$0,$L734
+	li	$3,2			# 0x2
+
+	bne	$2,$3,$L735
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L735:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L734:
+	bne	$2,$3,$L736
+	li	$3,1			# 0x1
+
+	lui	$3,%hi(g_sc_ctx+10810)
+	lhu	$4,%lo(g_sc_ctx+10810)($3)
+	j	$L865
+	nop
+
+$L736:
+	bne	$2,$3,$L931
+	andi	$21,$20,0x1f
+
+	lui	$3,%hi(g_sc_ctx+10808)
+	lhu	$4,%lo(g_sc_ctx+10808)($3)
+$L865:
+	lhu	$3,36($16)
+	sltu	$5,$4,$3
+	beq	$5,$0,$L932
+	sltu	$5,$3,$4
+
+	subu	$5,$3,$4
+	slt	$5,$5,10
+	beq	$5,$0,$L507
+	sltu	$5,$3,$4
+
+$L932:
+	beq	$5,$0,$L931
+	andi	$21,$20,0x1f
+
+	subu	$3,$4,$3
+	slt	$3,$3,4086
+	bne	$3,$0,$L507
+	nop
+
+$L931:
+	addiu	$3,$21,-2
+	sltu	$3,$3,24
+	beq	$3,$0,$L740
+	li	$3,1			# 0x1
+
+	bne	$2,$3,$L741
+	li	$3,2			# 0x2
+
+	lui	$3,%hi(g_sc_ctx)
+	addiu	$3,$3,%lo(g_sc_ctx)
+	lw	$5,10892($3)
+	blez	$5,$L742
+	nop
+
+	lhu	$4,10882($3)
+	lhu	$3,36($16)
+	sltu	$6,$4,$3
+	beq	$6,$0,$L743
+	sltu	$6,$3,$4
+
+	subu	$6,$3,$4
+	slt	$6,$6,33
+	bne	$6,$0,$L744
+	lui	$6,%hi(g_p4_group_index_FromDS)
+
+	j	$L879
+	nop
+
+$L743:
+	beq	$6,$0,$L933
+	lui	$6,%hi(g_p4_group_index_FromDS)
+
+	subu	$6,$4,$3
+	slt	$6,$6,4063
+	beq	$6,$0,$L933
+	lui	$6,%hi(g_p4_group_index_FromDS)
+
+$L879:
+	lw	$6,%lo(g_p4_group_index_FromDS)($6)
+	beq	$5,$6,$L507
+	nop
+
+$L744:
+	lui	$6,%hi(g_p4_group_index_FromDS)
+$L933:
+	lw	$6,%lo(g_p4_group_index_FromDS)($6)
+	slt	$7,$5,$6
+	beq	$7,$0,$L742
+	addiu	$6,$6,-1
+
+	bne	$5,$6,$L742
+	lui	$5,%hi(g_sc_ctx+10886)
+
+	lhu	$5,%lo(g_sc_ctx+10886)($5)
+	j	$L880
+	sltu	$6,$5,$3
+
+$L741:
+	bne	$2,$3,$L934
+	lui	$3,%hi(g_sc_debug)
+
+	lui	$3,%hi(g_sc_ctx)
+	addiu	$3,$3,%lo(g_sc_ctx)
+	lw	$5,10888($3)
+	blez	$5,$L742
+	nop
+
+	lhu	$4,10880($3)
+	lhu	$3,36($16)
+	sltu	$6,$4,$3
+	beq	$6,$0,$L746
+	sltu	$6,$3,$4
+
+	subu	$6,$3,$4
+	slt	$6,$6,33
+	bne	$6,$0,$L747
+	lui	$6,%hi(g_p4_group_index_ToDS)
+
+	j	$L881
+	nop
+
+$L746:
+	beq	$6,$0,$L935
+	lui	$6,%hi(g_p4_group_index_ToDS)
+
+	subu	$6,$4,$3
+	slt	$6,$6,4063
+	beq	$6,$0,$L935
+	lui	$6,%hi(g_p4_group_index_ToDS)
+
+$L881:
+	lw	$6,%lo(g_p4_group_index_ToDS)($6)
+	beq	$5,$6,$L507
+	nop
+
+$L747:
+	lui	$6,%hi(g_p4_group_index_ToDS)
+$L935:
+	lw	$6,%lo(g_p4_group_index_ToDS)($6)
+	slt	$7,$5,$6
+	beq	$7,$0,$L742
+	addiu	$6,$6,-1
+
+	bne	$5,$6,$L742
+	lui	$5,%hi(g_sc_ctx+10884)
+
+	lhu	$5,%lo(g_sc_ctx+10884)($5)
+	sltu	$6,$5,$3
+$L880:
+	beq	$6,$0,$L748
+	subu	$6,$3,$5
+
+	slt	$6,$6,37
+	beq	$6,$0,$L507
+	nop
+
+$L748:
+	sltu	$5,$3,$5
+	beq	$5,$0,$L742
+	nop
+
+	beq	$3,$4,$L507
+	nop
+
+$L742:
+	lui	$3,%hi(g_sc_debug)
+$L934:
+	lw	$4,%lo(g_sc_debug)($3)
+	li	$3,-1			# 0xffffffff
+	bne	$4,$3,$L749
+	addiu	$19,$21,-2
+
+	li	$3,-1207959552			# 0xb8000000
+	lui	$4,%hi(g_p4_group)
+	move	$6,$19
+	ori	$3,$3,0x311c
+	li	$8,8388608			# 0x800000
+	lw	$9,0($3)
+	move	$7,$17
+	lw	$5,%lo(g_p4_group)($4)
+	lui	$4,%hi($LC45)
+	or	$8,$9,$8
+	addiu	$4,$4,%lo($LC45)
+	sw	$8,0($3)
+	jal	panic_printk
+	sw	$2,16($sp)
+
+$L749:
+	lbu	$2,40($16)
+	li	$3,1			# 0x1
+	bne	$2,$3,$L750
+	li	$3,2			# 0x2
+
+	lui	$3,%hi(g_sc_ctx)
+	addiu	$3,$3,%lo(g_sc_ctx)
+	lbu	$5,4462($3)
+	addu	$2,$5,$3
+	lbu	$2,4479($2)
+	bne	$2,$0,$L936
+	li	$2,25			# 0x19
+
+	sll	$6,$5,5
+	addu	$6,$6,$3
+	addu	$4,$6,$19
+	lbu	$2,5007($4)
+	bne	$2,$0,$L936
+	li	$2,25			# 0x19
+
+	addiu	$5,$5,2702
+	sll	$5,$5,2
+	addu	$3,$3,$5
+	lw	$3,4($3)
+	sltu	$2,$19,$3
+	beq	$2,$0,$L752
+	subu	$2,$19,$3
+
+	lbu	$2,4495($4)
+	beq	$2,$0,$L753
+	nop
+
+	sb	$0,4495($4)
+$L753:
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lbu	$3,4462($2)
+	sll	$3,$3,5
+	addu	$3,$3,$2
+	addu	$3,$3,$19
+	j	$L850
+	sb	$17,4495($3)
+
+$L752:
+	andi	$4,$19,0x1
+	srl	$2,$2,1
+	addu	$2,$2,$3
+	beq	$4,$0,$L755
+	addu	$2,$6,$2
+
+	lbu	$3,4495($2)
+	j	$L882
+	or	$17,$3,$17
+
+$L755:
+	lbu	$3,4495($2)
+	sll	$17,$17,4
+	or	$17,$3,$17
+$L882:
+	sb	$17,4495($2)
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+$L850:
+	lbu	$3,4462($2)
+	sll	$3,$3,5
+	addu	$2,$3,$2
+	addu	$19,$2,$19
+	li	$2,1			# 0x1
+	sb	$2,5007($19)
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lbu	$3,4462($2)
+	addu	$2,$3,$2
+	lbu	$3,4463($2)
+	addiu	$3,$3,1
+	sb	$3,4463($2)
+	li	$2,25			# 0x19
+$L936:
+	bne	$21,$2,$L937
+	lui	$3,%hi(g_sc_ctx)
+
+	li	$3,-1			# 0xffffffff
+	lui	$2,%hi(g_p4_group_index_FromDS)
+	sw	$3,%lo(g_p4_group_index_FromDS)($2)
+	lui	$3,%hi(g_sc_ctx)
+$L937:
+	addiu	$3,$3,%lo(g_sc_ctx)
+	lbu	$2,4462($3)
+	addu	$4,$2,$3
+	lbu	$5,4479($4)
+	bne	$5,$0,$L758
+	nop
+
+	lbu	$6,3388($4)
+	lbu	$4,4463($4)
+	bne	$4,$6,$L759
+	sll	$7,$2,5
+
+	move	$6,$0
+	addu	$3,$3,$7
+	j	$L760
+	addiu	$3,$3,4495
+
+$L762:
+	beq	$7,$0,$L761
+	nop
+
+	lbu	$7,0($3)
+	sltu	$7,$7,16
+	bne	$7,$0,$L761
+	nop
+
+	addiu	$5,$5,1
+	sb	$0,512($3)
+$L761:
+	addiu	$6,$6,1
+	addiu	$3,$3,1
+$L760:
+	slt	$7,$6,$4
+	bne	$7,$0,$L762
+	slt	$7,$6,16
+
+	lui	$21,%hi(g_sc_ctx)
+	bne	$5,$0,$L763
+	addiu	$21,$21,%lo(g_sc_ctx)
+
+	jal	initialize_ecc
+	lui	$19,%hi(g_sc_ctx+4495)
+
+	lbu	$4,4462($21)
+	addiu	$19,$19,%lo(g_sc_ctx+4495)
+	addu	$2,$21,$4
+	sll	$4,$4,5
+	lbu	$5,3388($2)
+	addu	$4,$19,$4
+	jal	decode_data
+	addiu	$5,$5,-4
+
+	lui	$2,%hi(synBytes)
+	lw	$3,%lo(synBytes)($2)
+	bne	$3,$0,$L764
+	addiu	$2,$2,%lo(synBytes)
+
+	lw	$3,4($2)
+	bne	$3,$0,$L938
+	lui	$17,%hi(g_sc_ctx)
+
+	lw	$3,8($2)
+	bne	$3,$0,$L939
+	lui	$4,%hi(g_sc_ctx+5007)
+
+	lw	$2,12($2)
+	beq	$2,$0,$L765
+	li	$17,1			# 0x1
+
+$L764:
+	lui	$17,%hi(g_sc_ctx)
+$L938:
+	lui	$4,%hi(g_sc_ctx+5007)
+$L939:
+	addiu	$17,$17,%lo(g_sc_ctx)
+	addiu	$4,$4,%lo(g_sc_ctx+5007)
+	lbu	$2,4462($17)
+	move	$5,$0
+	li	$6,32			# 0x20
+	addu	$2,$2,$17
+	sb	$0,4463($2)
+	lbu	$2,4462($17)
+	sll	$2,$2,5
+	jal	memset
+	addu	$4,$4,$2
+
+	lui	$4,%hi(g_sc_ctx+4495)
+	lbu	$2,4462($17)
+	addiu	$4,$4,%lo(g_sc_ctx+4495)
+	move	$5,$0
+	li	$6,32			# 0x20
+	sll	$2,$2,5
+	jal	memset
+	addu	$4,$4,$2
+
+	lui	$4,%hi(g_sc_ctx+5520)
+	lbu	$2,4462($17)
+	addiu	$4,$4,%lo(g_sc_ctx+5520)
+	move	$5,$0
+	li	$6,32			# 0x20
+	sll	$2,$2,7
+	jal	memset
+	addu	$4,$4,$2
+
+	lbu	$2,4462($17)
+	addiu	$2,$2,1892
+	sll	$2,$2,2
+	addu	$17,$2,$17
+	j	$L758
+	sw	$0,0($17)
+
+$L872:
+	li	$6,16			# 0x10
+	addiu	$4,$4,%lo(g_sc_ctx+3405)
+	addu	$5,$19,$2
+	jal	memcpy
+	addu	$4,$4,$2
+
+	lui	$4,%hi($LC46)
+	lbu	$5,4461($21)
+	lbu	$2,4462($21)
+	addiu	$5,$5,1
+	andi	$5,$5,0x00ff
+	addu	$2,$2,$21
+	sb	$5,4461($21)
+	sb	$17,4445($2)
+	lbu	$6,4462($21)
+	j	$L851
+	addiu	$4,$4,%lo($LC46)
+
+$L763:
+	addu	$21,$21,$2
+	subu	$4,$4,$5
+	j	$L758
+	sb	$4,4463($21)
+
+$L759:
+	lw	$5,10876($3)
+	bne	$5,$0,$L758
+	sltu	$4,$4,$6
+
+	beq	$4,$0,$L758
+	addiu	$5,$2,2702
+
+	sll	$7,$2,5
+	move	$4,$0
+	sll	$5,$5,2
+	addu	$5,$3,$5
+	lw	$5,4($5)
+	addu	$7,$5,$7
+	addu	$3,$3,$7
+	j	$L766
+	addiu	$3,$3,5007
+
+$L768:
+	lbu	$7,0($3)
+	addiu	$5,$5,1
+	addiu	$3,$3,1
+	xori	$7,$7,0x1
+	sltu	$7,$7,1
+	addu	$4,$4,$7
+$L766:
+	slt	$7,$5,$6
+	bne	$7,$0,$L768
+	nop
+
+	slt	$3,$4,8
+	bne	$3,$0,$L758
+	li	$3,8			# 0x8
+
+	bne	$4,$3,$L758
+	lui	$4,%hi(g_sc_ctx+5520)
+
+	sll	$21,$2,7
+	move	$5,$0
+	addiu	$4,$4,%lo(g_sc_ctx+5520)
+	li	$6,32			# 0x20
+	jal	memset
+	addu	$4,$4,$21
+
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	move	$5,$0
+	lbu	$4,4462($2)
+	move	$8,$2
+	move	$3,$0
+	li	$12,1			# 0x1
+	li	$11,21			# 0x15
+	addiu	$4,$4,1892
+	sll	$4,$4,2
+	addu	$4,$4,$2
+	sw	$0,0($4)
+	lbu	$4,4462($2)
+	addiu	$10,$4,2702
+	sll	$7,$4,5
+	addiu	$9,$4,1892
+	sll	$10,$10,2
+	addu	$6,$2,$7
+	sll	$9,$9,2
+	addu	$2,$2,$10
+	addiu	$6,$6,5007
+	lw	$10,4($2)
+	j	$L769
+	addu	$2,$8,$9
+
+$L772:
+	lbu	$9,0($6)
+	bne	$9,$12,$L770
+	subu	$13,$11,$3
+
+	j	$L771
+	addiu	$5,$5,1
+
+$L770:
+	lw	$9,0($2)
+	addu	$9,$7,$9
+	addiu	$9,$9,1380
+	sll	$9,$9,2
+	addu	$9,$9,$8
+	sw	$13,0($9)
+	lw	$9,0($2)
+	addiu	$9,$9,1
+	sw	$9,0($2)
+$L771:
+	addiu	$3,$3,1
+	addiu	$6,$6,1
+$L769:
+	slt	$9,$3,$10
+	bne	$9,$0,$L772
+	nop
+
+	lui	$3,%hi(g_sc_ctx)
+	addiu	$3,$3,%lo(g_sc_ctx)
+	addu	$4,$4,$3
+	lbu	$2,3388($4)
+	addiu	$2,$2,-10
+	slt	$5,$2,$5
+	beq	$5,$0,$L758
+	move	$2,$0
+
+	lbu	$5,4462($3)
+	move	$4,$0
+	sll	$7,$5,5
+	addu	$6,$5,$3
+	addu	$3,$3,$7
+	lbu	$6,4463($6)
+	j	$L773
+	addiu	$3,$3,4495
+
+$L775:
+	beq	$7,$0,$L774
+	nop
+
+	lbu	$7,0($3)
+	sltu	$7,$7,16
+	bne	$7,$0,$L774
+	nop
+
+	addiu	$2,$2,1
+	sb	$0,512($3)
+$L774:
+	addiu	$4,$4,1
+	addiu	$3,$3,1
+$L773:
+	slt	$7,$4,$6
+	bne	$7,$0,$L775
+	slt	$7,$4,16
+
+	lui	$21,%hi(g_sc_ctx)
+	bne	$2,$0,$L776
+	addiu	$21,$21,%lo(g_sc_ctx)
+
+	jal	initialize_ecc
+	lui	$19,%hi(g_sc_ctx+4495)
+
+	lbu	$4,4462($21)
+	addiu	$19,$19,%lo(g_sc_ctx+4495)
+	addu	$21,$21,$4
+	sll	$4,$4,5
+	lbu	$5,3388($21)
+	addu	$4,$19,$4
+	jal	decode_data
+	addiu	$5,$5,-4
+
+	lui	$2,%hi(synBytes)
+	lw	$3,%lo(synBytes)($2)
+	bne	$3,$0,$L777
+	addiu	$2,$2,%lo(synBytes)
+
+	lw	$3,4($2)
+	bne	$3,$0,$L940
+	lui	$17,%hi(g_sc_ctx)
+
+	lw	$3,8($2)
+	bne	$3,$0,$L941
+	addiu	$17,$17,%lo(g_sc_ctx)
+
+	lw	$2,12($2)
+	beq	$2,$0,$L883
+	lui	$2,%hi(g_p4_group_index_FromDS)
+
+$L777:
+	lui	$17,%hi(g_sc_ctx)
+$L940:
+	addiu	$17,$17,%lo(g_sc_ctx)
+$L941:
+	lbu	$4,4462($17)
+	addiu	$2,$4,1892
+	sll	$2,$2,2
+	addu	$2,$2,$17
+	lw	$6,0($2)
+	blez	$6,$L758
+	lui	$7,%hi(g_sc_ctx+5520)
+
+	sll	$2,$4,7
+	li	$5,20			# 0x14
+	sll	$4,$4,5
+	addiu	$7,$7,%lo(g_sc_ctx+5520)
+	addu	$7,$7,$2
+	jal	correct_errors_erasures
+	addu	$4,$19,$4
+
+	jal	initialize_ecc
+	nop
+
+	lbu	$4,4462($17)
+	addu	$2,$4,$17
+	sll	$4,$4,5
+	lbu	$5,3388($2)
+	addu	$4,$19,$4
+	jal	decode_data
+	addiu	$5,$5,-4
+
+	lui	$2,%hi(synBytes)
+	lw	$3,%lo(synBytes)($2)
+	bne	$3,$0,$L778
+	nop
+
+	addiu	$2,$2,%lo(synBytes)
+	lw	$3,4($2)
+	bne	$3,$0,$L778
+	nop
+
+	lw	$3,8($2)
+	bne	$3,$0,$L778
+	nop
+
+	lw	$2,12($2)
+	beq	$2,$0,$L779
+	li	$19,1			# 0x1
+
+$L778:
+	lui	$2,%hi(g_sc_ctx+4462)
+	lui	$4,%hi($LC47)
+	lbu	$6,%lo(g_sc_ctx+4462)($2)
+	addiu	$4,$4,%lo($LC47)
+	li	$5,3242			# 0xcaa
+$L851:
+	jal	panic_printk
+	nop
+
+	j	$L883
+	lui	$2,%hi(g_p4_group_index_FromDS)
+
+$L873:
+	sll	$4,$4,5
+	addiu	$2,$2,%lo(g_sc_ctx+3405)
+	addiu	$5,$5,%lo(g_sc_ctx+4495)
+	addu	$5,$5,$4
+	li	$6,16			# 0x10
+	jal	memcpy
+	addu	$4,$2,$4
+
+	lui	$4,%hi($LC48)
+	lbu	$5,4461($17)
+	lbu	$2,4462($17)
+	addiu	$5,$5,1
+	andi	$5,$5,0x00ff
+	addu	$2,$2,$17
+	sb	$5,4461($17)
+	sb	$19,4445($2)
+	lbu	$6,4462($17)
+	j	$L851
+	addiu	$4,$4,%lo($LC48)
+
+$L776:
+	addu	$21,$21,$5
+	subu	$2,$6,$2
+	sb	$2,4463($21)
+$L758:
+	lui	$2,%hi(g_p4_group_index_FromDS)
+$L883:
+	lw	$4,%lo(g_p4_group_index_FromDS)($2)
+	lui	$2,%hi(g_sc_ctx)
+	lhu	$3,36($16)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	sw	$4,10892($2)
+	j	$L740
+	sh	$3,10882($2)
+
+$L750:
+	bne	$2,$3,$L942
+	lui	$2,%hi(g_sc_ctx)
+
+	lui	$3,%hi(g_sc_ctx)
+	addiu	$3,$3,%lo(g_sc_ctx)
+	lbu	$5,7632($3)
+	addu	$2,$5,$3
+	lbu	$2,7649($2)
+	bne	$2,$0,$L943
+	li	$2,25			# 0x19
+
+	sll	$6,$5,5
+	addu	$6,$6,$3
+	addu	$4,$6,$19
+	lbu	$2,8177($4)
+	bne	$2,$0,$L943
+	li	$2,25			# 0x19
+
+	addiu	$5,$5,2702
+	sll	$5,$5,2
+	addu	$3,$3,$5
+	lw	$3,4($3)
+	sltu	$2,$19,$3
+	beq	$2,$0,$L781
+	subu	$2,$19,$3
+
+	lbu	$2,7665($4)
+	beq	$2,$0,$L782
+	nop
+
+	sb	$0,7665($4)
+$L782:
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lbu	$3,7632($2)
+	sll	$3,$3,5
+	addu	$3,$3,$2
+	addu	$3,$3,$19
+	j	$L853
+	sb	$17,7665($3)
+
+$L781:
+	andi	$4,$19,0x1
+	srl	$2,$2,1
+	addu	$2,$2,$3
+	beq	$4,$0,$L784
+	addu	$2,$6,$2
+
+	lbu	$3,7665($2)
+	j	$L884
+	or	$17,$3,$17
+
+$L784:
+	lbu	$3,7665($2)
+	sll	$17,$17,4
+	or	$17,$3,$17
+$L884:
+	sb	$17,7665($2)
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+$L853:
+	lbu	$3,7632($2)
+	sll	$3,$3,5
+	addu	$2,$3,$2
+	addu	$19,$2,$19
+	li	$2,1			# 0x1
+	sb	$2,8177($19)
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lbu	$3,7632($2)
+	addu	$2,$3,$2
+	lbu	$3,7633($2)
+	addiu	$3,$3,1
+	sb	$3,7633($2)
+	li	$2,25			# 0x19
+$L943:
+	bne	$21,$2,$L944
+	lui	$3,%hi(g_sc_ctx)
+
+	li	$3,-1			# 0xffffffff
+	lui	$2,%hi(g_p4_group_index_ToDS)
+	sw	$3,%lo(g_p4_group_index_ToDS)($2)
+	lui	$3,%hi(g_sc_ctx)
+$L944:
+	addiu	$3,$3,%lo(g_sc_ctx)
+	lbu	$2,7632($3)
+	addu	$4,$2,$3
+	lbu	$5,7649($4)
+	bne	$5,$0,$L787
+	nop
+
+	lbu	$6,3388($4)
+	lbu	$4,7633($4)
+	bne	$4,$6,$L788
+	sll	$7,$2,5
+
+	move	$6,$0
+	addu	$3,$3,$7
+	j	$L789
+	addiu	$3,$3,7665
+
+$L791:
+	beq	$7,$0,$L790
+	nop
+
+	lbu	$7,0($3)
+	sltu	$7,$7,16
+	bne	$7,$0,$L790
+	nop
+
+	addiu	$5,$5,1
+	sb	$0,512($3)
+$L790:
+	addiu	$6,$6,1
+	addiu	$3,$3,1
+$L789:
+	slt	$7,$6,$4
+	bne	$7,$0,$L791
+	slt	$7,$6,16
+
+	lui	$21,%hi(g_sc_ctx)
+	bne	$5,$0,$L792
+	addiu	$21,$21,%lo(g_sc_ctx)
+
+	jal	initialize_ecc
+	lui	$19,%hi(g_sc_ctx+7665)
+
+	lbu	$4,7632($21)
+	addiu	$19,$19,%lo(g_sc_ctx+7665)
+	addu	$2,$21,$4
+	sll	$4,$4,5
+	lbu	$5,3388($2)
+	addu	$4,$19,$4
+	jal	decode_data
+	addiu	$5,$5,-4
+
+	lui	$2,%hi(synBytes)
+	lw	$3,%lo(synBytes)($2)
+	bne	$3,$0,$L793
+	addiu	$2,$2,%lo(synBytes)
+
+	lw	$3,4($2)
+	bne	$3,$0,$L945
+	lui	$17,%hi(g_sc_ctx)
+
+	lw	$3,8($2)
+	bne	$3,$0,$L946
+	lui	$4,%hi(g_sc_ctx+8177)
+
+	lw	$2,12($2)
+	beq	$2,$0,$L794
+	li	$17,1			# 0x1
+
+$L793:
+	lui	$17,%hi(g_sc_ctx)
+$L945:
+	lui	$4,%hi(g_sc_ctx+8177)
+$L946:
+	addiu	$17,$17,%lo(g_sc_ctx)
+	addiu	$4,$4,%lo(g_sc_ctx+8177)
+	lbu	$2,7632($17)
+	move	$5,$0
+	li	$6,32			# 0x20
+	addu	$2,$2,$17
+	sb	$0,7633($2)
+	lbu	$2,7632($17)
+	sll	$2,$2,5
+	jal	memset
+	addu	$4,$4,$2
+
+	lui	$4,%hi(g_sc_ctx+7665)
+	lbu	$2,7632($17)
+	addiu	$4,$4,%lo(g_sc_ctx+7665)
+	move	$5,$0
+	li	$6,32			# 0x20
+	sll	$2,$2,5
+	jal	memset
+	addu	$4,$4,$2
+
+	lui	$4,%hi(g_sc_ctx+8692)
+	lbu	$2,7632($17)
+	addiu	$4,$4,%lo(g_sc_ctx+8692)
+	move	$5,$0
+	li	$6,32			# 0x20
+	sll	$2,$2,7
+	jal	memset
+	addu	$4,$4,$2
+
+	lbu	$2,7632($17)
+	addiu	$2,$2,2684
+	sll	$2,$2,2
+	addu	$17,$17,$2
+	j	$L787
+	sw	$0,4($17)
+
+$L874:
+	li	$6,16			# 0x10
+	addiu	$4,$4,%lo(g_sc_ctx+3405)
+	addu	$5,$19,$2
+	jal	memcpy
+	addu	$4,$4,$2
+
+	lui	$4,%hi($LC49)
+	lbu	$5,4461($21)
+	lbu	$2,7632($21)
+	addiu	$5,$5,1
+	andi	$5,$5,0x00ff
+	addu	$2,$2,$21
+	sb	$5,4461($21)
+	sb	$17,4445($2)
+	lbu	$6,7632($21)
+	j	$L854
+	addiu	$4,$4,%lo($LC49)
+
+$L792:
+	addu	$21,$21,$2
+	subu	$4,$4,$5
+	j	$L787
+	sb	$4,7633($21)
+
+$L788:
+	lw	$5,10876($3)
+	bne	$5,$0,$L787
+	sltu	$4,$4,$6
+
+	beq	$4,$0,$L787
+	addiu	$5,$2,2702
+
+	sll	$7,$2,5
+	move	$4,$0
+	sll	$5,$5,2
+	addu	$5,$3,$5
+	lw	$5,4($5)
+	addu	$7,$5,$7
+	addu	$3,$3,$7
+	j	$L795
+	addiu	$3,$3,8177
+
+$L797:
+	lbu	$7,0($3)
+	addiu	$5,$5,1
+	addiu	$3,$3,1
+	xori	$7,$7,0x1
+	sltu	$7,$7,1
+	addu	$4,$4,$7
+$L795:
+	slt	$7,$5,$6
+	bne	$7,$0,$L797
+	nop
+
+	slt	$3,$4,8
+	bne	$3,$0,$L787
+	li	$3,8			# 0x8
+
+	bne	$4,$3,$L787
+	lui	$4,%hi(g_sc_ctx+8692)
+
+	sll	$21,$2,7
+	move	$5,$0
+	addiu	$4,$4,%lo(g_sc_ctx+8692)
+	li	$6,32			# 0x20
+	jal	memset
+	addu	$4,$4,$21
+
+	lui	$2,%hi(g_sc_ctx)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	move	$5,$0
+	lbu	$4,7632($2)
+	move	$8,$2
+	move	$3,$0
+	li	$12,1			# 0x1
+	li	$11,21			# 0x15
+	addiu	$4,$4,2684
+	sll	$4,$4,2
+	addu	$4,$2,$4
+	sw	$0,4($4)
+	lbu	$4,7632($2)
+	addiu	$10,$4,2702
+	sll	$7,$4,5
+	addiu	$9,$4,2684
+	sll	$10,$10,2
+	addu	$6,$2,$7
+	sll	$9,$9,2
+	addu	$2,$2,$10
+	addiu	$6,$6,8177
+	lw	$10,4($2)
+	j	$L798
+	addu	$2,$8,$9
+
+$L801:
+	lbu	$9,0($6)
+	bne	$9,$12,$L799
+	subu	$13,$11,$3
+
+	j	$L800
+	addiu	$5,$5,1
+
+$L799:
+	lw	$9,4($2)
+	addu	$9,$7,$9
+	addiu	$9,$9,2172
+	sll	$9,$9,2
+	addu	$9,$8,$9
+	sw	$13,4($9)
+	lw	$9,4($2)
+	addiu	$9,$9,1
+	sw	$9,4($2)
+$L800:
+	addiu	$3,$3,1
+	addiu	$6,$6,1
+$L798:
+	slt	$9,$3,$10
+	bne	$9,$0,$L801
+	nop
+
+	lui	$3,%hi(g_sc_ctx)
+	addiu	$3,$3,%lo(g_sc_ctx)
+	addu	$4,$4,$3
+	lbu	$2,3388($4)
+	addiu	$2,$2,-10
+	slt	$5,$2,$5
+	beq	$5,$0,$L787
+	move	$2,$0
+
+	lbu	$5,7632($3)
+	move	$4,$0
+	sll	$7,$5,5
+	addu	$6,$5,$3
+	addu	$3,$3,$7
+	lbu	$6,7633($6)
+	j	$L802
+	addiu	$3,$3,7665
+
+$L804:
+	beq	$7,$0,$L803
+	nop
+
+	lbu	$7,0($3)
+	sltu	$7,$7,16
+	bne	$7,$0,$L803
+	nop
+
+	addiu	$2,$2,1
+	sb	$0,512($3)
+$L803:
+	addiu	$4,$4,1
+	addiu	$3,$3,1
+$L802:
+	slt	$7,$4,$6
+	bne	$7,$0,$L804
+	slt	$7,$4,16
+
+	lui	$21,%hi(g_sc_ctx)
+	bne	$2,$0,$L805
+	addiu	$21,$21,%lo(g_sc_ctx)
+
+	jal	initialize_ecc
+	lui	$19,%hi(g_sc_ctx+7665)
+
+	lbu	$4,7632($21)
+	addiu	$19,$19,%lo(g_sc_ctx+7665)
+	addu	$21,$21,$4
+	sll	$4,$4,5
+	lbu	$5,3388($21)
+	addu	$4,$19,$4
+	jal	decode_data
+	addiu	$5,$5,-4
+
+	lui	$2,%hi(synBytes)
+	lw	$3,%lo(synBytes)($2)
+	bne	$3,$0,$L806
+	addiu	$2,$2,%lo(synBytes)
+
+	lw	$3,4($2)
+	bne	$3,$0,$L947
+	lui	$17,%hi(g_sc_ctx)
+
+	lw	$3,8($2)
+	bne	$3,$0,$L948
+	addiu	$17,$17,%lo(g_sc_ctx)
+
+	lw	$2,12($2)
+	beq	$2,$0,$L885
+	lui	$2,%hi(g_p4_group_index_ToDS)
+
+$L806:
+	lui	$17,%hi(g_sc_ctx)
+$L947:
+	addiu	$17,$17,%lo(g_sc_ctx)
+$L948:
+	lbu	$4,7632($17)
+	addiu	$2,$4,2684
+	sll	$2,$2,2
+	addu	$2,$17,$2
+	lw	$6,4($2)
+	blez	$6,$L787
+	lui	$7,%hi(g_sc_ctx+8692)
+
+	sll	$2,$4,7
+	li	$5,20			# 0x14
+	sll	$4,$4,5
+	addiu	$7,$7,%lo(g_sc_ctx+8692)
+	addu	$7,$7,$2
+	jal	correct_errors_erasures
+	addu	$4,$19,$4
+
+	jal	initialize_ecc
+	nop
+
+	lbu	$4,7632($17)
+	addu	$2,$4,$17
+	sll	$4,$4,5
+	lbu	$5,3388($2)
+	addu	$4,$19,$4
+	jal	decode_data
+	addiu	$5,$5,-4
+
+	lui	$2,%hi(synBytes)
+	lw	$3,%lo(synBytes)($2)
+	bne	$3,$0,$L807
+	nop
+
+	addiu	$2,$2,%lo(synBytes)
+	lw	$3,4($2)
+	bne	$3,$0,$L807
+	nop
+
+	lw	$3,8($2)
+	bne	$3,$0,$L807
+	nop
+
+	lw	$2,12($2)
+	beq	$2,$0,$L808
+	li	$19,1			# 0x1
+
+$L807:
+	lui	$2,%hi(g_sc_ctx+7632)
+	lui	$4,%hi($LC50)
+	lbu	$6,%lo(g_sc_ctx+7632)($2)
+	addiu	$4,$4,%lo($LC50)
+	li	$5,3385			# 0xd39
+$L854:
+	jal	panic_printk
+	nop
+
+	j	$L885
+	lui	$2,%hi(g_p4_group_index_ToDS)
+
+$L875:
+	sll	$4,$4,5
+	addiu	$2,$2,%lo(g_sc_ctx+3405)
+	addiu	$5,$5,%lo(g_sc_ctx+7665)
+	addu	$5,$5,$4
+	li	$6,16			# 0x10
+	jal	memcpy
+	addu	$4,$2,$4
+
+	lui	$4,%hi($LC51)
+	lbu	$5,4461($17)
+	lbu	$2,7632($17)
+	addiu	$5,$5,1
+	andi	$5,$5,0x00ff
+	addu	$2,$2,$17
+	sb	$5,4461($17)
+	sb	$19,4445($2)
+	lbu	$6,7632($17)
+	j	$L854
+	addiu	$4,$4,%lo($LC51)
+
+$L805:
+	addu	$21,$21,$5
+	subu	$2,$6,$2
+	sb	$2,7633($21)
+$L787:
+	lui	$2,%hi(g_p4_group_index_ToDS)
+$L885:
+	lw	$4,%lo(g_p4_group_index_ToDS)($2)
+	lui	$2,%hi(g_sc_ctx)
+	lhu	$3,36($16)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	sw	$4,10888($2)
+	sh	$3,10880($2)
+$L740:
+	lui	$2,%hi(g_sc_ctx)
+$L942:
+	lui	$3,%hi(g_p4_group)
+	addiu	$2,$2,%lo(g_sc_ctx)
+	lui	$4,%hi(g_p4_last_seq)
+	lw	$5,%lo(g_p4_group)($3)
+	lbu	$3,10804($2)
+	sw	$20,%lo(g_p4_last_seq)($4)
+	lui	$4,%hi(g_p4_last_group)
+	bne	$3,$0,$L809
+	sw	$5,%lo(g_p4_last_group)($4)
+
+	lbu	$4,4461($2)
+	lbu	$3,3386($2)
+	bne	$4,$3,$L809
+	lui	$19,%hi(g_sc_ctx+3405)
+
+	lui	$22,%hi(g_sc_ctx+2874)
+	move	$20,$2
+	addiu	$19,$19,%lo(g_sc_ctx+3405)
+	addiu	$22,$22,%lo(g_sc_ctx+2874)
+	move	$21,$19
+	j	$L810
+	move	$17,$0
+
+$L811:
+	move	$4,$22
+	addiu	$17,$17,1
+	lbu	$6,3388($2)
+	move	$5,$21
+	addiu	$22,$22,16
+	addiu	$21,$21,32
+	jal	memcpy
+	addiu	$6,$6,-8
+
+$L810:
+	lbu	$2,4461($20)
+	slt	$2,$17,$2
+	bne	$2,$0,$L811
+	addu	$2,$20,$17
+
+	lui	$2,%hi(g_sc_debug)
+	lw	$3,%lo(g_sc_debug)($2)
+	li	$2,2			# 0x2
+	bne	$3,$2,$L949
+	lui	$17,%hi(g_sc_ctx)
+
+	lui	$4,%hi($LC52)
+	jal	panic_printk
+	addiu	$4,$4,%lo($LC52)
+
+	lui	$4,%hi(g_sc_ctx+2874)
+	lbu	$5,4461($20)
+	addiu	$4,$4,%lo(g_sc_ctx+2874)
+	jal	bytedump
+	sll	$5,$5,4
+
+	lui	$17,%hi(g_sc_ctx)
+$L949:
+	lui	$3,%hi(pp)
+	addiu	$17,$17,%lo(g_sc_ctx)
+	lw	$2,2424($17)
+	beq	$2,$0,$L813
+	sw	$2,%lo(pp)($3)
+
+	lw	$2,4($2)
+	andi	$2,$2,0x2
+	beq	$2,$0,$L950
+	lui	$4,%hi($LC53)
+
+	jal	rtk_sc_check_profile
+	move	$4,$18
+
+	li	$3,-1			# 0xffffffff
+	bne	$2,$3,$L814
+	li	$2,1			# 0x1
+
+$L813:
+	lui	$4,%hi($LC53)
+$L950:
+	lui	$20,%hi(g_sc_ctx+5520)
+	addiu	$4,$4,%lo($LC53)
+	jal	panic_printk
+	lui	$18,%hi(g_sc_ctx+7568)
+
+	lui	$17,%hi(g_sc_ctx+4429)
+	lui	$2,%hi(g_sc_ctx+4461)
+	lui	$21,%hi(g_sc_ctx+3917)
+	sb	$0,%lo(g_sc_ctx+4461)($2)
+	addiu	$20,$20,%lo(g_sc_ctx+5520)
+	addiu	$18,$18,%lo(g_sc_ctx+7568)
+	addiu	$17,$17,%lo(g_sc_ctx+4429)
+	addiu	$21,$21,%lo(g_sc_ctx+3917)
+$L815:
+	move	$4,$19
+	move	$5,$0
+	jal	memset
+	li	$6,32			# 0x20
+
+	addiu	$4,$19,1602
+	move	$5,$0
+	jal	memset
+	li	$6,32			# 0x20
+
+	addiu	$4,$19,4772
+	move	$5,$0
+	jal	memset
+	li	$6,32			# 0x20
+
+	addiu	$4,$19,512
+	move	$5,$0
+	jal	memset
+	li	$6,32			# 0x20
+
+	move	$4,$20
+	move	$5,$0
+	li	$6,32			# 0x20
+	jal	memset
+	addiu	$19,$19,32
+
+	addiu	$4,$20,3172
+	move	$5,$0
+	jal	memset
+	li	$6,32			# 0x20
+
+	addiu	$20,$20,128
+	sw	$0,0($18)
+	sw	$0,3172($18)
+	addiu	$18,$18,4
+	sb	$0,0($17)
+	sb	$0,34($17)
+	sb	$0,3204($17)
+	sb	$0,16($17)
+	sb	$0,3220($17)
+	sb	$0,50($17)
+	bne	$19,$21,$L815
+	addiu	$17,$17,1
+
+	j	$L809
+	nop
+
+$L814:
+	sb	$2,10804($17)
+$L809:
+	lbu	$2,40($16)
+	li	$3,2			# 0x2
+	bne	$2,$3,$L816
+	li	$3,1			# 0x1
+
+	lhu	$3,36($16)
+	lui	$2,%hi(g_sc_ctx+10810)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10810)($2)
+
+$L816:
+	bne	$2,$3,$L507
+	lui	$2,%hi(g_sc_ctx+10808)
+
+	lhu	$3,36($16)
+	j	$L507
+	sh	$3,%lo(g_sc_ctx+10808)($2)
+
+$L765:
+	lbu	$2,4462($21)
+	addu	$2,$2,$21
+	sb	$17,4479($2)
+	lbu	$2,4462($21)
+	addu	$3,$2,$21
+	lbu	$3,4445($3)
+	bne	$3,$0,$L758
+	lui	$4,%hi(g_sc_ctx+3405)
+
+	j	$L872
+	sll	$2,$2,5
+
+$L779:
+	lbu	$2,4462($17)
+	addu	$2,$2,$17
+	sb	$19,4479($2)
+	lbu	$4,4462($17)
+	addu	$2,$4,$17
+	lbu	$2,4445($2)
+	bne	$2,$0,$L758
+	lui	$5,%hi(g_sc_ctx+4495)
+
+	j	$L873
+	lui	$2,%hi(g_sc_ctx+3405)
+
+$L794:
+	lbu	$2,7632($21)
+	addu	$2,$2,$21
+	sb	$17,7649($2)
+	lbu	$2,7632($21)
+	addu	$3,$2,$21
+	lbu	$3,4445($3)
+	bne	$3,$0,$L787
+	lui	$4,%hi(g_sc_ctx+3405)
+
+	j	$L874
+	sll	$2,$2,5
+
+$L808:
+	lbu	$2,7632($17)
+	addu	$2,$2,$17
+	sb	$19,7649($2)
+	lbu	$4,7632($17)
+	addu	$2,$4,$17
+	lbu	$2,4445($2)
+	bne	$2,$0,$L787
+	lui	$5,%hi(g_sc_ctx+7665)
+
+	j	$L875
+	lui	$2,%hi(g_sc_ctx+3405)
+
+$L507:
+	lw	$31,76($sp)
+	move	$2,$0
+	lw	$fp,72($sp)
+	lw	$23,68($sp)
+	lw	$22,64($sp)
+	lw	$21,60($sp)
+	lw	$20,56($sp)
+	lw	$19,52($sp)
+	lw	$18,48($sp)
+	lw	$17,44($sp)
+	lw	$16,40($sp)
+	j	$31
+	addiu	$sp,$sp,80
+
+	.set	macro
+	.set	reorder
+	.end	rtk_sc_start_parse_packet
+	.size	rtk_sc_start_parse_packet, .-rtk_sc_start_parse_packet
+	.globl	sync_pkt_index
+	.section	.bss,"aw",@nobits
+	.align	2
+	.type	sync_pkt_index, @object
+	.size	sync_pkt_index, 4
+sync_pkt_index:
+	.space	4
+	.globl	profile_pkt_index
+	.align	2
+	.type	profile_pkt_index, @object
+	.size	profile_pkt_index, 4
+profile_pkt_index:
+	.space	4
+	.globl	finish_sync
+	.align	2
+	.type	finish_sync, @object
+	.size	finish_sync, 4
+finish_sync:
+	.space	4
+	.globl	use_ios7_mac
+	.align	2
+	.type	use_ios7_mac, @object
+	.size	use_ios7_mac, 4
+use_ios7_mac:
+	.space	4
+	.globl	sequence
+	.align	2
+	.type	sequence, @object
+	.size	sequence, 4
+sequence:
+	.space	4
+	.globl	g_sc_send_ack_round
+	.align	2
+	.type	g_sc_send_ack_round, @object
+	.size	g_sc_send_ack_round, 4
+g_sc_send_ack_round:
+	.space	4
+	.globl	g_sc_is_vxd
+	.align	2
+	.type	g_sc_is_vxd, @object
+	.size	g_sc_is_vxd, 4
+g_sc_is_vxd:
+	.space	4
+	.globl	g_ios_mac
+	.data
+	.align	2
+	.type	g_ios_mac, @object
+	.size	g_ios_mac, 6
+g_ios_mac:
+	.byte	2
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.byte	0
+	.globl	null_mac
+	.section	.bss
+	.align	2
+	.type	null_mac, @object
+	.size	null_mac, 6
+null_mac:
+	.space	6
+	.globl	g_sc_debug
+	.align	2
+	.type	g_sc_debug, @object
+	.size	g_sc_debug, 4
+g_sc_debug:
+	.space	4
+	.globl	g_sc_check_level
+	.align	2
+	.type	g_sc_check_level, @object
+	.size	g_sc_check_level, 4
+g_sc_check_level:
+	.space	4
+	.globl	g_sc_ignore_overlap
+	.align	2
+	.type	g_sc_ignore_overlap, @object
+	.size	g_sc_ignore_overlap, 4
+g_sc_ignore_overlap:
+	.space	4
+	.globl	default_key_iv
+	.data
+	.align	2
+	.type	default_key_iv, @object
+	.size	default_key_iv, 8
+default_key_iv:
+	.byte	-90
+	.byte	-90
+	.byte	-90
+	.byte	-90
+	.byte	-90
+	.byte	-90
+	.byte	-90
+	.byte	-90
+	.globl	udp_mcast
+	.align	2
+	.type	udp_mcast, @object
+	.size	udp_mcast, 64
+udp_mcast:
+	.word	2
+	.word	10
+	.ascii	"sc_mcast_udp\000"
+	.space	19
+	.word	mcast_udp_get_pattern
+	.word	mcast_udp_get_cipher_info
+	.word	mcast_udp_generate_key
+	.word	mcast_udp_decode_profile
+	.word	mcast_udp_get_profile
+	.word	mcast_udp_send_ack
+	.globl	udp_mcast_pin
+	.align	2
+	.type	udp_mcast_pin, @object
+	.size	udp_mcast_pin, 64
+udp_mcast_pin:
+	.word	3
+	.word	10
+	.ascii	"sc_mcast_udp\000"
+	.space	19
+	.word	mcast_udp_get_pattern
+	.word	mcast_udp_get_cipher_info
+	.word	mcast_udp_generate_key
+	.word	mcast_udp_decode_profile
+	.word	mcast_udp_get_profile
+	.word	mcast_udp_send_ack
+	.globl	udp_bcast
+	.align	2
+	.type	udp_bcast, @object
+	.size	udp_bcast, 64
+udp_bcast:
+	.word	4
+	.word	10
+	.ascii	"sc_bcast_udp\000"
+	.space	19
+	.word	bcast_udp_get_pattern
+	.word	bcast_udp_get_cipher_info
+	.word	mcast_udp_generate_key
+	.word	mcast_udp_decode_profile
+	.word	mcast_udp_get_profile
+	.word	mcast_udp_send_ack
+	.globl	udp_bcast_pin
+	.align	2
+	.type	udp_bcast_pin, @object
+	.size	udp_bcast_pin, 64
+udp_bcast_pin:
+	.word	5
+	.word	10
+	.ascii	"sc_bcast_udp\000"
+	.space	19
+	.word	bcast_udp_get_pattern
+	.word	bcast_udp_get_cipher_info
+	.word	mcast_udp_generate_key
+	.word	mcast_udp_decode_profile
+	.word	mcast_udp_get_profile
+	.word	mcast_udp_send_ack
+	.local	i.45907
+	.comm	i.45907,2,2
+	.local	radom_value
+	.comm	radom_value,4,4
+	.align	2
+	.type	mcast_udp_buffer, @object
+	.size	mcast_udp_buffer, 65
+mcast_udp_buffer:
+	.ascii	"8CmT/ J(3_aE R_UFR}`mtwF=)Qfjtn^S_1/ffg<_C7yw's}?'_'n&2~"
+	.ascii	"Blm&_k?6\000"
+	.local	Lambda
+	.comm	Lambda,32,4
+	.local	Omega
+	.comm	Omega,32,4
+	.local	ErrorLocs
+	.comm	ErrorLocs,1024,4
+	.local	NErrors
+	.comm	NErrors,4,4
+	.local	ErasureLocs
+	.comm	ErasureLocs,1024,4
+	.local	NErasures
+	.comm	NErasures,4,4
+	.local	g_sc_ctx
+	.comm	g_sc_ctx,10904,4
+	.globl	pBytes
+	.section	.bss
+	.align	2
+	.type	pBytes, @object
+	.size	pBytes, 32
+pBytes:
+	.space	32
+	.globl	synBytes
+	.align	2
+	.type	synBytes, @object
+	.size	synBytes, 32
+synBytes:
+	.space	32
+	.globl	genPoly
+	.align	2
+	.type	genPoly, @object
+	.size	genPoly, 64
+genPoly:
+	.space	64
+	.globl	gexp
+	.align	2
+	.type	gexp, @object
+	.size	gexp, 2048
+gexp:
+	.space	2048
+	.globl	glog
+	.align	2
+	.type	glog, @object
+	.size	glog, 1024
+glog:
+	.space	1024
+	.globl	fix_sa
+	.align	2
+	.type	fix_sa, @object
+	.size	fix_sa, 4
+fix_sa:
+	.space	4
+	.globl	g_sc_pin_len
+	.align	2
+	.type	g_sc_pin_len, @object
+	.size	g_sc_pin_len, 4
+g_sc_pin_len:
+	.space	4
+	.globl	g_sc_bssid
+	.align	2
+	.type	g_sc_bssid, @object
+	.size	g_sc_bssid, 6
+g_sc_bssid:
+	.space	6
+	.globl	g_smac
+	.align	2
+	.type	g_smac, @object
+	.size	g_smac, 6
+g_smac:
+	.space	6
+	.globl	g_dmac
+	.align	2
+	.type	g_dmac, @object
+	.size	g_dmac, 6
+g_dmac:
+	.space	6
+	.globl	g_sc_ifname
+	.align	2
+	.type	g_sc_ifname, @object
+	.size	g_sc_ifname, 32
+g_sc_ifname:
+	.space	32
+	.globl	g_sc_magic
+	.align	2
+	.type	g_sc_magic, @object
+	.size	g_sc_magic, 32
+g_sc_magic:
+	.space	32
+	.globl	g_option_sa
+	.align	2
+	.type	g_option_sa, @object
+	.size	g_option_sa, 140
+g_option_sa:
+	.space	140
+	.globl	g_p4_option_num
+	.align	2
+	.type	g_p4_option_num, @object
+	.size	g_p4_option_num, 4
+g_p4_option_num:
+	.space	4
+	.globl	g_p4_magic_1
+	.align	2
+	.type	g_p4_magic_1, @object
+	.size	g_p4_magic_1, 4
+g_p4_magic_1:
+	.space	4
+	.globl	g_p4_magic_2
+	.align	2
+	.type	g_p4_magic_2, @object
+	.size	g_p4_magic_2, 4
+g_p4_magic_2:
+	.space	4
+	.globl	g_p4_have_pin
+	.align	2
+	.type	g_p4_have_pin, @object
+	.size	g_p4_have_pin, 4
+g_p4_have_pin:
+	.space	4
+	.globl	g_p4_magic_len
+	.align	2
+	.type	g_p4_magic_len, @object
+	.size	g_p4_magic_len, 4
+g_p4_magic_len:
+	.space	4
+	.globl	g_p4_group
+	.align	2
+	.type	g_p4_group, @object
+	.size	g_p4_group, 4
+g_p4_group:
+	.space	4
+	.globl	g_p4_last_group
+	.align	2
+	.type	g_p4_last_group, @object
+	.size	g_p4_last_group, 4
+g_p4_last_group:
+	.space	4
+	.globl	g_p4_last_seq
+	.align	2
+	.type	g_p4_last_seq, @object
+	.size	g_p4_last_seq, 4
+g_p4_last_seq:
+	.space	4
+	.globl	g_p4_option_idx
+	.align	2
+	.type	g_p4_option_idx, @object
+	.size	g_p4_option_idx, 4
+g_p4_option_idx:
+	.space	4
+	.globl	g_p4_to_ds_hrate
+	.align	2
+	.type	g_p4_to_ds_hrate, @object
+	.size	g_p4_to_ds_hrate, 4
+g_p4_to_ds_hrate:
+	.space	4
+	.globl	g_p4_group_index_FromDS
+	.align	2
+	.type	g_p4_group_index_FromDS, @object
+	.size	g_p4_group_index_FromDS, 4
+g_p4_group_index_FromDS:
+	.space	4
+	.globl	g_p4_group_index_ToDS
+	.align	2
+	.type	g_p4_group_index_ToDS, @object
+	.size	g_p4_group_index_ToDS, 4
+g_p4_group_index_ToDS:
+	.space	4
+	.globl	g_pkt_type
+	.align	2
+	.type	g_pkt_type, @object
+	.size	g_pkt_type, 4
+g_pkt_type:
+	.space	4
+	.globl	g_sc_config_type
+	.align	2
+	.type	g_sc_config_type, @object
+	.size	g_sc_config_type, 4
+g_sc_config_type:
+	.space	4
+	.globl	pp
+	.align	2
+	.type	pp, @object
+	.size	pp, 4
+pp:
+	.space	4
+	.globl	ack_pkt
+	.align	2
+	.type	ack_pkt, @object
+	.size	ack_pkt, 108
+ack_pkt:
+	.space	108
+	.ident	"GCC: (GNU) 4.4.5-1.5.5p4"

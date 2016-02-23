@@ -1,1 +1,0 @@
-stdsoap2.cpp

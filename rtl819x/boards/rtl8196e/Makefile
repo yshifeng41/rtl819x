@@ -28,6 +28,10 @@ FW_BIN = image/fw.bin
 
 FW_NOWEB_BIN = image/fw_noweb.bin
 
+FW_ALL_BIN = image/all_fw.bin
+
+CONFIG_DAT = image/config*.dat
+
 ifdef CONFIG_ROOTFS_SQUASH
 ROOT_BIN = image/root.bin
 endif
@@ -153,6 +157,12 @@ ifeq ($(CONFIG_APP_BOA), y)
 	sed -i "s/webs&/boa/" $(DIR_ROMFS)/etc/init.d/rcS
 endif
 
+##################### WHZ STA #########################
+ifeq ($(CONFIG_APP_TEST), y)
+	echo -e "whztest\n" >> $(DIR_ROMFS)/etc/init.d/rcS
+endif
+##################### WHZ END #########################
+
 
 ifdef CONFIG_APP_LOGIN_CONSOLE
 	sed -i 's/^::respawn:-\/bin\/sh/::respawn:\/bin\/getty -L ttyS0 38400 vt100/' $(DIR_ROMFS)/etc/inittab
@@ -197,6 +207,7 @@ else
 			cd $(DIR_USERS)/boa/defconfig; \
 			mv *.dat $(DIR_ROOT)/boards/rtl8196e/image; \
 			cd -; \
+			$(MGBIN) -c -o $(FW_ALL_BIN) $(ROOT_BIN) $(WEBPAGE_BIN) $(CONFIG_DAT) $(LINUX_BIN); \
 		else \
 			egrep "^CONFIG_APP_GOAHEAD=y" $(DIR_USERS)/.config > GOAHEAD.test; \
 			if [ -s GOAHEAD.test ] ; then \
@@ -205,6 +216,7 @@ else
 				cd $(DIR_USERS)/goahead-2.1.1/LINUX; \
 				mv *.dat $(DIR_ROOT)/boards/rtl8196e/image; \
 				cd -; \
+				$(MGBIN) -c -o $(FW_ALL_BIN) $(ROOT_BIN) $(WEBPAGE_BIN) $(CONFIG_DAT) $(LINUX_BIN); \
 			fi; \
 		fi; \
 	fi; \

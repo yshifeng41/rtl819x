@@ -806,4 +806,13 @@ config APP_SPEEDTEST
     default n
 	help
 	 daemon for speed test
+
+##################### WHZ STA #########################
+config APP_TEST
+	bool "whztest"
+	default y
+	help
+		just test
+##################### WHZ END #########################
+
 #############################################################################

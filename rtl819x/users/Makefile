@@ -273,6 +273,9 @@ app_$(CONFIG_APP_DHRYSTONE)		+= dhrystone
 app_$(CONFIG_APP_IOZONE)		+= iozone3_327/src/current
 app_$(CONFIG_APP_EXAMPLE)		+= example
 app_$(CONFIG_APP_LTP)			+= ltp
+##################### WHZ STA #########################
+app_$(CONFIG_APP_TEST)			+= whztest
+##################### WHZ END #########################
 
 # wapi related
 #app_$(CONFIG_APP_OPENSSL)		+= openssl-0.9.8b 

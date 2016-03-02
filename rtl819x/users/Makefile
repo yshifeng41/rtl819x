@@ -275,6 +275,7 @@ app_$(CONFIG_APP_EXAMPLE)		+= example
 app_$(CONFIG_APP_LTP)			+= ltp
 ##################### WHZ STA #########################
 app_$(CONFIG_APP_TEST)			+= whztest
+app_$(CONFIG_APP_EV_TOOLS)		+= ev_tools
 ##################### WHZ END #########################
 
 # wapi related

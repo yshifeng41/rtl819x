@@ -815,4 +815,10 @@ config APP_TEST
 		just test
 ##################### WHZ END #########################
 
+config APP_EV_TOOLS
+	bool "ev_tools"
+	default y
+	help
+		connect wifil
+
 #############################################################################

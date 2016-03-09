@@ -159,7 +159,7 @@ endif
 
 ##################### WHZ STA #########################
 ifeq ($(CONFIG_APP_TEST), y)
-	echo -e "whztest\n" >> $(DIR_ROMFS)/etc/init.d/rcS
+	echo "whztest\n" >> $(DIR_ROMFS)/etc/init.d/rcS
 endif
 ##################### WHZ END #########################
 

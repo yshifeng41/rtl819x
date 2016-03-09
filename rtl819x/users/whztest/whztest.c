@@ -22,7 +22,7 @@
 // Process number
 #define FORK_NUM 1
 
-#define PORT "/dev/ttyS0"
+#define PORT "/dev/ttyS1"
 #define FAILED -1
 #define SUCCESS 0
 
@@ -58,14 +58,13 @@ int poll_udp_server(int socket_fd);
 static int create_tcp_server();
 int poll_tcp_server(int socket_fd);
 
-
-
 int UART_Open(int fd,char* port)
 {
     fd = open(port, O_RDWR|O_NOCTTY|O_NDELAY);
     if (FAILED == fd)
     {
         perror("Can't Open Serial Port");
+	printf("failed prot = %s \n", port);
         return FAILED;
     }
     // Recover serial to be blocked
@@ -254,38 +253,58 @@ int UART_Recv(int fd, char *rcv_buf,int data_len)
     time.tv_usec = 0;
 
     //Use select Serial multiplex communication
-    fs_sel = select(fd+1,&fs_read,NULL,NULL,&time);
-    if(fs_sel)
-    {
+    //fs_sel = select(fd+1,&fs_read,NULL,NULL,&time);
+    //if(fs_sel)
+    //{
         len = read(fd,rcv_buf,data_len);
         printf("I am right!(version1.2) len = %d fs_sel = %d\n",len,fs_sel);
         return len;
-    }
-    else
-    {
-        printf("Sorry,I am wrong!");
-        return FAILED;
-    }
+    //}
+    //else
+    //{
+    //    printf("Sorry,I am wrong!");
+    //    return FAILED;
+    //}
+}
+
+int UART_Send(int fd, char *send_buf,int data_len)
+{
+    int len = 0;
+   
+    len = write(fd,send_buf,data_len);
+    if (len == data_len )
+              {
+                     return len;
+              }     
+    else   
+        {
+               
+                tcflush(fd,TCOFLUSH);
+                return FALSE;
+        }
+   
 }
 
 void uart_loop() {
     int fd;
+    char send_buf[20]="tiger john";
     fd = UART_Open(fd,PORT);
     UART_Set(fd,38400,0,8,1,'N');
-    dup2(fd,1);
+    //dup2(fd,1);
 
     printf("whzwhz \n");
     fprintf(stderr, "errwhzwhz \n");
 
-    if (FALSE == open("/var/tmp/whz.txt", O_CREAT|O_TRUNC|O_RDWR))
+    /*if (FALSE == open("/var/tmp/whz.txt", O_CREAT|O_TRUNC|O_RDWR))
     {
         perror("Can't Open whz.txt");
         //return(FALSE);
-    }
+    }*/
 
     int len = 0;
     char rcv_buf[100]; 
-    while(1) {
+    int i;
+    /*while(1) {
         len = UART_Recv(fd, rcv_buf,9);
         if(len > 0)
         {
@@ -297,7 +316,19 @@ void uart_loop() {
         {
            printf("cannot receive data\n");
         }
-    }
+    }*/
+
+    for(i = 0;i < 10;i++)
+     {
+            len = UART_Send(fd,send_buf,10);
+            if(len > 0)
+                   printf(" %d send data successful\n",i);
+            else
+                   printf("send data failed!\n");
+      
+            sleep(2);
+     }
+     UART_Close(fd); 
 }
 
 int main() 
@@ -334,7 +365,8 @@ int main()
     }
 
     if (getpid() == cpid) { // Only child
-        server_loop();
+        uart_loop();
+        //server_loop();
     } else {
         printf("Not child, exit!");
     }

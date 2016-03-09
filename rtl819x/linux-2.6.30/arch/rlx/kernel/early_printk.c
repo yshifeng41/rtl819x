@@ -28,7 +28,7 @@ int prom_putchar(char c)
    extern unsigned int sc16is7x0_serial_in_i2c(int offset);
 #endif
 
-#define UART0_BASE		0xB8002000
+#define UART0_BASE		0xB8002100
 #define UART0_THR		(UART0_BASE + 0x000)
 #define UART0_FCR		(UART0_BASE + 0x008)
 #define UART0_LSR       (UART0_BASE + 0x014)

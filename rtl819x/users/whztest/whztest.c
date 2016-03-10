@@ -304,7 +304,7 @@ void uart_loop() {
     int len = 0;
     char rcv_buf[100]; 
     int i;
-    /*while(1) {
+    while(1) {
         len = UART_Recv(fd, rcv_buf,9);
         if(len > 0)
         {
@@ -316,9 +316,9 @@ void uart_loop() {
         {
            printf("cannot receive data\n");
         }
-    }*/
+    }
 
-    for(i = 0;i < 10;i++)
+    /*for(i = 0;i < 10;i++)
      {
             len = UART_Send(fd,send_buf,10);
             if(len > 0)
@@ -328,7 +328,7 @@ void uart_loop() {
       
             sleep(2);
      }
-     UART_Close(fd); 
+     UART_Close(fd); */
 }
 
 int main() 

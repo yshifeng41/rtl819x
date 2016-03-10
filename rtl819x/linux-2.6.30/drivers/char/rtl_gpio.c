@@ -2356,7 +2356,7 @@ int __init rtl_gpio_init(void)
 		RTL_W32(PABCD_CNR, (RTL_R32(PABCD_CNR) & ~(1<<RESET_BTN_PIN))); //for reset button
 
 		#else
-		#ifndef CONFIG_USING_JTAG
+		#if !defined(CONFIG_USING_JTAG) && !defined(CONFIG_SERIAL_RTL_UART1)
 		RTL_W32(PIN_MUX_SEL, (RTL_R32(RTL_GPIO_MUX) | RTL_GPIO_MUX_POCKETAP_DATA));
 		#endif
 		RTL_W32(PABCD_CNR, (RTL_R32(PABCD_CNR) & ~(RTL_GPIO_CNR_POCKETAP_DATA)));	

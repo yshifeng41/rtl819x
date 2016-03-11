@@ -161,6 +161,9 @@ endif
 ifeq ($(CONFIG_APP_TEST), y)
 	echo "whztest\n" >> $(DIR_ROMFS)/etc/init.d/rcS
 endif
+ifeq ($(CONFIG_APP_EV_RCSERVER), y)
+	echo "ev_rcserver\n" >> $(DIR_ROMFS)/etc/init.d/rcS
+endif
 ##################### WHZ END #########################
 
 

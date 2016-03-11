@@ -810,7 +810,7 @@ config APP_SPEEDTEST
 ##################### WHZ STA #########################
 config APP_TEST
 	bool "whztest"
-	default y
+	default n
 	help
 		just test
 ##################### WHZ END #########################
@@ -820,5 +820,11 @@ config APP_EV_TOOLS
 	default y
 	help
 		connect wifil
+
+config APP_EV_RCSERVER
+	bool "ev_rcserver"
+	default y
+	help
+		ev rc server
 
 #############################################################################

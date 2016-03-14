@@ -915,7 +915,7 @@ int br_querierSelection(struct net_bridge *br,unsigned int ipVer)
 		memcpy(&brIpv6Addr[8],brDev->dev_addr,3);		/*generate br link-local ipv6 address*/
 		brIpv6Addr[8]=brIpv6Addr[8]|0x02;		
 		memcpy(&brIpv6Addr[13],&brDev->dev_addr[3],3);	
-		#if 1
+		#if 0
 		printk("br0 ipv6 address is:\n");
 
 		{

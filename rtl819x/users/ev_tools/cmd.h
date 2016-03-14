@@ -78,6 +78,7 @@
 #endif
 
 #define id_get_fw_version		0x50
+#define id_ev_get_fw_version		0x70
 #define FW_VERSION_MAX_LEN		24
 
 #define TEMP_MIB_FILE "/var/hcd_mib"

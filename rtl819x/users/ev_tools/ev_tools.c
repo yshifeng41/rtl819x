@@ -947,7 +947,7 @@ int main(int argc, char *argv[])
 	}
 	pidfile_write_release(pid_fd);
 
-	DISPLAY_BANNER;
+	//DISPLAY_BANNER;
 	
 	// initialize mib
 	init_config_mib();
@@ -969,7 +969,7 @@ int main(int argc, char *argv[])
 	  //init_bridge();
 	  //bring_up_lan();
 	  //bring_up_br();
-      sleep(1);
+      /*sleep(1);
 	   chan = inband_open(INBAND_NETIF,NULL,ETH_P_RTK,INBAND_DEBUG);
 	   if(chan < 0)
 	   {
@@ -978,7 +978,7 @@ int main(int argc, char *argv[])
 	    }
 	   else
 	   	ev_tools_inband_chan = chan;	   
-
+*/
 	// Set daemon pid to driver. 
 	// When this ioctl is set, driver will set AllSoftwareReady bit to 'CPU System Status' Register
 	pid =  getpid();
@@ -990,7 +990,7 @@ int main(int argc, char *argv[])
 
 	/* INBAND_HOST ---> */
   	/* Get wireless name */
-	memset(wrq.ifr_ifrn.ifrn_name, 0, sizeof wrq.ifr_ifrn.ifrn_name);
+	/*memset(wrq.ifr_ifrn.ifrn_name, 0, sizeof wrq.ifr_ifrn.ifrn_name);
   	strncpy(wrq.ifr_ifrn.ifrn_name, "wlan0", IFNAMSIZ);
 
 	pid = getpid();
@@ -999,7 +999,7 @@ int main(int argc, char *argv[])
 	event_channel = inband_open(INBAND_INTF,INBAND_HOST,INBAND_EVENT_TYPE,INBAND_DEBUG);
 	if( event_channel < 0 )
 		return -1;
-	signal(SIGIO, notify_host);
+	signal(SIGIO, notify_host);*/
 	/* INBAND_HOST <--- */
 
 	//init_system(INIT_ALL); //mark_debug

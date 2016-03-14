@@ -37,6 +37,7 @@
 #if defined(CONFIG_FIRMWARE_UPGRADE_LEB_BLINK)
 #include "RgbLedBlink.h"
 #endif
+#include "../boa/src/version.c"	
 //#include "inband_if.h"
 #define MAX_INBAND_PAYLOAD_LEN 1480
 
@@ -152,8 +153,6 @@ static int ev_tools_inband_ioctl_chan=-1;
 #define CMD_INBAND_IOCTL 0x03
 #define CMD_INBAND_SYSTEMCALL 0x04
 
-
-
 extern int ev_tools_inband_chan;
 
 #define SIGNATURE_ERROR		(1<<0)
@@ -222,6 +221,7 @@ static int _del_macfilter_rule(char *cmd, int cmd_len);
 #endif
 
 static int _get_firmware_version(char *cmd, int cmd_len);
+static int _ev_get_firmware_version(char *cmd, int cmd_len);
 static int _connect_ap(char *cmd, int cmd_len);
 static int set_profile_to_flash(char *wlan_if, char *ssid,char *passwd,int encrypt_type);
 
@@ -270,6 +270,7 @@ struct cmd_entry cmd_table[]={ \
 	CMD_DEF(del_macfilter_rule_imm,_del_macfilter_rule),
 	CMD_DEF(get_fw_version, _get_firmware_version),
 #endif
+        CMD_DEF(ev_get_fw_version, _ev_get_firmware_version),
 	/* last one type should be LAST_ENTRY - */   
 	{0}
 };
@@ -2955,6 +2956,42 @@ ssr_err_out :
 	return (MAX_INBAND_PAYLOAD_LEN + 1);
 }
 #endif
+
+static int _ev_get_firmware_version(char *cmd , int cmd_len)
+{
+	printf("[%s:%d]\n", __FUNCTION__,__LINE__);
+	int ret = 1,length;
+	unsigned char errbuff[48] = {0};
+	char *version = (char *)malloc(FW_VERSION_MAX_LEN);
+	if(version == NULL){
+		strcpy(errbuff, "error,not enough memory\n");
+		//inband_write(ev_tools_inband_chan, 0, id_get_fw_version, errbuff, strlen(errbuff), 2);	
+		return (MAX_INBAND_PAYLOAD_LEN + 1);
+	}
+
+        if(version == NULL)
+		ret = 0;
+	
+	if (ret == 0)
+	{
+		strcpy(errbuff, "error,rtk_get_firmware_version failed\n");
+		goto ssr_err_out;
+	} else {
+	    version[0] = 0;
+	    strcpy(version, fwVersion);
+	    printf("version number: %s\n", version);
+	}
+	
+	length = strlen(version);
+	printf("%s.%d.return to client. firmware_version %s\n",__FUNCTION__,__LINE__, version);
+	free(version);
+	return (MAX_INBAND_PAYLOAD_LEN + 1);
+
+ssr_err_out :
+	printf("%s",errbuff);
+	free(version);
+	return (MAX_INBAND_PAYLOAD_LEN + 1);
+}
 
 #ifdef HOST_SEND_CONFIG_FILE
 static int _send_config_file(char *data_p , int data_len)

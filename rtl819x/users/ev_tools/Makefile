@@ -111,7 +111,7 @@ AR = $(CROSS_COMPILE)ar
 #mark_issue
 #LDFLAGS                =  -static
 #LDLIBS += ../inband_lib/inband.a
-LDLIBS += ../rtk_inbandLib/inband.a
+#LDLIBS += ../rtk_inbandLib/inband.a
 LDLIBS += ../boa/apmib/libapmib.so
 
 ifeq ($(CONFIG_APP_ADAPTER_API), y)

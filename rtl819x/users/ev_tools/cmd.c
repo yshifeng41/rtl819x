@@ -305,6 +305,7 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
         if (getWlJoinResult(wlanifp, &res) < 0) {
             printf("[%s:%d] conneting failed \n", __FUNCTION__,__LINE__);
             ret = -1;
+            break;
         }
 
         if(res==STATE_Bss  || res==STATE_Ibss_Idle || res==STATE_Ibss_Active) { // completed 
@@ -313,6 +314,7 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
             if (wait_time++ > max_wait_time) {
                 printf("[%s:%d] connecting time out \n", __FUNCTION__,__LINE__);
                 ret = -1;
+                break;
             }
         }
         sleep(1);

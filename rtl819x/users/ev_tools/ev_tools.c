@@ -75,11 +75,6 @@ extern unsigned int get_vap_num(void);
 
 extern struct config_mib_all mib_all;
 
-typedef struct _DOT11_REQUEST{
-        unsigned char   EventId;
-}DOT11_REQUEST;
-
-int ev_tools_inband_chan=0;
 /*================================================================*/
 /* Routine Implementations */
 
@@ -225,75 +220,6 @@ static int wps_get_value(char *data, char *value)
 		value[len] = '\0';
 	}
 	return len;
-}
-
-static int notif_host(void)
-{
-	int i, ret,fd;
-	int chan;
-	unsigned int seq=0;
-	char *data;		
-	char *buf_p,rx_cmd_type;
-	int count;
-	struct stat ffstat;
-	 int flen=0,len;
-
-	chan = inband_open(INBAND_NETIF,"00e04c8196c1",ETH_P_RTK_NOTIFY,INBAND_DEBUG);
-
-	if (chan < 0) {
-		printf("open inband failed!\n");
-		return -1;
-	}
-
-	fd = open(WPS_CONF, O_RDONLY);
-
-  	if (fd < 0)	{
-		printf("Cannot Open file %s!\n", WPS_CONF);
-		return -1;
-   	}
-	fstat(fd, &ffstat);
- 	flen = ffstat.st_size;
-  	printf("flen = %d \n",flen);
-
-  	if((data = (char *)malloc(flen)) == NULL)
-  	{
-		printf("data buffer allocation failed!\n");
-		return -1;
-	}
-	
-	ret = read(fd, data, flen);
-   	
-  	if (ret != flen) {
-		printf("Reading error\n");
-		free(data);	//need free before return!!!!!	
-		return -1;
-	}
-
- 	close(fd);
-	len = flen;		
-	ret = inband_write(chan,0,0,data,len,0); //send request		
-  	 
-	free(data);	//need free before return!!!!!   
-
-	count = inband_rcv_data(chan,&rx_cmd_type,&buf_p,3); //return data length
-
-	if(count < 0)
-	{
-		ret=-1;	
-		DEBUG_ERR("wps  notify fail\n");
-	}	
-
-	if( (rx_cmd_type == 0) )
-		DEBUG_ERR("wps  notify ok!\n");
-	else
-	{
-		ret=-1;
-		DEBUG_ERR("wps  notify fail!\n");
-	}		
-
-	inband_close(chan);
-
-	return 0;
 }
 
 int signal_daemon_by_name(unsigned char *name,unsigned int signo)
@@ -736,12 +662,7 @@ static int parse_argument(int argc, char *argv[])
 			goto daemon_not_start;		
 		sprintf(tmpbuf, "echo %s %s > %s",  "getstats", argv[argNum+1], CMD_FILE);
 	}
-	else if (argv[argNum][0]=='-' && !strcmp(&argv[argNum][1], "notif_wps_config")) {
-		if (fp == NULL) 
-			goto daemon_not_start;
-		if( notif_host() < 0 )
-			printf("Event host failed!!\n");
-	}
+
 #endif // CMD_LINE
 	else {
 		show_help();
@@ -786,25 +707,6 @@ static void sigchld_handler(int signo)
     }
 }
 
-static void inband_wait_event()
-{
-	int ret,data_len ;
-	char cmd_type;		
-	char *data_p;
-
-	inband_set_cmd_id_zero(ev_tools_inband_chan);
-	data_len = inband_rcv_data(ev_tools_inband_chan,&cmd_type,&data_p,-1); //try to rcv inband data 	
-
-	if(data_len < 0)
-		goto rcv_end;
-	//do cmd process
-	ret = do_cmd(cmd_type,data_p,data_len,1);  //do requested cmd , and reply a rsp_frame if need
-	
-rcv_end:	
-	inband_free_buf(data_p, data_len);	
-	return;
-}
-
 static void do_cmd_event(int argc, char *argv[])
 {
 	int ret, cmd_type, argNum;
@@ -839,84 +741,6 @@ static void do_cmd_event(int argc, char *argv[])
         ret = do_cmd(cmd_type,tmpbuf, strlen(tmpbuf), 0);
 
 	return;
-}
-
-
-#ifdef RTK_NFBI_AP_HCM
-int do_mdio_ioctl(int id, void *data)
-{
-                int ret = RET_OK;
-
-                switch (id) {
-#if 0
-                        case id_cmd_timeout     :
-                                if (ioctl(fd, MDIO_IOCTL_SET_CMD_TIMEOUT, data)) {
-                                        DEBUG_ERR("Set ioctl MDIO_IOCTL_SET_CMD_TIMEOUT error!\n");
-                                        ret = -RET_IOCTL_ERR;
-                                }
-                                break;
-                        case id_mii_pause_enable:
-                                if (ioctl(fd, MDIO_IOCTL_SET_MII_PAUSE, data)) {
-                                        DEBUG_ERR("Set ioctl MDIO_IOCTL_SET_MII_PAUSE error!\n");
-                                        ret = -RET_IOCTL_ERR;
-                                }
-                                break;
-                        case id_eth_pause_enable:
-                                if (ioctl(fd, MDIO_IOCTL_SET_ETH_PAUSE, data)) {
-                                        DEBUG_ERR("Set ioctl MDIO_IOCTL_SET_ETH_PAUSE error!\n");
-                                        ret = -RET_IOCTL_ERR;
-                                }
-                                break;
-                        case id_cpu_suspend_enable:
-                                if (ioctl(fd, MDIO_IOCTL_SET_SUSPEND, data)) {
-                                        DEBUG_ERR("Set ioctl MDIO_IOCTL_SET_SUSPEND error!\n");
-                                        ret = -RET_IOCTL_ERR;
-                                }
-                                break;
-                        case id_phy_reg_poll_time:
-                                if (ioctl(fd, MDIO_IOCTL_SET_PHY_POLL_TIME, data)) {
-                                        DEBUG_ERR("Set ioctl MDIO_IOCTL_SET_PHY_POLL_TIME error!\n");
-                                        ret = -RET_IOCTL_ERR;
-                                }
-                                break;
-#endif
-                        case id_set_host_pid:
-                                if (ioctl(mdio_fd, MDIO_IOCTL_SET_HOST_PID, data)) {
-                                        DEBUG_ERR("Set ioctl MDIO_IOCTL_SET_HOST_PID error!\n");
-                                        ret = -RET_IOCTL_ERR;
-                                }
-                                break;
-                        default:
-                                DEBUG_ERR("Invalid mdio cmd id [0x%x] !\n", id);
-                                ret = -RET_NOT_SUPPORT_NOW;
-                }
-                return ret;
-}
-#endif
-
-int notify_host(int signo)
-{
-	struct iwreq wrq;
-	DOT11_REQUEST *req;
-
-  	/* Get wireless name */
-	memset(wrq.ifr_ifrn.ifrn_name, 0, sizeof wrq.ifr_ifrn.ifrn_name);
-	strncpy(wrq.ifr_ifrn.ifrn_name, "wlan0", IFNAMSIZ);
-
-	req = (DOT11_REQUEST *)malloc(MAXDATALEN);
-	wrq.u.data.pointer = (caddr_t)req;
-	req->EventId = DOT11_EVENT_REQUEST;
-	wrq.u.data.length = sizeof(DOT11_REQUEST);
-
-	//iw_message(MESS_DBG_IWCONTROL, "[RequestIndication] : Start\n");
-	//printf("\n[RequestIndication] : Start\n");
-  	if(ioctl(ioctl_sock, SIOCGIWIND, &wrq) < 0)
-	{
-    	// If no wireless name : no wireless extensions
-		return(-1);
-	}
-
-	inband_write(event_channel,0,0xff,wrq.u.data.pointer,wrq.u.data.length,0);
 }
 
 int main(int argc, char *argv[])
@@ -966,19 +790,6 @@ int main(int argc, char *argv[])
                 return 1;
         }
 #endif
-	  //init_bridge();
-	  //bring_up_lan();
-	  //bring_up_br();
-      /*sleep(1);
-	   chan = inband_open(INBAND_NETIF,NULL,ETH_P_RTK,INBAND_DEBUG);
-	   if(chan < 0)
-	   {
-	   	printf(" inband_open failed!\n");
-	   	return -1;
-	    }
-	   else
-	   	ev_tools_inband_chan = chan;	   
-*/
 	// Set daemon pid to driver. 
 	// When this ioctl is set, driver will set AllSoftwareReady bit to 'CPU System Status' Register
 	pid =  getpid();
@@ -987,20 +798,6 @@ int main(int argc, char *argv[])
 		perror("socket[PF_INET,SOCK_DGRAM]");
 		return -1;
 	}
-
-	/* INBAND_HOST ---> */
-  	/* Get wireless name */
-	/*memset(wrq.ifr_ifrn.ifrn_name, 0, sizeof wrq.ifr_ifrn.ifrn_name);
-  	strncpy(wrq.ifr_ifrn.ifrn_name, "wlan0", IFNAMSIZ);
-
-	pid = getpid();
-	wrq.u.data.pointer = (caddr_t)&pid;
-	wrq.u.data.length = sizeof(pid_t);
-	event_channel = inband_open(INBAND_INTF,INBAND_HOST,INBAND_EVENT_TYPE,INBAND_DEBUG);
-	if( event_channel < 0 )
-		return -1;
-	signal(SIGIO, notify_host);*/
-	/* INBAND_HOST <--- */
 
 	//init_system(INIT_ALL); //mark_debug
 #if defined(CONFIG_APP_ADAPTER_API)

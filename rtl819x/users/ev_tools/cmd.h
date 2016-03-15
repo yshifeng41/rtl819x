@@ -22,52 +22,20 @@
 #define id_ioctl						0x0b
 #define id_syscall						0x04
 #define id_firm_upgrade						0x20
-
 #define id_set_mibs						0x1a
-
-//#define CONFIG_HCD_FLASH_SUPPORT
-
-#ifndef INBAND_GET_FILE_SUPPOPRT
-//#define INBAND_GET_FILE_SUPPOPRT
-#endif
-//#define HOST_SEND_CONFIG_FILE  	//defined to receive and save file form host
-
 #define id_sync_to_server			0x0f
-
 #define id_request_scan			0x21
 #define id_get_scan_result		0x22
 #define id_start_lite_clnt_connect	0x23
 #define id_wlan_sync	0x24
 #define id_set_wlan_on 	0x25
 #define id_set_wlan_off 0x26
-
 #define id_getlanRate				0x10
 #define id_getlanRatePercent		0x11
 #define id_setlanBandwidth			0x12
-
-#if defined(CONFIG_APP_ADAPTER_API)
-#define CONFIG_RTK_NAS_FILTER   1
-/* storage related */
-#define id_get_storage_info		0x30
-#define id_format_partition		0x31
-
-#define id_get_wan_status		0x40
-#define id_get_lan_terminal_info		0x41
-#define id_get_upload_speed		0x42
-#define id_get_download_speed	0x43
-#define id_get_phy_port_status	0x44
-#define id_get_lan_drop_rate	0x45
-#define id_get_wan_drop_rate	0x46
-#define id_get_wlan_drop_rate	0x51
-#define id_restart_wan			0x58
-#define id_get_pppoe_err_code	0x59
-#define id_wlan_immediately_work	0x5a
-#endif
 #define id_get_macfilter_rule		0x60
 #define id_add_macfilter_rule_imm		0x61
 #define id_del_macfilter_rule_imm		0x62
-
-
 #define id_firm_check_sig_checksum	0x47
 #define id_firm_check_flash_data	0x48
 #define id_firm_upgrade_reboot		0x49

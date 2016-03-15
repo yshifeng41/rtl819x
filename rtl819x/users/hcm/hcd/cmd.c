@@ -1097,7 +1097,8 @@ static int host_ioctl_receive(char *ioctl_data_p,int ioctl_data_len)
 		ioctl_data_len += iwr.u.data.length;
 	} else {
 		memcpy(ioctl_data_p,(char *)&error_code,sizeof(int));
-		memcpy(ioctl_data_p+HDR_IOCTL_DATA_OFFSET,data_ptr,data_len);	//mark_test	}
+		memcpy(ioctl_data_p+HDR_IOCTL_DATA_OFFSET,data_ptr,data_len);	//mark_test	
+	}
 
 	//return ret;
 	/*

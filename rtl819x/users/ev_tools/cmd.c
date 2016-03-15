@@ -14,12 +14,6 @@
 #include <net/if.h>
 #include <linux/if_packet.h>
 #include "../inband_lib/wireless_copy.h"
-#if defined(CONFIG_APP_ADAPTER_API)
-#include "../adapter-api/rtk_api/rtk_disk_adapter.h"
-#include "../adapter-api/rtk_api/rtk_api.h"
-#include "../adapter-api/rtk_api/rtk_firewall_adapter.h"
-
-#endif
 /*================================================================*/
 /* Local Include Files */
 
@@ -153,8 +147,6 @@ static int ev_tools_inband_ioctl_chan=-1;
 #define CMD_INBAND_IOCTL 0x03
 #define CMD_INBAND_SYSTEMCALL 0x04
 
-extern int ev_tools_inband_chan;
-
 #define SIGNATURE_ERROR		(1<<0)
 #define WEBCHECKSUM_ERROR	(1<<1)
 #define ROOTCHECKSUM_ERROR	(1<<2)
@@ -182,7 +174,6 @@ static int _getlanstatus(char *cmd , int cmd_len);
 static int _getlanRate(char *cmd,int cmd_len);
 static int _setlanBandwidth(char *cmd, int cmd_len);
 
-//static int _sendfile(char *cmd , int cmd_len);
 static int _firm_upgrade(char *cmd , int cmd_len);
 static int _firm_check_signature_checksum(char *cmd , int cmd_len);
 static int _firm_check_flash_data(char *cmd , int cmd_len);
@@ -192,33 +183,6 @@ static int host_systemcall_receive(char *data,int data_len);
 
 static int _request_scan(char *cmd , int cmd_len);
 static int _get_scan_result(char *cmd , int cmd_len);
-
-#ifdef CONFIG_RTL_LITE_CLNT
-static int 	_start_lite_clnt_connect(char *cmd , int cmd_len);
-static int 	_wlan_sync(char *cmd , int cmd_len);
-static int 	_set_wlan_off(char *cmd , int cmd_len);
-static int 	_set_wlan_on(char *cmd , int cmd_len);
-#endif
-
-#if defined(CONFIG_APP_ADAPTER_API)
-static int _get_storage_info(char *cmd , int cmd_len);
-static int _format_partition(char *cmd , int cmd_len);
-
-static int _get_wan_status_By_Url(char *cmd , int cmd_len);
-static int _get_lan_terminal_info(char *cmd , int cmd_len);
-static int _get_upload_speed(char *cmd , int cmd_len);
-static int _get_download_speed(char *cmd , int cmd_len);
-static int _get_phy_port_status(char *cmd , int cmd_len);
-static int _get_lan_drop_rate(char *cmd , int cmd_len);
-static int _get_wan_drop_rate(char *cmd , int cmd_len);
-static int _get_wlan_drop_rate(char *cmd , int cmd_len);
-static int _restart_wan(char *cmd, int cmd_len);
-static int _get_pppoe_err_code(char *cmd, int cmd_len);
-static int _wlan_immediately_work(char *cmd, int cmd_len);
-static int _get_macfilter_rule(char *cmd , int cmd_len);
-static int  _add_macfilter_rule(char *cmd, int cmd_len);
-static int _del_macfilter_rule(char *cmd, int cmd_len);
-#endif
 
 static int _get_firmware_version(char *cmd, int cmd_len);
 static int _ev_get_firmware_version(char *cmd, int cmd_len);
@@ -243,34 +207,13 @@ struct cmd_entry cmd_table[]={ \
 
 	CMD_DEF(request_scan,_request_scan),
 	CMD_DEF(get_scan_result,_get_scan_result),
-
-#if defined(CONFIG_RTL_LITE_CLNT)
-	CMD_DEF(wlan_sync,_wlan_sync),
-	CMD_DEF(start_lite_clnt_connect,_start_lite_clnt_connect),
-	CMD_DEF(set_wlan_on,_set_wlan_on),
-	CMD_DEF(set_wlan_off,_set_wlan_off),
-#endif
-
-#if defined(CONFIG_APP_ADAPTER_API)
-	CMD_DEF(get_storage_info,_get_storage_info),
-	CMD_DEF(format_partition,_format_partition),	
-	CMD_DEF(get_wan_status,_get_wan_status_By_Url),
-	CMD_DEF(get_lan_terminal_info,_get_lan_terminal_info),
-	CMD_DEF(get_upload_speed,_get_upload_speed),
-	CMD_DEF(get_download_speed,_get_download_speed),
-	CMD_DEF(get_phy_port_status,_get_phy_port_status),
-	CMD_DEF(get_lan_drop_rate,_get_lan_drop_rate),
-	CMD_DEF(get_wan_drop_rate,_get_wan_drop_rate),
-	CMD_DEF(get_wlan_drop_rate,_get_wlan_drop_rate),
-	CMD_DEF(restart_wan,_restart_wan),
-	CMD_DEF(get_pppoe_err_code,_get_pppoe_err_code),
-	CMD_DEF(wlan_immediately_work,_wlan_immediately_work),
-	CMD_DEF(get_macfilter_rule,_get_macfilter_rule),
-	CMD_DEF(add_macfilter_rule_imm,_add_macfilter_rule),
-	CMD_DEF(del_macfilter_rule_imm,_del_macfilter_rule),
-	CMD_DEF(get_fw_version, _get_firmware_version),
-#endif
         CMD_DEF(ev_get_fw_version, _ev_get_firmware_version),
+#ifdef CONFIG_HCD_FLASH_SUPPORT  
+    CMD_DEF(firm_upgrade, _firm_upgrade),
+    CMD_DEF(firm_check_sig_checksum,_firm_check_signature_checksum),
+    CMD_DEF(firm_check_flash_data,_firm_check_flash_data),
+    CMD_DEF(firm_upgrade_reboot,_firm_upgrade_reboot),
+#endif
 	/* last one type should be LAST_ENTRY - */   
 	{0}
 };
@@ -351,33 +294,237 @@ int do_cmd(int id , char *cmd ,int cmd_len ,int relply)
 			ret = 1;
 		}
 
-		inband_write(ev_tools_inband_chan,0,id,cmd,ret,1); //good reply
-		//printf("%d,%s[%s]:[%d].\n",id,cmd,__FUNCTION__,__LINE__);
 	}
 	else{ //error rsp	
 		cmd[0] = (unsigned char)( ~ret + 1);			
-		inband_write(ev_tools_inband_chan,0,id,cmd,1,2); //error reply
-		//printf(" %d,%s[%s]:[%d].\n",id,cmd,__FUNCTION__,__LINE__);
 	}			
 	
 	return ret;
 }
 
-#if 0 //mark_firm
-static inline int CHECKSUM_OK(unsigned char *data, int len)
+int get_encrypt_type(int encrypt,int passwd_len)
 {
-        int i;
-        unsigned char sum=0;
-
-        for (i=0; i<len; i++)
-                sum += data[i];
-
-        if (sum == 0)
-                return 1;
-        else
-                return 0;
+       int type;
+       switch(encrypt){
+               case 0:
+                       type = 0;
+               break;
+               case 1:
+                       if(passwd_len == 5)
+                               type = 1;
+                       else if(passwd_len == 10)
+                               type = 2;
+                       else if (passwd_len == 13)
+                               type = 3;
+                       else if(passwd_len == 26)
+                               type = 4;
+                       else
+                               type = -1;
+               break;
+               case 4:
+                       type = 9;
+               break;
+               case 2:
+                       type = 10;
+               break;
+               case 6:
+                       type = 11;
+               break;
+               default:
+                       type = -1;
+               break;
+       }
+       return type;
 }
-#endif
+
+static int set_profile_to_flash(char *wlan_if, char *ssid,char *passwd,int encrypt_type)
+{
+       unsigned char buffer[128]={0};
+       unsigned char value[128];
+       char config_prefix[16];
+       //unsigned char tmp[128];
+       unsigned char *p;
+       //unsigned int security_type=0;
+       //unsigned int wsc_auth=0, wsc_enc=0;
+       //unsigned char wsc_psk[65] = {0};
+
+       system("flash setconf start");
+       if(!strcmp(wlan_if,"wlan0"))
+               sprintf(config_prefix,"WLAN0_");
+       else if(!strcmp(wlan_if,"wlan0-vxd"))
+               sprintf(config_prefix,"WLAN0_VXD_");
+       else if(!strcmp(wlan_if,"wlan1"))
+               sprintf(config_prefix,"WLAN1_");
+       else if(!strcmp(wlan_if,"wlan1-vxd"))
+               sprintf(config_prefix,"WLAN1_VXD_");
+
+       sprintf(buffer, "flash setconf %sSSID %s", config_prefix,ssid);
+       system(buffer); 
+       switch(encrypt_type)
+       {
+               case 0:
+                       sprintf(buffer, "flash setconf %sENCRYPT 0", config_prefix);
+                       system(buffer);
+                       break;
+               case 1:
+                       sprintf(buffer, "flash setconf %sENCRYPT 1", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWEP 1", config_prefix);
+                       system(buffer);
+                       sprintf(value, "%02x%02x%02x%02x%02x", passwd[0], passwd[1], passwd[2], passwd[3], passwd[4]);
+                       value[10] = 0;
+                       sprintf(buffer, "flash setconf %sWEP64_KEY1  %s", config_prefix, value);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWEP_KEY_TYPE 0", config_prefix);
+                       system(buffer);                 
+                       sprintf(buffer, "flash setconf %sAUTH_TYPE  2", config_prefix);
+                       system(buffer);
+                       break;
+               case 2:
+                       sprintf(buffer, "flash setconf %sENCRYPT 1", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWEP 1", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWEP64_KEY1     %s", config_prefix, passwd);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWEP_KEY_TYPE 1", config_prefix);
+                       system(buffer);                 
+                       sprintf(buffer, "flash setconf %sAUTH_TYPE 2", config_prefix);
+                       system(buffer);                 
+                       break;
+               case 3:
+                       sprintf(buffer, "flash setconf %sENCRYPT 1", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWEP 2", config_prefix);
+                       system(buffer);
+                       sprintf(value, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", 
+                               passwd[0], passwd[1], passwd[2], passwd[3], passwd[4], passwd[5], passwd[6],
+                               passwd[7], passwd[8], passwd[9], passwd[10], passwd[11], passwd[12]
+                               );
+                       value[26] = 0;
+                       sprintf(buffer, "flash setconf %sWEP128_KEY1 %s", config_prefix, value);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWEP_KEY_TYPE 0", config_prefix);
+                       system(buffer);                 
+                       sprintf(buffer, "flash setconf %sAUTH_TYPE 2", config_prefix);
+                       system(buffer);                 
+                       break;
+               case 4:
+                       sprintf(buffer, "flash setconf %sENCRYPT 1", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWEP 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWEP128_KEY1 %s", config_prefix, passwd);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWEP_KEY_TYPE 1", config_prefix);
+                       system(buffer);                 
+                       sprintf(buffer, "flash setconf %sAUTH_TYPE 2", config_prefix);
+                       system(buffer);                 
+                       break;
+               case 5:
+                       sprintf(buffer, "flash setconf %sENCRYPT 4", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA2_CIPHER_SUITE 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
+                       system(buffer);
+
+                       break;
+               case 6:
+                       sprintf(buffer, "flash setconf %sENCRYPT 4", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA2_CIPHER_SUITE 1", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
+                       system(buffer);
+                       break;
+               case 7:
+                       sprintf(buffer, "flash setconf %sENCRYPT 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_CIPHER_SUITE 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
+                       system(buffer);
+                       break;
+               case 8:
+                       sprintf(buffer, "flash setconf %sENCRYPT 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_CIPHER_SUITE 1", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
+                       system(buffer);
+               
+                       break;
+               case 9:
+                       sprintf(buffer, "flash setconf %sENCRYPT 4", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA2_CIPHER_SUITE 3", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
+                       system(buffer);
+                       break;
+               case 10:
+                       sprintf(buffer, "flash setconf %sENCRYPT 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_CIPHER_SUITE 3", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
+                       system(buffer);
+               
+                       break;
+               case 11:
+                       sprintf(buffer, "flash setconf %sENCRYPT 6", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_CIPHER_SUITE 3", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA2_CIPHER_SUITE 3", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
+                       system(buffer);
+                       sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
+                       system(buffer);
+                   break;
+               default:
+                       sprintf(buffer, "flash setconf %sENCRYPT 0", config_prefix);
+                       system(buffer);
+                       break;
+       }
+       
+       //sprintf(buffer, "flash setconf %sSC_SAVE_PROFILE 2", config_prefix);
+       //system(buffer);
+       //pCtx->sc_save_profile = 2;
+       
+       system("flash setconf end");
+       return 1;
+       
+}
+
 static int get_mib_value(int type, int vidx,unsigned char *value, unsigned char *mib_name, unsigned int is_string)
 {
 	FILE *stream;
@@ -415,7 +562,6 @@ static int get_mib_value(int type, int vidx,unsigned char *value, unsigned char 
 	}	
 	return 0;
 }
-
 
 #ifdef CONFIG_HCD_FLASH_SUPPORT
 static int fwChecksumOk(char *data, int len)
@@ -874,7 +1020,6 @@ static int _firm_upgrade(char *cmd , int cmd_len)
 	{
 		ret=MAX_INBAND_PAYLOAD_LEN+1;
 		memset(cmd2,0x0,sizeof(cmd2));
-		inband_write(ev_tools_inband_chan,0,id_firm_upgrade,cmd2,1,1);
 	}
 
 	//winfred_wang
@@ -1079,7 +1224,8 @@ static int host_ioctl_receive(char *ioctl_data_p,int ioctl_data_len)
 		ioctl_data_len += iwr.u.data.length;
 	} else {
 		memcpy(ioctl_data_p,(char *)&error_code,sizeof(int));
-		memcpy(ioctl_data_p+HDR_IOCTL_DATA_OFFSET,data_ptr,data_len);	//mark_test	}
+		memcpy(ioctl_data_p+HDR_IOCTL_DATA_OFFSET,data_ptr,data_len);	//mark_test	
+	}
 
 	//return ret;
 	/*
@@ -1092,10 +1238,6 @@ static int host_ioctl_receive(char *ioctl_data_p,int ioctl_data_len)
 		        return -1;
 		}
 	}*/
-	//inband_write(ev_tools_inband_ioctl_chan,0,CMD_INBAND_IOCTL,ioctl_data_p,ioctl_data_len,reply);   
-	//inband_write(ev_tools_inband_ioctl_chan,0,CMD_INBAND_IOCTL,ioctl_data_p,ioctl_data_len,ret);
-	inband_write(ev_tools_inband_chan,0,CMD_INBAND_IOCTL,ioctl_data_p,ioctl_data_len,ret); //good reply
-	//inband_write(ev_tools_inband_ioctl_chan,0,CMD_INBAND_IOCTL,ioctl_data_p,ioctl_data_len,ret);
 	return ret;
 }
 
@@ -1115,7 +1257,6 @@ static int host_systemcall_receive(char *cmd , int cmd_len) //mark_cmd
 	{
 		strcpy(tmp_cmd,cmd);
 		res[0] = '\0';
-		inband_write(ev_tools_inband_chan,0,id_syscall,res,1,1); //good reply
 		sleep(1);
 		system(tmp_cmd);
 		return MAX_INBAND_PAYLOAD_LEN+1;
@@ -1124,7 +1265,6 @@ static int host_systemcall_receive(char *cmd , int cmd_len) //mark_cmd
 	{
 		strcpy(tmp_cmd,cmd);
 		res[0] = '\0';
-		inband_write(ev_tools_inband_chan,0,id_syscall,res,1,1); //good reply
 		system(tmp_cmd);
 		return MAX_INBAND_PAYLOAD_LEN+1;
 	}
@@ -1166,8 +1306,6 @@ RETRY_SYSTEM_CALL:
 			return -1;
 		}
 	}	
-	//syscmd reply here , not in do_cmd bcz some reply is very long (site_survey!)
-	inband_write(ev_tools_inband_chan,0,id_syscall,res,resp_len,1); 
 	pclose(fp);
 	//mark_issue , always syscmd reply here so , ret set to MAX_INBAND_PAYLOAD_LEN +1
 	return MAX_INBAND_PAYLOAD_LEN+1;
@@ -1182,7 +1320,6 @@ static int _request_scan(char *cmd , int cmd_len)
 	else
 		sprintf(errbuf,"Auto Scan running!\n");
 	printf("%s",errbuf);
-	//inband_write(ev_tools_inband_chan,0,id_request_scan,errbuf,strlen(errbuf)+1,1); //reply
 	return MAX_INBAND_PAYLOAD_LEN+1;
 
 }
@@ -1268,1694 +1405,14 @@ static int _get_scan_result(char *cmd , int cmd_len)
 
  	
   	free(pStatus); 
-	//inband_write(ev_tools_inband_chan,0,id_get_scan_result,ssr_result,strlen(ssr_result)+1,1); 
 	printf("%s",ssr_result);
 	return MAX_INBAND_PAYLOAD_LEN+1;
 ssr_err :
 	free(pStatus); 
 ssr_err_out :
 	printf("%s",errBuf);
-	//inband_write(ev_tools_inband_chan,0,id_get_scan_result,errBuf,strlen(errBuf),1);
 	return -1;
-
-
 }
-#if defined(CONFIG_RTL_LITE_CLNT)
-int set_wlan_onoff(char *wlanif,int onoff)
-{
-	char cmd_buf[100];
-	char wlan_vxd[16] = {0};
-	char value[10] = {0};
-	int rptenabled = 0;
-	if(!wlanif)
-		return -1;
-	if(!strcmp(wlanif,"wlan0"))
-		get_mib_value(2,0,&value,"REPEATER_ENABLED1",0);
-	else if(!strcmp(wlanif,"wlan1"))
-		get_mib_value(2,0,&value,"REPEATER_ENABLED2",0);
-	if(value[0])
-		rptenabled = atoi(value);
-	
-	if(rptenabled){
-		strcpy(wlan_vxd,wlanif);
-		strcat(wlan_vxd,"-vxd");
-	}
-	
-	sprintf(cmd_buf,"flash set %s FUNC_OFF %d",wlanif,onoff);
-	system(cmd_buf);
-	if(rptenabled){
-		sprintf(cmd_buf,"ifconfig %s down",wlan_vxd);
-		system(cmd_buf);
-	}
-	sprintf(cmd_buf,"ifconfig %s down",wlanif);
-	system(cmd_buf);
-	sprintf(cmd_buf,"iwpriv %s set_mib func_off=%d",wlanif,onoff);
-	system(cmd_buf);
-	sprintf(cmd_buf,"ifconfig %s up",wlanif);
-	system(cmd_buf);
-	if(rptenabled){
-		sprintf(cmd_buf,"ifconfig %s up",wlan_vxd);
-		system(cmd_buf);
-	}
-	return 0;
-	
-}
-
-static int 	_set_wlan_on(char *cmd , int cmd_len)
-{
-		char errbuf[100];
-		cmd[cmd_len] = '\0';
-		if(strncmp("wlan",cmd,4)){
-			sprintf(errbuf,"Invild wlan interface!\n");
-			goto err_end;
-		}
-		if(set_wlan_onoff(cmd,0) < 0)
-			sprintf(errbuf,"Set %s function on fail\n",cmd);
-		else
-			sprintf(errbuf,"Set %s function on successful\n",cmd);
-err_end:
-		printf("%s",errbuf);
-		inband_write(ev_tools_inband_chan,0,id_set_wlan_on,errbuf,strlen(errbuf)+1,1); //reply
-		return MAX_INBAND_PAYLOAD_LEN+1;
-
-}
-static int 	_set_wlan_off(char *cmd , int cmd_len)
-{
-		char errbuf[100];
-		cmd[cmd_len] = '\0';
-		if(strncmp("wlan",cmd,4)){
-			sprintf(errbuf,"Invild wlan interface!\n");
-			goto err_end;
-		}
-		if(set_wlan_onoff(cmd,1) < 0)
-			sprintf(errbuf,"Set %s function off fail\n",cmd);
-		else
-			sprintf(errbuf,"Set %s function off successful\n",cmd);
-err_end:
-		printf("%s",errbuf);
-		inband_write(ev_tools_inband_chan,0,id_set_wlan_off,errbuf,strlen(errbuf)+1,1); //reply
-		return MAX_INBAND_PAYLOAD_LEN+1;
-
-}
-
-int get_encrypt_type(int encrypt,int passwd_len)
-{
-	int type;
-	switch(encrypt){
-		case 0:
-			type = 0;
-		break;
-		case 1:
-			if(passwd_len == 5)
-				type = 1;
-			else if(passwd_len == 10)
-				type = 2;
-			else if (passwd_len == 13)
-				type = 3;
-			else if(passwd_len == 26)
-				type = 4;
-			else
-				type = -1;
-		break;
-		case 4:
-			type = 9;
-		break;
-		case 2:
-			type = 10;
-		break;
-		case 6:
-			type = 11;
-		break;
-		default:
-			type = -1;
-		break;
-	}
-	return type;
-}
-
-static int set_profile_to_flash(char *wlan_if, char *ssid,char *passwd,int encrypt_type)
-{
-	unsigned char buffer[128]={0};
-	unsigned char value[128];
-	char config_prefix[16];
-	//unsigned char tmp[128];
-	unsigned char *p;
-	//unsigned int security_type=0;
-	//unsigned int wsc_auth=0, wsc_enc=0;
-	//unsigned char wsc_psk[65] = {0};
-
-	system("flash setconf start");
-	if(!strcmp(wlan_if,"wlan0"))
-		sprintf(config_prefix,"WLAN0_");
-	else if(!strcmp(wlan_if,"wlan0-vxd"))
-		sprintf(config_prefix,"WLAN0_VXD_");
-	else if(!strcmp(wlan_if,"wlan1"))
-		sprintf(config_prefix,"WLAN1_");
-	else if(!strcmp(wlan_if,"wlan1-vxd"))
-		sprintf(config_prefix,"WLAN1_VXD_");
-
-	sprintf(buffer, "flash setconf %sSSID %s", config_prefix,ssid);
-	system(buffer);	
-	switch(encrypt_type)
-	{
-		case 0:
-			sprintf(buffer, "flash setconf %sENCRYPT 0", config_prefix);
-			system(buffer);
-			break;
-		case 1:
-			sprintf(buffer, "flash setconf %sENCRYPT 1", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWEP 1", config_prefix);
-			system(buffer);
-			sprintf(value, "%02x%02x%02x%02x%02x", passwd[0], passwd[1], passwd[2], passwd[3],passwd[4]);
-			value[10] = 0;
-			sprintf(buffer, "flash setconf %sWEP64_KEY1  %s", config_prefix, value);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWEP_KEY_TYPE 0", config_prefix);
-			system(buffer);			
-			sprintf(buffer, "flash setconf %sAUTH_TYPE  2", config_prefix);
-			system(buffer);
-			break;
-		case 2:
-			sprintf(buffer, "flash setconf %sENCRYPT 1", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWEP 1", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWEP64_KEY1	%s", config_prefix, passwd);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWEP_KEY_TYPE 1", config_prefix);
-			system(buffer); 		
-			sprintf(buffer, "flash setconf %sAUTH_TYPE 2", config_prefix);
-			system(buffer); 		
-			break;
-		case 3:
-			sprintf(buffer, "flash setconf %sENCRYPT 1", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWEP 2", config_prefix);
-			system(buffer);
-			sprintf(value, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", 
-				passwd[0], passwd[1], passwd[2], passwd[3], passwd[4], passwd[5], passwd[6],
-				passwd[7], passwd[8], passwd[9], passwd[10], passwd[11], passwd[12]
-				);
-			value[26] = 0;
-			sprintf(buffer, "flash setconf %sWEP128_KEY1 %s", config_prefix, value);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWEP_KEY_TYPE 0", config_prefix);
-			system(buffer); 		
-			sprintf(buffer, "flash setconf %sAUTH_TYPE 2", config_prefix);
-			system(buffer); 		
-			break;
-		case 4:
-			sprintf(buffer, "flash setconf %sENCRYPT 1", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWEP 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWEP128_KEY1 %s", config_prefix, passwd);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWEP_KEY_TYPE 1", config_prefix);
-			system(buffer); 		
-			sprintf(buffer, "flash setconf %sAUTH_TYPE 2", config_prefix);
-			system(buffer); 		
-			break;
-		case 5:
-			sprintf(buffer, "flash setconf %sENCRYPT 4", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA2_CIPHER_SUITE 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
-			system(buffer);
-
-			break;
-		case 6:
-			sprintf(buffer, "flash setconf %sENCRYPT 4", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA2_CIPHER_SUITE 1", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
-			system(buffer);
-			break;
-		case 7:
-			sprintf(buffer, "flash setconf %sENCRYPT 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_CIPHER_SUITE 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
-			system(buffer);
-			break;
-		case 8:
-			sprintf(buffer, "flash setconf %sENCRYPT 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_CIPHER_SUITE 1", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
-			system(buffer);
-		
-			break;
-		case 9:
-			sprintf(buffer, "flash setconf %sENCRYPT 4", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA2_CIPHER_SUITE 3", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
-			system(buffer);
-			break;
-		case 10:
-			sprintf(buffer, "flash setconf %sENCRYPT 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_CIPHER_SUITE 3", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
-			system(buffer);
-		
-			break;
-		case 11:
-			sprintf(buffer, "flash setconf %sENCRYPT 6", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_AUTH 2", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_CIPHER_SUITE 3", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA2_CIPHER_SUITE 3", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sPSK_FORMAT 0", config_prefix);
-			system(buffer);
-			sprintf(buffer, "flash setconf %sWPA_PSK %s", config_prefix, passwd);
-			system(buffer);
-                   break;
-		default:
-			sprintf(buffer, "flash setconf %sENCRYPT 0", config_prefix);
-			system(buffer);
-			break;
-	}
-	
-	//sprintf(buffer, "flash setconf %sSC_SAVE_PROFILE 2", config_prefix);
-	//system(buffer);
-	//pCtx->sc_save_profile = 2;
-	
-	system("flash setconf end");
-	return 1;
-	
-}
-
-static int 	_wlan_sync(char *cmd , int cmd_len)
-{
-		int intValue,passwd_len,encrypt_type,encrypt,status,idx,vidx = 0;
-		char errbuf[100],value[65],cmd_buf[256],ssid[65],passwd[65];
-		char wlan_root[16] = {0};
-		cmd[cmd_len] = '\0';
-		if(strncmp("wlan",cmd,4)){
-			sprintf(errbuf,"Invild wlan interface!\n");
-			goto err_end;
-		}
-		idx = cmd[4] - '0';
-		if(strstr(cmd,"vxd")){
-			vidx = -1;
-		}
-		if(strstr(cmd,"vxd"))
-			snprintf(wlan_root,6,"%s",cmd);
-		get_mib_value(idx,vidx,&value,"LITE_CLNT_PASSWD",1);
-		passwd_len = strlen(value);
-		strcpy(passwd,value);
-		get_mib_value(idx,vidx,&value,"ENCRYPT",0);
-		encrypt = atoi(value);
-		get_mib_value(idx,vidx,&ssid,"SSID",1);
-		
-		//encrypt_type = get_encrypt_type_by_ssid(idx,ssid,passwd_len);
-		encrypt_type = get_encrypt_type(encrypt,passwd_len);
-		printf("%s -->%d,encrypt_type = %d,passwd_len = %d\n",__FUNCTION__,__LINE__,encrypt_type,passwd_len);
-		if(encrypt_type < 0){
-			sprintf(errbuf,"Encrypt type wrone!\n");
-			goto err_end;
-		}
-		set_profile_to_flash(cmd,ssid,passwd,encrypt_type);
-		if(wlan_root[0]){
-			get_mib_value(2,0,&value,"LITE_CLNT_SYNC_VXD",0);
-			intValue = atoi(value);
-			if(intValue)
-				set_profile_to_flash(wlan_root,ssid,passwd,encrypt_type);
-		}
-		if(idx == 0)
-			get_mib_value(2,0,&value,"PROFILE_ENABLED1",0);
-		else
-			get_mib_value(2,0,&value,"PROFILE_ENABLED2",0);
-		intValue = atoi(value);
-		if(intValue){
-			sprintf(cmd_buf,"sysconf wlprofile add %d",idx);
-			system(cmd_buf);
-		}
-		sprintf(errbuf,"Wlan sync complete!\n");
-err_end:
-		printf("%s",errbuf);
-		inband_write(ev_tools_inband_chan,0,id_wlan_sync,errbuf,strlen(errbuf)+1,1); //reply
-		return MAX_INBAND_PAYLOAD_LEN+1;
-
-}
-
-
-static int 	_start_lite_clnt_connect(char *cmd , int cmd_len)
-{
-		int intValue,passwd_len,encrypt_type,encrypt,status,idx,vidx = 0;
-		char errbuf[100],value[65],cmd_buf[256],ssid[65],passwd[65];
-		char wlan_root[16] = {0};
-		cmd[cmd_len] = '\0';
-		if(strncmp("wlan",cmd,4)){
-			sprintf(errbuf,"Invild wlan interface!\n");
-			goto err_end;
-		}
-		idx = cmd[4] - '0';
-		if(strstr(cmd,"vxd")){
-			vidx = -1;
-		}
-
-		get_mib_value(idx,vidx,&value,"LITE_CLNT_ENABLE",0);
-		intValue = atoi(value);
-		if(!intValue){
-			sprintf(errbuf,"Lite Client mode is disabled!\n");
-			goto err_end;
-		}
-	
-		if(strstr(cmd,"vxd"))
-			snprintf(wlan_root,6,"%s",cmd);
-	
-		sprintf(cmd_buf,"ifconfig %s down",cmd);
-		system(cmd_buf);
-		sprintf(cmd_buf,"iwpriv %s set_mib lite_clnt_enabled=%d",cmd,intValue);
-		system(cmd_buf);
-		
-		get_mib_value(idx,vidx,&value,"SSID",1);
-		sprintf(cmd_buf,"iwpriv %s set_mib ssid=\"%s\"",cmd,value);
-		system(cmd_buf);
-		get_mib_value(idx,vidx,&value,"LITE_CLNT_PASSWD",1);
-		sprintf(cmd_buf,"iwpriv %s set_mib lite_clnt_passwd=\"%s\"",cmd,value);
-		system(cmd_buf);
-		if(wlan_root[0]){
-			sprintf(cmd_buf,"ifconfig %s down",wlan_root);
-			system(cmd_buf);
-			sprintf(cmd_buf,"ifconfig %s up",wlan_root);
-			system(cmd_buf);
-		}
-		sprintf(cmd_buf,"ifconfig %s up",cmd);
-		system(cmd_buf);
-		sprintf(errbuf,"Wlan client is connecting!\n");
-err_end:
-		printf("%s",errbuf);
-		inband_write(ev_tools_inband_chan,0,id_start_lite_clnt_connect,errbuf,strlen(errbuf)+1,1); //reply
-		return MAX_INBAND_PAYLOAD_LEN+1;
-
-}
-#endif
-
-#if defined(CONFIG_APP_ADAPTER_API)
-static int _get_storage_info(char *cmd , int cmd_len)
-{	
-	char errbuff[128]; //error msg  
-	RTK_DEVICEINFO_T *info = NULL;
-	int number = 0, ret = 0, length = 0;
-	cmd[cmd_len] = '\0';
-
-	memset(errbuff, '\0', sizeof(errbuff));
-
-	info = malloc(MAX_DEVICE_NUMBER*sizeof(RTK_DEVICEINFO_T));	
-	if(info != NULL)
-	{	
-		memset((void *)info, '\0', (MAX_DEVICE_NUMBER*sizeof(RTK_DEVICEINFO_T)));
-		ret = rtk_get_storage_info(&number, info, MAX_DEVICE_NUMBER);
-		if (ret == 0)
-		{
-			strcpy(errbuff, "rtk_get_storage_info return failed\n");
-			goto ssr_err_out;
-		}
-
-		if (number > MAX_DEVICE_NUMBER)
-		{
-			sprintf(errbuff, " usb number greater than the max %d \n", MAX_DEVICE_NUMBER);
-			goto ssr_err_out;
-		}
-	}
-	else
-	{		
-		sprintf(errbuff,"malloc fail,no free memory\n");		
-		goto ssr_err_out;
-	}
-
-
-	length = number*sizeof(RTK_DEVICEINFO_T);
-	inband_write(ev_tools_inband_chan, 0, id_get_storage_info, (char *)info, length,1); 
-	free(info);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	if(info!=NULL)		
-		free(info);
-	inband_write(ev_tools_inband_chan, 0, id_get_storage_info, errbuff, strlen(errbuff), 2);
-	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-}
-
-static int _format_partition(char *cmd , int cmd_len)
-{	
-	char errbuff[128] = {0}, rspbuff[128] = {0}; //error msg 
-	unsigned char partition_name[16] = {0}, systype[16] = {0}; 
-	int ret = 0, length = 0;
-	
-	cmd[cmd_len] = '\0';
-	memset(errbuff, '\0', sizeof(errbuff));
-	memset(rspbuff, '\0', sizeof(rspbuff));
-	memset(partition_name, '\0', sizeof(partition_name));
-	memset(systype, '\0', sizeof(systype));
-	
-	sscanf(cmd, "%s %s", partition_name, systype);
-	//printf("%s %d partition_name=%s systype=%s \n", __FUNCTION__, __LINE__, partition_name, systype);
-	if (!partition_name[0])
-	{
-		strcpy(errbuff, " partition name is NULL\n");
-		goto ssr_err_out;
-	}
-	if (!systype[0])
-	{
-		strcpy(errbuff, " file system type is NULL\n");
-		goto ssr_err_out;
-	}
-	ret = rtk_disk_format(partition_name, systype);
-	if (ret == 0)
-	{
-		strcpy(errbuff, " rtk_disk_format return failed\n");
-		goto ssr_err_out;
-	}
-	sprintf(rspbuff, " format success! \n");
-	length = strlen(rspbuff);
-	//printf("%s %d rspbuff=%s length=%d \n", __FUNCTION__, __LINE__, rspbuff, length);
-	inband_write(ev_tools_inband_chan, 0, id_format_partition, rspbuff, length,1); 
-	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	inband_write(ev_tools_inband_chan, 0, id_format_partition, errbuff, strlen(errbuff), 2);
-	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-}
-
-static int _get_wan_status_By_Url(char *cmd , int cmd_len)
-{
-	int ret,length;
-	int connected;
-	unsigned char *url;
-	unsigned char errbuff[48] = {0};
-	cmd[cmd_len]='\0';//mark_patch
-	ret=  rtk_get_wan_status_by_url(&connected,cmd);
-	if (ret == 0)
-	{
-		strcpy(errbuff, "error,rtk_get_wan_status_by_url failed\n");
-		goto ssr_err_out;
-	}
-	
-	length = sizeof(connected);	
-	inband_write(ev_tools_inband_chan, 0, id_get_wan_status, (char *)&connected, length,1);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	inband_write(ev_tools_inband_chan, 0, id_get_wan_status, errbuff, strlen(errbuff), 2);
-	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);	
-}
-
-static int _get_lan_terminal_info(char *cmd , int cmd_len)
-{
-	int number = 0;
-	char errbuff[128] = {0}; //error msg 
-	int ret = 0, length = 0;
-	struct rtk_link_type_info *rtk_info = NULL;
-	rtk_info = malloc(MAX_TERM_NUMBER*sizeof(struct rtk_link_type_info));
-	if(rtk_info != NULL)
-	{
-		memset(rtk_info,0,(MAX_TERM_NUMBER*sizeof(struct rtk_link_type_info)));
-		ret = rtk_get_terminal_info(&number,rtk_info,MAX_TERM_NUMBER);
-		if(ret ==0)
-		{
-			strcpy(errbuff, "error,rtk_get_terminal_info failed\n");
-			goto ssr_err_out;
-		}
-	}
-	else
-	{
-		printf("error.malloc fail,no free memory\n");		
-		goto ssr_err_out;
-	}
-	
-	length = number*sizeof(struct rtk_link_type_info);
-	inband_write(ev_tools_inband_chan, 0, id_get_lan_terminal_info, (char *)rtk_info , length,1);
-	free(rtk_info);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	
-	if(rtk_info != NULL)
-		free(rtk_info);
-	
-	inband_write(ev_tools_inband_chan, 0, id_get_lan_terminal_info, errbuff, strlen(errbuff), 2);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);	
-	
-}
-static int _get_upload_speed(char *cmd , int cmd_len)
-{
-	int ret ,length;
-	char errbuff[128] = {0}; //error msg 
-	RTK_UPLOAD_STATICS *rtk_info=NULL;
-	rtk_info = malloc(sizeof(RTK_UPLOAD_STATICS));
-	if(rtk_info != NULL)
-	{
-		memset(rtk_info,0,sizeof(RTK_UPLOAD_STATICS));
-		ret = rtk_get_upload_statics(rtk_info);
-		if(ret ==0)
-		{
-			strcpy(errbuff, "error,rtk_get_upload_statics failed\n");
-			goto ssr_err_out;
-		}	
-	}
-	else
-	{
-		printf("error.malloc fail,no free memory\n");		
-		goto ssr_err_out;
-	}
-	
-	length = sizeof(RTK_UPLOAD_STATICS);
-	inband_write(ev_tools_inband_chan, 0, id_get_upload_speed, (char *)rtk_info, length,1);	
-	free(rtk_info);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	if(rtk_info != NULL)
-		free(rtk_info);
-	
-	inband_write(ev_tools_inband_chan, 0, id_get_upload_speed, errbuff, strlen(errbuff), 2);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);		
-}
-static int _get_download_speed(char *cmd , int cmd_len)
-{
-	int ret ,length;
-	char errbuff[128] = {0}; //error msg 
-	RTK_DOWNLOAD_STATICS *rtk_info=NULL;
-	rtk_info = malloc(sizeof(RTK_DOWNLOAD_STATICS));
-	if(rtk_info != NULL)
-	{
-		memset(rtk_info,0,sizeof(RTK_DOWNLOAD_STATICS));
-		ret = rtk_get_download_statics(rtk_info);
-		if(ret ==0)
-		{
-			strcpy(errbuff, "error,rtk_get_download_statics failed\n");
-			goto ssr_err_out;
-		}	
-	}
-	else
-	{
-		printf("error.malloc fail,no free memory\n");		
-		goto ssr_err_out;
-	}
-	
-	length = sizeof(RTK_DOWNLOAD_STATICS);
-	inband_write(ev_tools_inband_chan, 0, id_get_download_speed, (char *)rtk_info, length,1);	
-	free(rtk_info);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	if(rtk_info != NULL)
-		free(rtk_info);
-	
-	inband_write(ev_tools_inband_chan, 0, id_get_download_speed, errbuff, strlen(errbuff), 2);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);	
-	
-}
-static int _get_phy_port_status(char *cmd , int cmd_len)
-{
-	int number = 0;
-	char errbuff[128] = {0}; //error msg 
-	int ret = 0, length = 0;
-	struct rtk_port_status *rtk_info = NULL;
-	rtk_info = malloc(MAX_PORT_NUMBER*sizeof(struct rtk_port_status));
-	
-	if(rtk_info != NULL)
-	{
-		memset(rtk_info,0,MAX_PORT_NUMBER*sizeof(struct rtk_port_status));
-		ret = rtk_get_ports_status(&number,rtk_info,MAX_PORT_NUMBER);
-		if(ret ==0)
-		{
-			strcpy(errbuff, "error,rtk_get_ports_status failed\n");
-			goto ssr_err_out;
-		}
-	}
-	else
-	{
-		printf("error.malloc fail,no free memory\n");		
-		goto ssr_err_out;
-	}
-
-	length = MAX_PORT_NUMBER*sizeof(struct rtk_port_status);
-	inband_write(ev_tools_inband_chan, 0, id_get_phy_port_status, (char *)rtk_info , length,1);
-	free(rtk_info);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	if(rtk_info != NULL)
-		free(rtk_info);
-	
-	inband_write(ev_tools_inband_chan, 0, id_get_phy_port_status, errbuff, strlen(errbuff), 2);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-}
-
-static int _get_lan_drop_rate(char *cmd , int cmd_len)
-{
-	int ret,length;
-	int drop_rate;
-	unsigned char errbuff[48] = {0};
-
-	ret=  rtk_get_lan_drop_rate(&drop_rate);
-	if (ret == 0)
-	{
-		strcpy(errbuff, "error,rtk_get_lan_drop_rate failed\n");
-		goto ssr_err_out;
-	}
-	
-	length = sizeof(drop_rate);	
-	
-	//printf("%s.%d.return to client.drop_rate(%d),length(%d)\n",__FUNCTION__,__LINE__,drop_rate,length);
-	inband_write(ev_tools_inband_chan, 0, id_get_lan_drop_rate, (char *)&drop_rate, length,1);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	inband_write(ev_tools_inband_chan, 0, id_get_lan_drop_rate, errbuff, strlen(errbuff), 2);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-}
-static int _get_wan_drop_rate(char *cmd , int cmd_len)
-{
-	int ret,length;
-	int drop_rate;
-	unsigned char errbuff[48] = {0};
-
-	ret=  rtk_get_wan_drop_rate(&drop_rate);
-	if (ret == 0)
-	{
-		strcpy(errbuff, "error,rtk_get_wan_drop_rate failed\n");
-		goto ssr_err_out;
-	}
-	
-	length = sizeof(drop_rate); 	
-	inband_write(ev_tools_inband_chan, 0, id_get_wan_drop_rate, (char *)&drop_rate, length,1);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	inband_write(ev_tools_inband_chan, 0, id_get_wan_drop_rate, errbuff, strlen(errbuff), 2);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);	
-
-}
-static int _get_wlan_drop_rate(char *cmd , int cmd_len)
-{
-	int ret,length;
-	int drop_rate;
-	unsigned char errbuff[48] = {0};
-
-	ret=  rtk_get_wlan_drop_rate(&drop_rate,cmd);
-	if (ret == 0)
-	{
-		strcpy(errbuff, "error,rtk_get_wlan_drop_rate failed\n");
-		goto ssr_err_out;
-	}
-	
-	length = sizeof(drop_rate); 	
-	inband_write(ev_tools_inband_chan, 0, id_get_wlan_drop_rate, (char *)&drop_rate, length,1);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	inband_write(ev_tools_inband_chan, 0, id_get_wlan_drop_rate, errbuff, strlen(errbuff), 2);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);	
-
-}
-#if defined (CONFIG_RTL_QOS_MONOPOLY_SUPPORT)||defined (QOS_BY_BANDWIDTH)
-
-static int string_to_hexmac(char *string, unsigned char *key, int len)
-{
-	char tmpBuf[4];
-	int idx, ii=0;
-	for (idx=0; idx<len; idx+=2) {
-		tmpBuf[0] = string[idx];
-		tmpBuf[1] = string[idx+1];
-		tmpBuf[2] = 0;
-		if ( !_is_hex(tmpBuf[0]) || !_is_hex(tmpBuf[1]))
-			return 0;
-
-		key[ii++] = (unsigned char) strtol(tmpBuf, (char**)NULL, 16);
-	}
-	return 1;
-}
-#endif
-#if defined (CONFIG_RTL_QOS_MONOPOLY_SUPPORT)
-static int _get_qos_rule_monopoly(char *cmd , int cmd_len)
-{
-	int ret,length;
-	RTK_QOSMNP_INFO rtk_info;
-	unsigned char errbuff[48] = {0};
-
-	ret=rtk_get_qos_rule_monopoly_info(&rtk_info);
-	if (ret == 0)
-	{
-		strcpy(errbuff, "error,rtk_get_qos_rule_monopoly failed\n");
-		goto ssr_err_out;
-	}
-	
-	length = sizeof(rtk_info); 	
-	inband_write(ev_tools_inband_chan, 0, id_get_qos_rule_monopoly, (char *)(&rtk_info), length,1);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	inband_write(ev_tools_inband_chan, 0, id_get_qos_rule_monopoly, errbuff, strlen(errbuff), 2);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);	
-
-}
-
-static int _set_qos_rule_monopoly(char *cmd, int cmd_len)
-{
-
-	char *tmpInfo = NULL;
-	char *ptr;
-	char		*strptr, *cmd_addr;
-	char		*tokptr;
-	int flag=0;
-	int ret=0;
-	int index=0;
-	unsigned int enabled;
-	unsigned char macAddr[6]={0};
-	unsigned int qosTime;
-	char errbuf[100];
-	char cmd_buf[100]={0};
-	cmd[cmd_len]='\0';
-	//printf("cmd:%s,[%s]:[%d].\n",cmd,__FUNCTION__,__LINE__);
-
-
-	strptr=cmd;
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	sscanf( tokptr, "%d", &enabled ); 
-	//printf("tokptr:%s,%d[%s]:[%d].\n",tokptr,enabled,__FUNCTION__,__LINE__);
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	
-	if (strlen(tokptr)!=12 || !string_to_hexmac(tokptr, macAddr, 12)) {
-		goto out;
-	}
-
-	//printf("tokptr:%s,%x:%x:%x:%x:%x:%x [%s]:[%d].\n",tokptr,macAddr[0], macAddr[1], 
-	//	macAddr[2], macAddr[3],macAddr[4],macAddr[5],__FUNCTION__,__LINE__);
-		
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	
-	sscanf(tokptr, "%d", &qosTime);
-	//printf("tokptr:%s,%d[%s]:[%d].\n",tokptr,qosTime,__FUNCTION__,__LINE__);
-	
-	ret=rtk_set_qos_rule_monopoly(enabled, macAddr, qosTime);
-out:	
-	if(ret ==0)
-		sprintf(errbuf,"Set rtk_set_qos_rule_monopoly fail\n");
-	else
-		sprintf(errbuf,"Set rtk_set_qos_rule_monopoly successful\n");
-	
-	printf("%s",errbuf);
-	
-	inband_write(ev_tools_inband_chan,0,id_set_qos_rule_monopoly,errbuf,strlen(errbuf)+1,1); //reply
-	return MAX_INBAND_PAYLOAD_LEN+1;
-
-	
-
-	
-}
-
-static int _set_qos_rule_monopoly_imm(char *cmd, int cmd_len)
-{
-
-	char *tmpInfo = NULL;
-	char *ptr;
-	char		*strptr, *cmd_addr;
-	char		*tokptr;
-	int flag=0;
-	int ret=0;
-	int index=0;
-	unsigned int enabled;
-	unsigned char macAddr[6];
-	unsigned int qosTime;
-	char errbuf[100];
-	char cmd_buf[100]={0};
-	cmd[cmd_len]='\0';
-	//printf("cmd:%s,[%s]:[%d].\n",cmd,__FUNCTION__,__LINE__);
-
-	strptr=cmd;
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	sscanf( tokptr, "%d", &enabled ); 
-	//printf("tokptr:%s,%d[%s]:[%d].\n",tokptr,enabled,__FUNCTION__,__LINE__);
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	if (strlen(tokptr)!=12 || !string_to_hexmac(tokptr, macAddr, 12)) {
-		goto out;
-	}
-	//printf("tokptr:%s,%x:%x:%x:%x:%x:%x [%s]:[%d].\n",tokptr,macAddr[0], macAddr[1], 
-	//	macAddr[2], macAddr[3],macAddr[4],macAddr[5],__FUNCTION__,__LINE__);
-		
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	
-	sscanf(tokptr, "%d", &qosTime);
-	//printf("tokptr:%s,%d[%s]:[%d].\n",tokptr,qosTime,__FUNCTION__,__LINE__);
-	
-	ret=rtk_set_qos_rule_monopoly_immediately(enabled, macAddr, qosTime);
-	
-	
-out:	
-	if(ret ==0)
-		sprintf(errbuf,"Set rtk_set_qos_rule_monopoly_imm fail\n");
-	else
-		sprintf(errbuf,"Set rtk_set_qos_rule_monopoly_imm successful\n");
-	
-	printf("%s",errbuf);
-	inband_write(ev_tools_inband_chan,0,id_set_qos_rule_monopoly_imm,errbuf,strlen(errbuf)+1,1); //reply
-	return MAX_INBAND_PAYLOAD_LEN+1;
-
-	
-}
-#endif
-#if defined (QOS_BY_BANDWIDTH)
-static int _get_qos_rule(char *cmd , int cmd_len)
-{
-	int ret,length;
-	int i=0;
-	unsigned char *rtk_info=NULL;
-	unsigned char errbuff[48] = {0};
-	unsigned int num=1;
-	unsigned int allFlag=0;
-	RTK_IPQOS_T tmpentry;
-	RTK_IPQOS_T entry[MAX_QOS_RULE_NUM]={0};
-	char		*strptr, *cmd_addr;
-	char		*tokptr;
-	unsigned char macAddr[6]={0};
-	int mode=0;
-	unsigned int index=0;
-	cmd[cmd_len]='\0';
-	strptr=cmd;
-	//printf("cmd:%s,[%s]:[%d].\n",cmd,__FUNCTION__,__LINE__);
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	if(strcmp(tokptr,"mac")==0)
-	{
-		mode= QOS_RESTRICT_MAC;
-		
-	}
-	else if(strcmp(tokptr,"all")==0)
-	{
-		allFlag= 1;
-		goto process;
-	}	
-	else
-	{
-		printf("not support mode!\n");
-		goto out;
-	}
-	
-	if(mode==QOS_RESTRICT_MAC)
-	{
-		tokptr = strsep(&strptr," ");
-		
-		if (tokptr==NULL)
-		{
-			goto out;
-		}
-		
-		if (strlen(tokptr)!=12 || !string_to_hexmac(tokptr, macAddr, 12)) {
-			printf("invalid mac address:%s\n", tokptr);
-			goto out;
-		}
-	}
-	
-process:
-	if(allFlag)
-	{
-		ret=rtk_get_qos_rule_entry_num(&num);
-		if (ret == 0)
-		{
-			strcpy(errbuff, "error,rtk_get_qos_rule failed\n");
-			goto out;
-		}
-		ret=get_qos_rule_entry(&num, &entry[0], num);
-		if (ret == 0)
-		{
-			strcpy(errbuff, "error,rtk_get_qos_rule failed\n");
-			goto out;
-		}
-	}
-	else if(mode==QOS_RESTRICT_MAC)
-	{
-		memset(&tmpentry,0,sizeof(RTK_IPQOS_T));
-		tmpentry.mode =mode;
-		memcpy(tmpentry.mac,macAddr,6);
-		tmpentry.enabled =1;	
-		//printf("mode:%x, mac:%2x:%2x:%2x:%2x:%2x:%2x[%s]:[%d].\n",mode,macAddr[0],macAddr[1],macAddr[2],macAddr[3],macAddr[4],macAddr[5],__FUNCTION__,__LINE__);
-		index=rtk_get_qos_rule_entry_index(&tmpentry);
-		if(index){
-			ret=rtk_get_qos_rule_entry_by_index(&entry[0],index);
-			if (ret == 0)
-			{
-				strcpy(errbuff, "error,rtk_get_qos_rule failed\n");
-				goto out;
-			}
-		}	
-	}
-	
-	length = num*sizeof(RTK_IPQOS_T)+1; 	
-	rtk_info=malloc(length+1);
-	if(rtk_info == NULL){
-		strcpy(errbuff, "error,not enough memory\n");
-		goto out;
-	}
-	
-	memset(rtk_info,"\0",(length+1));
-	rtk_info[0]=num;
-	memcpy(&rtk_info[1],&entry[0],(num*sizeof(RTK_IPQOS_T)));
-	#if 0
-	for(i=0;i<length+1;i++)
-	{
-		printf("%x ",rtk_info[i]);
-		if(((i+1)%8)==0)
-			printf("\n");
-	}
-	#endif
-	inband_write(ev_tools_inband_chan, 0, id_get_qos_rule, (char *)(rtk_info), (length+1),1);	
-	free(rtk_info);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-out :
-	printf("%s",errbuff);
-	inband_write(ev_tools_inband_chan, 0, id_get_qos_rule, errbuff, strlen(errbuff), 2);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);	
-
-}
-
-static int _add_qos_rule_imm(char *cmd, int cmd_len)
-{
-
-	char *tmpInfo = NULL;
-	char *ptr;
-	char		*strptr, *cmd_addr;
-	char		*tokptr;
-	int flag=0;
-	int ret=0;
-	int index=0;
-	unsigned int enabled;
-	unsigned char macAddr[6];
-	unsigned int upbw=0;
-	unsigned int downbw=0;
-	int mode=0;
-	char errbuf[100];
-	char cmd_buf[100]={0};
-	RTK_IPQOS_T entry;
-	cmd[cmd_len]='\0';
-	//printf("cmd:%s,[%s]:[%d].\n",cmd,__FUNCTION__,__LINE__);
-	
-	strptr=cmd;
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	if(strcmp(tokptr,"mac")==0)
-	{
-		mode= QOS_RESTRICT_MAC;
-	}
-	else
-	{
-		printf("not support mode!\n");
-		goto out;
-	}
-	
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	if(mode==QOS_RESTRICT_MAC){
-		if (strlen(tokptr)!=12 || !string_to_hexmac(tokptr, macAddr, 12)) {
-			printf("invalid mac address:%s\n", tokptr);
-			goto out;
-		}
-	}
-	//printf("tokptr:%s,%x:%x:%x:%x:%x:%x [%s]:[%d].\n",tokptr,macAddr[0], macAddr[1], 
-	//	macAddr[2], macAddr[3],macAddr[4],macAddr[5],__FUNCTION__,__LINE__);
-		
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	
-	sscanf(tokptr, "%d", &upbw);
-
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	
-	sscanf(tokptr, "%d", &downbw);
-	
-	memset(&entry,0,sizeof(RTK_IPQOS_T));
-	entry.mode =mode |QOS_RESTRICT_MAX;
-	memcpy(entry.mac,macAddr,6);
-	entry.enabled =1;
-	entry.bandwidth =upbw;
-	entry.bandwidth_downlink =downbw;
-	ret=rtk_add_qos_rule_entry_imm_inband(&entry);
-		
-out:	
-	if(ret ==0)
-		sprintf(errbuf,"Set rtk_add_qos_rule_imm fail\n");
-	else
-		sprintf(errbuf,"Set rtk_add_qos_rule_imm successful\n");
-	
-	printf("%s",errbuf);
-	inband_write(ev_tools_inband_chan,0,id_add_qos_rule_imm,errbuf,strlen(errbuf)+1,1); //reply
-	return MAX_INBAND_PAYLOAD_LEN+1;
-
-	
-}
-static int _del_qos_rule_imm(char *cmd, int cmd_len)
-{
-
-	char *tmpInfo = NULL;
-	char *ptr;
-	char		*strptr, *cmd_addr;
-	char		*tokptr;
-	int flag=0;
-	int ret=0;
-	int index=0;
-	unsigned int enabled;
-	unsigned char macAddr[6];
-	
-	int mode=0;
-	char errbuf[100];
-	char cmd_buf[100]={0};
-	int delall =0;
-	RTK_IPQOS_T entry;
-	cmd[cmd_len]='\0';
-	//printf("cmd:%s,[%s]:[%d].\n",cmd,__FUNCTION__,__LINE__);
-	
-	strptr=cmd;
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	if(strcmp(tokptr,"mac")==0)
-	{
-		mode= QOS_RESTRICT_MAC;
-	}
-	else if(strcmp(tokptr,"all")==0)
-	{
-		delall= 1;
-		goto process;
-	}	
-	else
-	{
-		printf("not support mode!\n");
-		goto out;
-	}
-	
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	
-	if(mode==QOS_RESTRICT_MAC)
-	{
-		if (strlen(tokptr)!=12 || !string_to_hexmac(tokptr, macAddr, 12)) {
-			printf("invalid mac address:%s\n", tokptr);
-			goto out;
-		}
-	}
-	
-process:	
-	memset(&entry,0,sizeof(RTK_IPQOS_T));
-	entry.mode =mode |QOS_RESTRICT_MAX;
-	memcpy(entry.mac,macAddr,6);
-	entry.enabled =1;
-	
-	ret=rtk_del_qos_rule_entry_imm_inband(&entry,delall);
-	
-out:	
-	if(ret ==0)
-		sprintf(errbuf,"Set rtk_del_qos_rule_imm fail\n");
-	else
-		sprintf(errbuf,"Set rtk_del_qos_rule_imm successful\n");
-	
-	printf("%s",errbuf);
-	inband_write(ev_tools_inband_chan,0,id_del_qos_rule_imm,errbuf,strlen(errbuf)+1,1); //reply
-
-	return MAX_INBAND_PAYLOAD_LEN+1;
-}
-#endif
-static int _get_macfilter_rule(char *cmd , int cmd_len)
-{
-	int entryNum=0;
-	int ret=0,length=0;
-	unsigned char * rtk_info=NULL;
-	char		*strptr, *cmd_addr;
-	char		*tokptr;
-	unsigned char macAddr[6]={0};
-	unsigned char errbuff[48] = {0};
-	int allFlag=0,index =0;
-	RTK_MACFILTER_T entry[MAX_FILTER_NUM]={0};
-	
-	cmd[cmd_len]='\0';
-	strptr=cmd;
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	if(strcmp(tokptr,"mac")==0)
-	{
-		tokptr = strsep(&strptr," ");
-		
-		if (tokptr==NULL)
-		{
-			goto out;
-		}
-		
-		if (strlen(tokptr)!=12 || !string_to_hexmac(tokptr, macAddr, 12)) {
-			printf("invalid mac address:%s\n", tokptr);
-			goto out;
-		}
-		
-	}
-	else if(strcmp(tokptr,"all")==0)
-	{
-		allFlag= 1;
-		goto process;
-	}	
-	else
-	{
-		printf("not support mode!\n");
-		goto out;
-	}
-process:
-	
-	if(allFlag)
-	{
-		ret=rtk_get_mac_filter_entry(&entryNum, &entry[0], MAX_FILTER_NUM);
-		if(ret==0)
-		{
-			strcpy(errbuff, "error,rtk_get_mac_filter_entry failed\n");
-			goto out;
-		}
-	}
-	else
-	{
-		memset(&entry[0],0,sizeof(RTK_MACFILTER_T));
-		memcpy(entry[0].macAddr,macAddr,6);
-		//printf("mac:%2x:%2x:%2x:%2x:%2x:%2x[%s]:[%d].\n",macAddr[0],macAddr[1],macAddr[2],macAddr[3],macAddr[4],macAddr[5],__FUNCTION__,__LINE__);
-		index=rtk_find_macfilter_rule_by_mac(&entry[0]);
-		if(index==0){
-			entryNum=0;
-		}	
-		else
-		{
-			entryNum =1;
-		}
-	}
-
-	length = entryNum*sizeof(RTK_MACFILTER_T)+1; 	
-	rtk_info=malloc(length+1);
-	if(rtk_info == NULL){
-		strcpy(errbuff, "error,not enough memory\n");
-		goto out;
-	}
-	memset(rtk_info,"\0",(length+1));
-	
-	rtk_info[0]=entryNum;
-	if(entryNum)
-	{
-		memcpy(&rtk_info[1],&entry[0],(entryNum*sizeof(RTK_MACFILTER_T)));
-	}
-	#if 0
-	printf("----Dump macfilter info:entry:%d,length:%d [%s]:[%d].\n",entryNum,length,__FUNCTION__,__LINE__);
-	int i;
-	for(i=0;i<length+1;i++)
-	{
-		printf("%02x ",rtk_info[i]);
-		if(((i+1)%8)==0)
-			printf("\n");
-	}
-	printf("\n");
-	#endif
-	
-	inband_write(ev_tools_inband_chan, 0, id_get_macfilter_rule, (char *)(rtk_info), (length+1),1);	
-	free(rtk_info);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-out:
-	printf("%s",errbuff);
-	inband_write(ev_tools_inband_chan, 0, id_get_macfilter_rule, errbuff, strlen(errbuff), 2);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);	
-}
-
-static int _add_macfilter_rule(char *cmd , int cmd_len)
-{
-	char		*strptr, *cmd_addr;
-	char		*tokptr;
-	int flag=0;
-	int ret=0;
-	int index=0;
-	unsigned int enabled;
-	unsigned char macAddr[6];
-	unsigned int upbw=0;
-	unsigned int downbw=0;
-	int mode=0;
-	char errbuf[100];
-	char cmd_buf[100]={0};
-	RTK_MACFILTER_T entry;
-	cmd[cmd_len]='\0';
-	//printf("cmd:%s,[%s]:[%d].\n",cmd,__FUNCTION__,__LINE__);
-	
-	strptr=cmd;
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	if(strcmp(tokptr,"mac")!=0)
-	{
-		printf("not support mode!\n");
-		goto out;
-	}
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	
-	if (strlen(tokptr)!=12 || !string_to_hexmac(tokptr, macAddr, 12)) {
-		printf("invalid mac address:%s\n", tokptr);
-		goto out;
-	}
-	#if 0
-	printf("tokptr:%s,%x:%x:%x:%x:%x:%x [%s]:[%d].\n",tokptr,macAddr[0], macAddr[1], 
-		macAddr[2], macAddr[3],macAddr[4],macAddr[5],__FUNCTION__,__LINE__);
-	#endif
-	memset(&entry,0,sizeof(RTK_MACFILTER_T));
-	memcpy(entry.macAddr,macAddr,6);
-	ret=rtk_add_macfilter_rule_entry_imm_inband(&entry);
-out:	
-	if(ret ==0){
-		sprintf(errbuf,"Set rtk_add_macfilter_rule_entry_imm_inband fail\n");
-		inband_write(ev_tools_inband_chan,0,id_add_macfilter_rule_imm,errbuf,strlen(errbuf)+1,2); //fail reply
-	}	
-	else{
-		sprintf(errbuf,"Set rtk_add_macfilter_rule_entry_imm_inband successful\n");
-		inband_write(ev_tools_inband_chan,0,id_add_macfilter_rule_imm,errbuf,strlen(errbuf)+1,1); // reply
-	}	
-	
-	printf("%s",errbuf);
-
-	return MAX_INBAND_PAYLOAD_LEN+1;
-
-	
-}
-
-
-
-static int _del_macfilter_rule(char *cmd , int cmd_len)
-{
-	char		*strptr, *cmd_addr;
-	char		*tokptr;
-	int flag=0;
-	int ret=0;
-	int index=0;
-	unsigned char macAddr[6]={0};
-	int mode=0;
-	char errbuf[100];
-	char cmd_buf[100]={0};
-	int delall =0;
-	RTK_MACFILTER_T entry;
-	cmd[cmd_len]='\0';
-	//printf("cmd:%s,[%s]:[%d].\n",cmd,__FUNCTION__,__LINE__);
-	
-	strptr=cmd;
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	if(strcmp(tokptr,"mac")==0)
-	{
-		delall=0;
-	}
-	else if(strcmp(tokptr,"all")==0)
-	{
-		delall= 1;
-		goto process;
-	}	
-	else
-	{
-		printf("not support command!\n");
-		goto out;
-	}
-	
-	tokptr = strsep(&strptr," ");
-	if (tokptr==NULL)
-	{
-		goto out;
-	}
-	
-	if (strlen(tokptr)!=12 || !string_to_hexmac(tokptr, macAddr, 12)) {
-		printf("invalid mac address:%s\n", tokptr);
-		goto out;
-	}
-	
-process:	
-	#if 0
-	printf("tokptr:%s,%x:%x:%x:%x:%x:%x [%s]:[%d].\n",tokptr,macAddr[0], macAddr[1], 
-	macAddr[2], macAddr[3],macAddr[4],macAddr[5],__FUNCTION__,__LINE__);
-	#endif
-	memset(&entry,0,sizeof(RTK_MACFILTER_T));
-	memcpy(entry.macAddr,macAddr,6);
-		
-	ret=rtk_del_macfilter_rule_entry_imm_inband(&entry,delall);
-	
-out:	
-	if(ret ==0){
-		sprintf(errbuf,"Set rtk_del_macfilter_rule_entry_imm_inband fail\n");
-		inband_write(ev_tools_inband_chan,0,id_del_macfilter_rule_imm,errbuf,strlen(errbuf)+1,2); //fail reply
-	}	
-	else{
-		sprintf(errbuf,"Set rtk_del_macfilter_rule_entry_imm_inband successful\n");
-		inband_write(ev_tools_inband_chan,0,id_del_macfilter_rule_imm,errbuf,strlen(errbuf)+1,1); //reply
-	}	
-	
-	printf("%s",errbuf);
-	return MAX_INBAND_PAYLOAD_LEN+1;
-}
-
-
-#if CONFIG_RTK_NAS_FILTER
-static int  _enable_nas_filter(char *cmd, int cmd_len)
-{
-    // 1-enable, 0-disable
-    int enable, ret;
-    char errbuf[64];
-    printf("[%s:%d] cmd=%s, cmd_len=%d\n", __FUNCTION__, __LINE__, cmd, cmd_len);
-
-    cmd[cmd_len] = '\0';
-    enable = atoi(cmd);
-    printf("[%s:%d] enable=%d\n", __FUNCTION__, __LINE__, enable);
-    ret = rtk_set_nas_filter_enable(enable);
-    
-	if(ret == 0)
-		sprintf(errbuf,"Enable nas filter fail\n");
-	else
-		sprintf(errbuf,"Enable nas filter successful\n");
-	
-	printf("[%s:%d]%s\n", __FUNCTION__, __LINE__, errbuf);
-	inband_write(ev_tools_inband_chan,0,id_enable_nas_filter, errbuf,strlen(errbuf)+1,1); //reply
-
-	return MAX_INBAND_PAYLOAD_LEN+1;
-}
-
-static int  _get_status_nas_filter(char *cmd, int cmd_len)
-{
-    // 1 - enable, 0 -disable
-    int enabled, ret;
-    char errbuf[64] = {0};
-
-    ret = rtk_get_nas_filter_enable(&enabled);
-    if(ret!=1){
-        sprintf(errbuf, "Get nas filter status failed!\n");
-    }else{
-        sprintf(errbuf, "%d", enabled);
-    }
-
-	printf("[%s:%d]%s\n", __FUNCTION__, __LINE__, errbuf);
-	inband_write(ev_tools_inband_chan,0,id_get_status_nas_filter, errbuf,strlen(errbuf)+1,1); //reply
-	return MAX_INBAND_PAYLOAD_LEN+1;
-}
-
-static char _nas_filter_build_char(char c1, char c2)
-{
-    char result = 0;
-    if(c1>='0' && c1<='9'){
-        result |= ((c1-'0')&0xF)<<4;
-    }else if(c1>='a'&&c1<='f'){
-        result |= ((c1-'a'+10)&0xF)<<4;
-    }else if(c1>='A'&&c1<='F'){
-        result |= ((c1-'A'+10)&0xF)<<4;
-    }else{
-        printf("[%s:%d]%02x is wrong!\n", __FUNCTION__, __LINE__, c1);
-    }
-
-    if(c2>='0' && c2<='9'){
-        result |= ((c2-'0')&0xF);
-    }else if(c2>='a'&&c2<='f'){
-        result |= ((c2-'a'+10)&0xF);
-    }else if(c2>='A'&&c2<='F'){
-        result |= ((c2-'A'+10)&0xF);
-    }else{
-        printf("[%s:%d]%02x is wrong!\n", __FUNCTION__, __LINE__, c2);
-    }
-
-    printf("[%s:%d] result=%02x\n", __FUNCTION__, __LINE__, result);
-    return result&0xFF;
-}
-
-static int _add_nas_filter(char *cmd, int cmd_len)
-{
-    printf("[%s:%d] cmd=%s, cmd_len=%d\n", __FUNCTION__, __LINE__, cmd, cmd_len);
-    int i, ret;
-    RTK_NASFILTER_Tp new_entry = (RTK_NASFILTER_Tp)malloc(sizeof(RTK_NASFILTER_T));
-    memset(new_entry, 0x0, sizeof(RTK_NASFILTER_T));
-    char errbuf[64];
-    if(new_entry==NULL){
-        sprintf(errbuf, "Malloc new space error!");
-        goto out;
-    }
-
-    if(cmd_len==12){
-        // no comments
-        for(i=0; i<6; i++)
-            new_entry->macAddr[i] = _nas_filter_build_char(cmd[i*2], cmd[i*2+1]);
-        memset(new_entry->comment, 0x0, RTK_FW_COMMENT_LEN);
-    }else if(cmd_len>12){
-        for(i=0; i<6; i++)
-            new_entry->macAddr[i] = _nas_filter_build_char(cmd[i*2], cmd[i*2+1]);
-        memcpy(new_entry->comment, cmd+12, cmd_len-12);
-        memset(new_entry->comment+cmd_len-12, 0x0, 1);
-    }
-
-    printf("new_entry->macAddr=%02x:%02x:%02x:%02x:%02x:%02x\n", new_entry->macAddr[0], new_entry->macAddr[1],new_entry->macAddr[2],new_entry->macAddr[3],new_entry->macAddr[4],new_entry->macAddr[5]);
-    if(cmd_len>12)
-        printf("new_entry->comment=%s\n", new_entry->comment);
-    ret = rtk_add_nas_filter_entry(new_entry);
-    if(ret!=RTK_SUCCESS)
-        sprintf(errbuf, "Add nas filter error!");
-    else
-        sprintf(errbuf, "Add nas filter succeed!");
-
-out:
-	printf("[%s:%d]%s\n", __FUNCTION__, __LINE__, errbuf);
-	inband_write(ev_tools_inband_chan,0,id_add_nas_filter, errbuf,strlen(errbuf)+1,1); //reply
-	return MAX_INBAND_PAYLOAD_LEN+1;
-}
-
-static int _del_nas_filter(char *cmd, int cmd_len)
-{
-    char errbuf[64] = {0};
-    int ret, i;
-    RTK_NASFILTER_Tp entry = (RTK_NASFILTER_Tp)malloc(sizeof(RTK_NASFILTER_T));
-    if(entry==NULL){
-        sprintf(errbuf, "Malloc space error!");
-        goto out;
-    }
-    memset(entry, 0x0, sizeof(RTK_NASFILTER_T));
-
-    printf("[%s:%d] cmd=%s, cmd_len=%d\n", __FUNCTION__, __LINE__, cmd, cmd_len);
-    if(strstr(cmd, "all")!=NULL || strstr(cmd, "All")!=NULL || strstr(cmd, "ALL")!=NULL){
-        // delete all
-        printf("delete all\n");
-        ret = rtk_del_nas_filter_entry(entry, 1);
-    }else{
-        for(i=0; i<6; i++)
-            entry->macAddr[i] = _nas_filter_build_char(cmd[i*2], cmd[i*2+1]);
-        memcpy(entry->comment, cmd+12, cmd_len-12);
-        memset(entry->comment + (cmd_len-12), 0x0, 1);
-
-        printf("delete: entry->macAddr=%02x:%02x:%02x:%02x:%02x:%02x\n", entry->macAddr[0], entry->macAddr[1],entry->macAddr[2],entry->macAddr[3],entry->macAddr[4],entry->macAddr[5]);
-        printf("delete: entry->comment=%s\n", entry->comment);
-        ret = rtk_del_nas_filter_entry(entry, 0);
-    }
-
-    if(ret!=RTK_SUCCESS){
-        printf("[%s:%d]Delete nas entry failed\n", __FUNCTION__, __LINE__);
-        sprintf(errbuf, "Delete nas filter entry failed!\n");
-    }else{
-        printf("[%s:%d]Delete nas entry succeed\n", __FUNCTION__, __LINE__);
-        sprintf(errbuf, "Delete nas filter entry succeed!\n");
-    }
-
-out:
-	inband_write(ev_tools_inband_chan,0,id_del_nas_filter, errbuf, strlen(errbuf)+1,1); //reply
-	return MAX_INBAND_PAYLOAD_LEN+1;
-}
-
-static int _get_nas_filter_entry(char *cmd, int cmd_len)
-{
-    int actual_num, max_num = 40, ret; // this max_numer must < sizeof(ioh->rx_buffer)/sizeof(RTK_NASFILTER_T), which is 47.xxx, so here we at most allow 40
-    char errbuf[1500] = {0};
-    RTK_NASFILTER_T entries[max_num];
-
-    ret = rtk_get_nas_filter_entry(&actual_num, entries, max_num);
-    if(ret!=1){
-        printf("[%s:%d]Get nas entries failed\n", __FUNCTION__, __LINE__);
-        sprintf(errbuf, "Get nas filter status failed!\n");
-    }else{
-        printf("[%s:%d]Get nas entries succeed\n", __FUNCTION__, __LINE__);
-        memcpy(errbuf, entries, actual_num*sizeof(RTK_NASFILTER_T));
-    }
-
-	inband_write(ev_tools_inband_chan,0,id_get_nas_filter_entry, errbuf, actual_num*sizeof(RTK_NASFILTER_T)+1,1); //reply
-	return MAX_INBAND_PAYLOAD_LEN+1;
-        
-}
-#endif
-static int _restart_wan(char *cmd, int cmd_len)
-{
-	int ret;
-	char rsp = '\0';
-	//rsp frist
-	inband_write(ev_tools_inband_chan, 0, id_restart_wan, (char *)(&rsp),1,1);		
-	ret=rtk_restart_wan();
-	if (ret == 0){
-		printf("%s function fail\n",cmd);
-	}	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-}
-static int _get_pppoe_err_code(char *cmd, int cmd_len)
-{
-	int ret;
-	int err_code;
-	ret=rtk_get_pppoe_err_code(&err_code);
-	if (ret == 0)
-	{
-		printf("%s function fail\n",cmd);
-		err_code = 0xffffffff;
-	}	
-	inband_write(ev_tools_inband_chan, 0, id_get_pppoe_err_code, (char *)(&err_code),sizeof(err_code),1);	
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-}
-static int _wlan_immediately_work(char *cmd, int cmd_len)
-{
-	int ret;
-	cmd[cmd_len]='\0';
-	if(!strstr(cmd,"wlan"))	
-		return -1;
-	
-	ret = rtk_wlan_immediately_work(cmd);
-	if(ret == 0) 
-		return -1;
-	else
-		return 0;
-}
-
-static int _get_firmware_version(char *cmd , int cmd_len)
-{
-	printf("[%s:%d]\n", __FUNCTION__,__LINE__);
-	int ret,length;
-	unsigned char errbuff[48] = {0};
-	char *version = (char *)malloc(FW_VERSION_MAX_LEN);
-	if(version == NULL){
-		strcpy(errbuff, "error,not enough memory\n");
-		//inband_write(ev_tools_inband_chan, 0, id_get_fw_version, errbuff, strlen(errbuff), 2);	
-		return (MAX_INBAND_PAYLOAD_LEN + 1);
-	}
-
-	ret=  rtk_get_firmware_version(&version);
-	if (ret == 0)
-	{
-		strcpy(errbuff, "error,rtk_get_firmware_version failed\n");
-		goto ssr_err_out;
-	}
-	
-	length = strlen(version);
-	printf("%s.%d.return to client. firmware_version %s\n",__FUNCTION__,__LINE__, version);
-	//inband_write(ev_tools_inband_chan, 0, id_get_fw_version, version, length,1);	
-	free(version);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-	
-ssr_err_out :
-	printf("%s",errbuff);
-	//inband_write(ev_tools_inband_chan, 0, id_get_fw_version, errbuff, strlen(errbuff), 2);	
-	free(version);
-	return (MAX_INBAND_PAYLOAD_LEN + 1);
-}
-#endif
 
 static int _ev_get_firmware_version(char *cmd , int cmd_len)
 {
@@ -2965,7 +1422,6 @@ static int _ev_get_firmware_version(char *cmd , int cmd_len)
 	char *version = (char *)malloc(FW_VERSION_MAX_LEN);
 	if(version == NULL){
 		strcpy(errbuff, "error,not enough memory\n");
-		//inband_write(ev_tools_inband_chan, 0, id_get_fw_version, errbuff, strlen(errbuff), 2);	
 		return (MAX_INBAND_PAYLOAD_LEN + 1);
 	}
 
@@ -2992,403 +1448,6 @@ ssr_err_out :
 	free(version);
 	return (MAX_INBAND_PAYLOAD_LEN + 1);
 }
-
-#ifdef HOST_SEND_CONFIG_FILE
-static int _send_config_file(char *data_p , int data_len)
-{
-	int fd,filenamelen,enable_flag_len,enable_flag_value;
-	char filename[50]; 
-	char *pfilenameend;
-	//printf("******len=%d data=%s \n",data_len,data_p);
-
-	char *pfilename= strstr(data_p,"filename=");
-	if(NULL != pfilename)
-	{//save file
-
-		//find file name and len
-		pfilenameend = strchr(data_p,'\n');
-		filenamelen = (int)(pfilenameend - pfilename) - strlen("filename=");
-		memcpy(filename,pfilename + strlen("filename="),filenamelen);
-		filename[filenamelen] = '\0';;
-		
-		//open or new a file to save data
-		fd = open(filename,O_RDWR|O_CREAT|O_TRUNC);
-		if(fd < 0)
-		{//change path to ./tmp/
-			char *ptmp_name;
-			char tmp_name[filenamelen];
-			ptmp_name = strchr(filename,'/');
-			while(NULL != ptmp_name)
-			{
-				strcpy(tmp_name,ptmp_name+1);
-				ptmp_name = strchr(tmp_name,'/');
-			}
-			sprintf(filename,"/tmp/%s",tmp_name);
-			fd = open(filename,O_RDWR|O_CREAT|O_TRUNC);
-		}
-		
-		//-d:only save config; -e:save and enable config file 
-		enable_flag_value = 1;
-		enable_flag_len = 0;
-		
-		if(!strcmp(pfilenameend+1,"-e") )
-		{
-			enable_flag_len = strlen("-e");
-			enable_flag_value = 1;
-		}
-		else if(!strcmp(pfilenameend+1,"-d") )
-		{
-			enable_flag_len = strlen("-d");
-			enable_flag_value = 0;
-		}
-		
-		write(fd,pfilenameend + 1 + enable_flag_len,data_len - filenamelen -  strlen("filename=") -1 - enable_flag_len);
-		if(fd < 0)
-			printf("Save file %s fail!\n",filename);
-		else
-			printf("Save file %s length %d successed!\n",filename,data_len);
-		close(fd);
-	}
-	if(enable_flag_value && NULL !=pfilename)
-	{
-//#if defined(SET_MIB_FROM_FILE)
-		//readFileSetMib(filename);//enable config file
-		char cmd[60];
-		sprintf(cmd,"cp %s /var/sys.conf",filename);
-		system(cmd);
-		system("flash setconf end");
-		system("rm /var/sys.conf");
-//#endif
-	}
-	return 0;
-}
-
-static int _get_config_file(char *cmd , int cmd_len)
-{	
-	int ret = -1;
-	char cmd1[50];
-	int fd,flen;
-	char *data;
-	char *line_data ;
-	char *tmp_pdata1,*tmp_pdata2;
-	char *snd_data;
-	struct stat ffstat;
-	char first_vlanconfig_tbl_flag = 0;
-	char first_schedule_tbl_flag = 0;
-	char schedule_wlan_idx;
-	//dump all config value to a file
-	char filename[]= "/tmp/config.txt";
-	sprintf(cmd1,"flash all > %s",filename);
-	system(cmd1);
-	
-	//read the config file 
-	fd = open(filename,O_RDWR);
-	if(fd < 0)
-		return -1;
-	fstat(fd, &ffstat);
-	flen = ffstat.st_size;
-
-	if((data = (char *)malloc(flen)) == NULL)
-	{
-		printf("data buffer allocation failed!\n");
-		return -1;
-	}
-	if(read(fd, data , flen)< 0)
-		goto GO_TO_END;
-	close(fd);
-
-	//leave config file only needed config value
-	fd = open(filename,O_RDWR|O_CREAT|O_TRUNC);
-	if(fd < 0)
-		goto GO_TO_END;
-	line_data = data;
-	tmp_pdata1 = data - 1;
-	flen = 0;
-	if(NULL == strcmp(cmd,"all"))
-	{
-		while(tmp_pdata1 != NULL)
-		{
-			if(!(*line_data=='D' && *(line_data +1) =='E' && *(line_data +2) =='F' && *(line_data +3) =='_'))
-			{
-				if(!strncmp(line_data,"VLANCONFIG_TBL",strlen("VLANCONFIG_TBL")))
-				{
-					if(!strncmp(line_data,"VLANCONFIG_TBL_NUM",strlen("VLANCONFIG_TBL_NUM")))
-						first_vlanconfig_tbl_flag=1;
-					if(!first_vlanconfig_tbl_flag)
-					{
-						tmp_pdata1 = strchr(line_data,'\n');
-						line_data = tmp_pdata1 + 1;
-						continue;
-					}
-				}
-				if(!strncmp(line_data,"SCHEDULE_TBL",strlen("SCHEDULE_TBL")) || !strncmp(line_data+6,"SCHEDULE_TBL",strlen("SCHEDULE_TBL")))
-				{
-					if(!strncmp(line_data+6,"SCHEDULE_TBL_NUM",strlen("SCHEDULE_TBL_NUM")))
-					{
-						first_schedule_tbl_flag=1;
-						schedule_wlan_idx = *(line_data + 4);//wlan0 or wlan1
-					}
-					if(!first_schedule_tbl_flag)
-					{
-						tmp_pdata1 = strchr(line_data,'\n');
-						line_data = tmp_pdata1 + 1;
-						continue;
-					}
-					if(strncmp(line_data,"WLAN",strlen("WLAN")))
-					{//if not include 'WLAN', add 
-						sprintf(cmd1,"WLAN%c_",schedule_wlan_idx);
-						memcpy(data+flen,cmd1,6);
-						flen += 6 ;
-					}
-				}
-				tmp_pdata2 = strchr(line_data,'\n');
-				if(tmp_pdata2 == NULL)
-					tmp_pdata2 = data + ffstat.st_size;
-				memcpy(data+flen,line_data,(tmp_pdata2 - tmp_pdata1));
-				flen += (tmp_pdata2 - tmp_pdata1) ;
-			}
-			tmp_pdata1 = strchr(line_data,'\n');
-			line_data = tmp_pdata1 + 1;
-		}		
-	}
-	else if (NULL == strcmp(cmd,"wlan"))
-	{		
-		while(tmp_pdata1 != NULL)
-		{
-			if(*line_data=='W' && *(line_data +1) =='L' && *(line_data +2) =='A' && *(line_data +3) =='N')//only WLAN 
-			{
-				tmp_pdata2 = strchr(line_data,'\n');
-				if(tmp_pdata2 == NULL)
-					tmp_pdata2 = data + ffstat.st_size;
-				memcpy(data+flen,line_data,(tmp_pdata2 - tmp_pdata1));
-				flen += (tmp_pdata2 - tmp_pdata1) ;
-			}
-			if(!strncmp(line_data,"SCHEDULE_TBL",strlen("SCHEDULE_TBL")) || !strncmp(line_data+6,"SCHEDULE_TBL",strlen("SCHEDULE_TBL")))
-			{
-				if(!strncmp(line_data+6,"SCHEDULE_TBL_NUM",strlen("SCHEDULE_TBL_NUM")))
-				{
-					first_schedule_tbl_flag=1;
-					schedule_wlan_idx = *(line_data + 4);//wlan0 or wlan1
-				}
-				if(!first_schedule_tbl_flag)
-				{
-					tmp_pdata1 = strchr(line_data,'\n');
-					line_data = tmp_pdata1 + 1;
-					continue;
-				}
-				if(strncmp(line_data,"WLAN",strlen("WLAN")))
-				{//if not include 'WLAN', add 
-					sprintf(cmd1,"WLAN%c_",schedule_wlan_idx);
-					memcpy(data+flen,cmd1,6);
-					flen += 6 ;
-					
-					tmp_pdata2 = strchr(line_data,'\n');
-					if(tmp_pdata2 == NULL)
-						tmp_pdata2 = data + ffstat.st_size;
-					memcpy(data+flen,line_data,(tmp_pdata2 - tmp_pdata1));
-					flen += (tmp_pdata2 - tmp_pdata1) ;
-				}
-			}
-			tmp_pdata1 = strchr(line_data,'\n');
-			line_data = tmp_pdata1 + 1;
-		}
-	}
-	else if (NULL == strcmp(cmd,"hw"))
-	{	
-		while(tmp_pdata1 != NULL)
-		{
-			if(*line_data=='H' && *(line_data +1) =='W' && *(line_data +2) =='_' )//only HW 
-			{
-				tmp_pdata2 = strchr(line_data,'\n');
-				if(tmp_pdata2 == NULL)
-					tmp_pdata2 = data + ffstat.st_size;
-				memcpy(data+flen,line_data,(tmp_pdata2 - tmp_pdata1));
-				flen += (tmp_pdata2 - tmp_pdata1) ;
-			}
-			tmp_pdata1 = strchr(line_data,'\n');
-			line_data = tmp_pdata1 + 1;
-		}
-	}
-	else
-	{	
-		goto GO_TO_END;
-	}		
-	write(fd,data,flen);
-
-	//read form file to memory
-	if(flen <= MAX_INBAND_PAYLOAD_LEN)
-	{
-		if(read(fd, cmd,flen)< 0) //copy to cmd[]
-			goto GO_TO_END;
-		ret = flen;
-	}
-	else
-	{
-		if(read(fd, data,flen)< 0)//copy to data[] 
-			goto GO_TO_END;
-		ret = flen;
-		inband_write(ev_tools_inband_chan,0,id_get_config_file,data,flen,1); //reply
-		printf("Send %s config file length %d end!\n",cmd,flen);
-	}
-
-GO_TO_END:
-	close(fd);
-	free(data);	
-
-	//delete config file 
-	sprintf(cmd1,"rm %s",filename);	
-	system(cmd1);
-	
-	return ret;
-}
-
-#endif
-#ifdef INBAND_GET_FILE_SUPPOPRT
-static int _get_file(char *cmd , int cmd_len)
-{
-	char fileName[MAX_PATH_LEN+1]={0};
-	int ret=-1,flen=-1;
-	int fd=-1;
-	char *data=NULL;
-	struct stat ffstat;
-	if(!cmd)
-	{
-		printf("invalid input!\n");
-		goto GET_FILE_END;
-	}
-	if(strlen(cmd)>MAX_PATH_LEN)
-	{
-		printf("path max %d!\n",MAX_PATH_LEN);
-		goto GET_FILE_END;
-	}
-
-	strcpy(fileName,cmd);
-	//printf("%s:%d fileName=%s\n",__FUNCTION__,__LINE__,fileName);
-	fd=open(fileName,O_RDONLY);
-	if(fd<0)
-	{
-		printf("can't open file %s!\n",fileName);
-		goto GET_FILE_END;
-	}
-	fstat(fd, &ffstat);
-	flen = ffstat.st_size;
-	
-//read form file to memory
-	if(flen <= MAX_INBAND_PAYLOAD_LEN)
-	{
-		if(read(fd, cmd,flen)< 0) //copy to cmd[]
-			goto GET_FILE_END;		
-	//	printf("%s:%d\n",__FUNCTION__,__LINE__);
-	}
-	else
-	{
-		if((data = (char *)malloc(flen)) == NULL)
-		{
-			printf("data buffer allocation failed!\n");
-			goto GET_FILE_END;
-		}
-	//	printf("%s:%d\n",__FUNCTION__,__LINE__);
-		if(read(fd, data,flen)< 0)//copy to data[] 
-			goto GET_FILE_END;
-		//printf("%s:%d\n",__FUNCTION__,__LINE__);
-		inband_write(ev_tools_inband_chan,0,id_get_file,data,flen,1); //reply
-		printf("Send %s file length %d end!\n",fileName,flen);
-	}
-	ret = flen;
-GET_FILE_END:
-	if(data) free(data);
-	close(fd);
-	return ret;
-}
-#endif
-
-#if defined(CONFIG_APP_ADAPTER_API)
-static int _sync_to_server(char *cmd, int cmd_len)
-{
-	char * name=NULL,*value=NULL;
-	int i=0,result=0;
-	char *nameArray[] = {"status"};
-    char *outPutArray[1]={0};
-	char buff[512]={0};
-
-	//analysis cmd
-	if(!cmd || cmd_len<=0)
-	{
-		return -1;
-	}
-	for(i=0;i<cmd_len;i++)
-	{
-		if(cmd[i]==' ')
-		{
-			name=(char*)malloc(i+1);
-			value=(char*)malloc(cmd_len-i);
-			if(!name||!value)
-			{
-				fprintf(stderr,"Malloc fail!\n");
-				return -1;
-			}
-			bzero(name,i+1);
-			bzero(value,cmd_len-i);
-			memcpy(name,cmd,i);
-			memcpy(value,cmd+i+1,cmd_len-i-1);
-			break;
-		}
-	}
-	if(!name||!value)
-	{
-		fprintf(stderr,"Invalid input format!\n");
-		return -1;
-	}
-	printf("sync %s value %s to server\n",name,value);
-	
-	//call rtk cgi cmd
-	sprintf(buff,"id=8&cmd=modify_config&title=%s&title_value=%s",name,value);
-	outPutArray[0]=(char*)malloc(64);
-	bzero(outPutArray[0],64);
-	//result=rtk_common_cgi_api("get","letvcgi",buff,1,nameArray,outPutArray);
-	//printf("status=%s\n",outPutArray[0]);
-
-	if(name) free(name);
-	if(value) free(value);
-	if(outPutArray[0]) free(outPutArray[0]);
-	return result;
-		
-}
-#endif
-
-#if 0
-static int _sendfile(char *cmd , int cmd_len)
-{
-	int fd,ret=0;
-	//char *filename="/var/hostapd.conf";
-	char *filename="/var/linux.bin";
-	char test_buf[64];
-
-	fd = open(filename, O_RDWR | O_CREAT);
-	printf("_sendfile cmd_len = %d \n",cmd_len);
-	
-	if (fd < 0)	{
-		printf("Cannot Open file %s!\n", filename);
-		return -1;
-	}
-
-	write( fd, cmd, cmd_len); 
-	
-	close(fd);
-
-	//-------read file for test
-	fd = open(filename, O_RDONLY);
-	if (fd < 0)	{
-		printf("Cannot Open file %s!\n", filename);
-		return -1;
-       }
-
-	 read(fd, test_buf, 64);
-	 hex_dump( test_buf, 64);
-	 close(fd);
-	return ret;
-}
-#endif
 
 static int _set_mib(char *cmd , int cmd_len)
 {

@@ -152,6 +152,18 @@ typedef struct wlan_rate{
 	unsigned char rate[20];
 }WLAN_RATE_T, *WLAN_RATE_Tp;
 */
+typedef enum _Synchronization_Sta_State{
+    STATE_Min		= 0,
+    STATE_No_Bss	= 1,
+    STATE_Bss		= 2,
+    STATE_Ibss_Active	= 3,
+    STATE_Ibss_Idle	= 4,
+    STATE_Act_Receive	= 5,
+    STATE_Pas_Listen	= 6,
+    STATE_Act_Listen	= 7,
+    STATE_Join_Wait_Beacon = 8,
+    STATE_Max		= 9
+} Synchronization_Sta_State;
 
 int do_cmd(int id , char *cmd ,int cmd_len ,int relply);
 int do_action(int id , char *cmd ,int cmd_len ,int relply);

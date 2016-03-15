@@ -40,6 +40,8 @@
 #define SERVER_PORT 8000
 #define SERVER_IP "192.168.0.252"
 
+//#define SAVE_LOG_FILE
+
 int udp_server_socket_fd = 0;
 int tcp_server_socket_fd  = 0;
 int fd_tcp_accepted[BACK_LOG];
@@ -305,21 +307,25 @@ void uart_loop() {
 
     printf("uart_loop \n");
 
+    #ifdef SAVE_LOG_FILE
     fd_log = open("/var/tmp/rcserver.log", O_CREAT|O_APPEND|O_RDWR);
     if (fd_log < 0) {
-        perror("Can't Open rcserver.log");
+        perror("Can't Open /var/tmp/rcserver.log");
     }
+    #endif
 
     int len = 0;
     char rcv_buf[100]; 
     int i;
     while(1) {
-        len = UART_Recv(fd, rcv_buf, 9);
+        len = UART_Recv(fd, rcv_buf, sizeof(rcv_buf));
         if(len > 0) {
            rcv_buf[len] = '\0';
+           #ifdef SAVE_LOG_FILE
            if (fd_log > 0)
                 write(fd_log, rcv_buf, len);
-           printf("receive data is %s\n",rcv_buf);
+           #endif
+           printf("receive data is %s\n", rcv_buf);
            printf("len = %d\n",len);
            if (client_socket_fd > 0) {
                if(rcv_buf[strlen(rcv_buf) - 1] == '\n')

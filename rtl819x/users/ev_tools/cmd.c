@@ -218,6 +218,43 @@ struct cmd_entry cmd_table[]={ \
 	{0}
 };
 
+static inline int
+iw_get_ext(int                  skfd,           /* Socket to the kernel */
+           char *               ifname,         /* Device name */
+           int                  request,        /* WE ID */
+           struct iwreq *       pwrq)           /* Fixed part of the request */
+{
+  /* Set device name */
+  strncpy(pwrq->ifr_name, ifname, IFNAMSIZ);
+  /* Do the request */
+  return(ioctl(skfd, request, pwrq));
+}
+
+int getWlJoinResult(char *interface, unsigned char *res)
+{
+    int skfd;
+    struct iwreq wrq;
+
+    skfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    /* Get wireless name */
+    if ( iw_get_ext(skfd, interface, SIOCGIWNAME, &wrq) < 0){
+      /* If no wireless name : no wireless extensions */
+      close( skfd );
+        return -1;
+	}
+    wrq.u.data.pointer = (caddr_t)res;
+    wrq.u.data.length = 1;
+
+    if (iw_get_ext(skfd, interface, SIOCGIWRTLJOINREQSTATUS, &wrq) < 0){
+    	close( skfd );
+	return -1;
+	}
+    close( skfd );
+
+    return 0;
+}
+
 int do_connect(char *ssid, char *wpa_key, int encrypt)
 {
     printf("[%s:%d]\n", __FUNCTION__,__LINE__);
@@ -240,7 +277,6 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
         sprintf(command,"ifconfig %s-vxd down",wlanif);
         system(command);
     }
-    printf("[%s:%d]\n", __FUNCTION__,__LINE__);
     sprintf(command,"ifconfig %s down",wlanif);
     system(command);
     sprintf(command,"flash set_mib %s",wlanif);
@@ -253,7 +289,6 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
         sprintf(command,"ifconfig %s-vxd up",wlanif);
         system(command);
     }
-    printf("[%s:%d]\n", __FUNCTION__,__LINE__);
     // wlan0 entering forwarding state need some time
     sleep(3);
 
@@ -262,6 +297,26 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
     /*sysconf upnpd 1(isgateway) 1(opmode is bridge)*/
     system("sysconf upnpd 1 1");
     sleep(1);
+
+    int wait_time = 0;
+    int max_wait_time = 30;
+    unsigned char res;
+    while (1)  {
+        if (getWlJoinResult(wlanifp, &res) < 0) {
+            printf("[%s:%d] conneting failed \n", __FUNCTION__,__LINE__);
+            ret = -1;
+        }
+
+        if(res==STATE_Bss  || res==STATE_Ibss_Idle || res==STATE_Ibss_Active) { // completed 
+            break;
+        } else {
+            if (wait_time++ > max_wait_time) {
+                printf("[%s:%d] connecting time out \n", __FUNCTION__,__LINE__);
+                ret = -1;
+            }
+        }
+        sleep(1);
+    }
     printf("[%s:%d]\n", __FUNCTION__,__LINE__);
     return ret;
 }

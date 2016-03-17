@@ -309,6 +309,7 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
         }
 
         if(res==STATE_Bss  || res==STATE_Ibss_Idle || res==STATE_Ibss_Active) { // completed 
+            printf("[%s:%d] connect success \n", __FUNCTION__,__LINE__);
             break;
         } else {
             if (wait_time++ > max_wait_time) {

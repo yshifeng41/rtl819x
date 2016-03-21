@@ -4561,7 +4561,7 @@ else if(!strcmp(argv[0],"caCertExist"))
 		else
 			req_format_write(wp, "%s","ulinker_opmode.htm");
 #else
-		req_format_write(wp, "%s","wizard.htm");
+		req_format_write(wp, "%s","wlsurvey.htm");
 #endif
 
 		return 0;

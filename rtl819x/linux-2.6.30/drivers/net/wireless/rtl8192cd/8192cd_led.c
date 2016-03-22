@@ -714,7 +714,7 @@ void control_wireless_led(struct rtl8192cd_priv *priv, int enable)
 }
 
 
-#ifdef CONFIG_RTL_ULINKER
+#if 1//def CONFIG_RTL_ULINKER
 static struct rtl8192cd_priv *root_priv = NULL;
 
 void enable_sys_LED(struct rtl8192cd_priv *priv)

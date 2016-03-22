@@ -9488,11 +9488,11 @@ int  __init re865x_probe (void)
 	rtl865x_creatSockDebugProc();
 #endif
 
-#if 0//def CONFIG_RTL_ULINKER //led
-	REG32(PIN_MUX_SEL_2) = REG32(PIN_MUX_SEL_2) | 0x00003000;
-	REG32(PABCD_CNR)     = REG32(PABCD_CNR) & ~(0x00004000);
-	REG32(PABCD_DIR)     = REG32(PABCD_DIR) | 0x00004000;
-	REG32(PABCD_DAT)     = REG32(PABCD_DAT) & ~(0x00004000);
+#if 1//def CONFIG_RTL_ULINKER //led
+	REG32(PIN_MUX_SEL_2) = REG32(PIN_MUX_SEL_2) | 0x000036d8;
+	REG32(PABCD_CNR)     = REG32(PABCD_CNR) & ~(0x00007800);
+	REG32(PABCD_DIR)     = REG32(PABCD_DIR) | 0x00007800;
+	REG32(PABCD_DAT)     = REG32(PABCD_DAT) & ~(0x00007800);
 #endif
 
 	memset(&rx_skb_queue, 0, sizeof(struct ring_que));

@@ -71,309 +71,7 @@ struct pid *wscd_pid_Ptr=NULL;
 #if defined(CONFIG_RTL_8196C) || defined(CONFIG_RTL_8198) || defined(CONFIG_RTL_819XD) || defined(CONFIG_RTL_8196E)
 	#include "drivers/net/rtl819x/AsicDriver/rtl865xc_asicregs.h"
 /*define the GPIO physical address to customer_gpio.h*/
-#ifdef CONFIG_RTK_VOIP_BOARD
-	#if defined (CONFIG_RTK_VOIP_GPIO_8954C_V100) || \
-		defined (CONFIG_RTK_VOIP_GPIO_8964C_QA)
-	
 
-		// GPIO E7
-		#define RESET_PIN_IOBASE PEFGH_CNR 		//RTL_GPIO_PEFGH_CNR
-		#define RESET_PIN_DIRBASE PEFGH_DIR		//RTL_GPIO_PEFGH_DIR 
-		#define RESET_PIN_DATABASE PEFGH_DAT 	//RTL_GPIO_PEFGH_DATA
-		#define RESET_PIN_NO 7 					//pin number of the EFGH
-
-		// GPIO G0
-		#define RESET_LED_IOBASE PEFCH_CNR 		//RTL_GPIO_PEFGH_CNR
-		#define RESET_LED_DIRBASE PEFGH_DIR		//RTL_GPIO_PEFGH_DIR 
-		#define RESET_LED_DATABASE PEFGH_DAT 	//RTL_GPIO_PEFGH_DATA
-		#define RESET_LED_NO 16 				//pin number of the EFGH
-		
-		// GPIO G1
-		#define AUTOCFG_LED_IOBASE PEFGH_CNR 	//RTL_GPIO_PEFGH_CNR
-		#define AUTOCFG_LED_DIRBASE PEFGH_DIR	//RTL_GPIO_PEFGH_DIR 
-		#define AUTOCFG_LED_DATABASE PEFGH_DAT 	//RTL_GPIO_PEFGH_DATA
-		#define AUTOCFG_LED_NO 17 				//pin number of the EFGH
-
-		// GPIO E2
-		#define AUTOCFG_PIN_IOBASE PEFGH_CNR 	//RTL_GPIO_PEFGH_CNR
-		#define AUTOCFG_PIN_DIRBASE PEFGH_DIR	//RTL_GPIO_PEFGH_DIR 
-		#define AUTOCFG_PIN_DATABASE PEFGH_DAT  //RTL_GPIO_PEFGH_DATA
-		#define AUTOCFG_PIN_NO 2 				//pin number of the EFGH)
-
-		#define AUTOCFG_PIN_IMR PEF_IMR
-		#define RTL_GPIO_MUX_DATA 0x00004300 	//MUX for GPIO
-
-	#elif defined(CONFIG_RTK_VOIP_GPIO_8954C_V200) || \
-	 	  defined(CONFIG_RTK_VOIP_GPIO_8954C_V400)
-
-		// GPIO F4 DEFAULT_Button
-		#define RESET_PIN_IOBASE PEFGH_CNR 		//RTL_GPIO_PEFGH_CNR
-		#define RESET_PIN_DIRBASE PEFGH_DIR		//RTL_GPIO_PEFGH_DIR 
-		#define RESET_PIN_DATABASE PEFGH_DAT 	//RTL_GPIO_PEFGH_DATA
-		#define RESET_PIN_NO 12 				//pin number of the EFGH
-
-		// GPIO E7 SYS LED
-		#define RESET_LED_IOBASE PEFGH_CNR 		//RTL_GPIO_PEFGH_CNR
-		#define RESET_LED_DIRBASE PEFGH_DIR		//RTL_GPIO_PEFGH_DIR 
-		#define RESET_LED_DATABASE PEFGH_DAT 	//RTL_GPIO_PEFGH_DATA
-		#define RESET_LED_NO 7 					//number of the EFGH
-		
-		// GPIO F0 WPS LED
-		#define AUTOCFG_LED_IOBASE PEFGH_CNR 	//RTL_GPIO_PEFGH_CNR
-		#define AUTOCFG_LED_DIRBASE PEFGH_DIR	//RTL_GPIO_PEFGH_DIR 
-		#define AUTOCFG_LED_DATABASE PEFGH_DAT  //RTL_GPIO_PEFGH_DATA
-		#define AUTOCFG_LED_NO 8 				//pin number of the EFGH
-
-		// GPIO F3 WPS Button
-		#define AUTOCFG_PIN_IOBASE PEFGH_CNR 	//RTL_GPIO_PEFGH_CNR
-		#define AUTOCFG_PIN_DIRBASE PEFGH_DIR	//RTL_GPIO_PEFGH_DIR 
-		#define AUTOCFG_PIN_DATABASE PEFGH_DAT  //RTL_GPIO_PEFGH_DATA
-		#define AUTOCFG_PIN_NO 11 				//pin number of the EFGH
-		#define AUTOCFG_PIN_IMR PEF_IMR
-		#define RTL_GPIO_MUX_DATA 0x00000300 	//MUX for GPIO
-
-	#elif defined(CONFIG_RTK_VOIP_GPIO_8954C_SOUNDWIN_XVN1420)
-		// GPIO F4 DEFAULT_Button
-		#define RESET_PIN_IOBASE PEFGH_CNR 		//RTL_GPIO_PEFGH_CNR
-		#define RESET_PIN_DIRBASE PEFGH_DIR		//RTL_GPIO_PEFGH_DIR 
-		#define RESET_PIN_DATABASE PEFGH_DAT 	//RTL_GPIO_PEFGH_DATA
-		#define RESET_PIN_NO 12 				//pin number of the EFGH
-		
-		// No SYS LED
-		
-		// No WPS LED
-		
-		// GPIO D1 WPS Button
-		#define AUTOCFG_PIN_IOBASE PABCD_CNR 	//RTL_GPIO_PEFGH_CNR
-		#define AUTOCFG_PIN_DIRBASE PABCD_DIR	//RTL_GPIO_PEFGH_DIR 
-		#define AUTOCFG_PIN_DATABASE PABCD_DAT  //RTL_GPIO_PEFGH_DATA
-		#define AUTOCFG_PIN_NO 25 				//pin number of the EFGH
-		#define AUTOCFG_PIN_IMR PCD_IMR
-		#define RTL_GPIO_MUX_DATA 0x00000300 	//MUX for GPIO
-
-	#elif defined(CONFIG_RTK_VOIP_GPIO_8954C_PMC)
-
-                // GPIO A3 DEFAULT_Button
-                #define RESET_PIN_IOBASE PABCD_CNR              //RTL_GPIO_PABCD_CNR
-                #define RESET_PIN_DIRBASE PABCD_DIR             //RTL_GPIO_PABCD_DIR
-                #define RESET_PIN_DATABASE PABCD_DAT    //RTL_GPIO_PABCD_DATA
-                #define RESET_PIN_NO 3                                 //pin number of the ABCD
-
-                // GPIO C1 SYS LED
-                #define RESET_LED_IOBASE PABCD_CNR              //RTL_GPIO_PABCD_CNR
-                #define RESET_LED_DIRBASE PABCD_DIR             //RTL_GPIO_PABCD_DIR
-                #define RESET_LED_DATABASE PABCD_DAT    //RTL_GPIO_PABCD_DATA
-                #define RESET_LED_NO 16                                  //number of the ABCD
-
-                // GPIO A1 WPS LED
-                #define AUTOCFG_LED_IOBASE PABCD_CNR    //RTL_GPIO_PABCD_CNR
-                #define AUTOCFG_LED_DIRBASE PABCD_DIR   //RTL_GPIO_PABCD_DIR
-                #define AUTOCFG_LED_DATABASE PABCD_DAT  //RTL_GPIO_PABCD_DATA
-                #define AUTOCFG_LED_NO 1                                //pin number of the ABCD
-
-                // GPIO A2 WPS Button
-                #define AUTOCFG_PIN_IOBASE PABCD_CNR    //RTL_GPIO_PABCD_CNR
-                #define AUTOCFG_PIN_DIRBASE PABCD_DIR   //RTL_GPIO_PABCD_DIR
-                #define AUTOCFG_PIN_DATABASE PABCD_DAT  //RTL_GPIO_PABCD_DATA
-                #define AUTOCFG_PIN_NO 2                               //pin number of the ABCD
-                #define AUTOCFG_PIN_IMR PEF_IMR
-                #define RTL_GPIO_MUX_DATA 0x00000018    //MUX for GPIO
-		#define RTL_GPIO_MUX2_DATA 0x00038000
-	#elif defined(CONFIG_RTK_VOIP_GPIO_8972D_V100)
-		// GPIO G2 DEFAULT_Button
-		#define RESET_PIN_IOBASE PEFGH_CNR 		//RTL_GPIO_PEFGH_CNR
-		#define RESET_PIN_DIRBASE PEFGH_DIR		//RTL_GPIO_PEFGH_DIR 
-		#define RESET_PIN_DATABASE PEFGH_DAT 	//RTL_GPIO_PEFGH_DATA
-		#define RESET_PIN_NO 18 				//pin number of the EFGH
-
-		// GPIO G3 SYS LED
-		#define RESET_LED_IOBASE PEFGH_CNR 		//RTL_GPIO_PEFGH_CNR
-		#define RESET_LED_DIRBASE PEFGH_DIR		//RTL_GPIO_PEFGH_DIR 
-		#define RESET_LED_DATABASE PEFGH_DAT 	//RTL_GPIO_PEFGH_DATA
-		#define RESET_LED_NO 19 					//number of the EFGH
-		
-		// GPIO G4 WPS LED
-		#define AUTOCFG_LED_IOBASE PEFGH_CNR 	//RTL_GPIO_PEFGH_CNR
-		#define AUTOCFG_LED_DIRBASE PEFGH_DIR	//RTL_GPIO_PEFGH_DIR 
-		#define AUTOCFG_LED_DATABASE PEFGH_DAT  //RTL_GPIO_PEFGH_DATA
-		#define AUTOCFG_LED_NO 20 				//pin number of the EFGH
-
-		// GPIO G1 WPS Button
-		#define AUTOCFG_PIN_IOBASE PEFGH_CNR 	//RTL_GPIO_PEFGH_CNR
-		#define AUTOCFG_PIN_DIRBASE PEFGH_DIR	//RTL_GPIO_PEFGH_DIR 
-		#define AUTOCFG_PIN_DATABASE PEFGH_DAT  //RTL_GPIO_PEFGH_DATA
-		#define AUTOCFG_PIN_NO 17 				//pin number of the EFGH
-		#define AUTOCFG_PIN_IMR PEF_IMR
-  
-    		#define RTL_GPIO_MUX_DATA 0x00000C00 	//MUX for GPIO
-    #endif
-	
-	#define RTL_GPIO_MUX 0xB8000040
-
-	//#define RTL_GPIO_WIFI_ONOFF     19
-	#define AUTOCFG_BTN_PIN         AUTOCFG_PIN_NO
-	#define AUTOCFG_LED_PIN         AUTOCFG_LED_NO
-	#define RESET_LED_PIN           RESET_LED_NO
-	#define RESET_BTN_PIN           RESET_PIN_NO
-	
-#else
-#if defined(CONFIG_RTL_8196C)	
-   #if defined(CONFIG_RTL_8196CS)
-	#define PCIE0_BASE 0xb9000000
-	#define PCIE_BASE_OFFSET (PCIE0_BASE+0x40)
-	#define PCIE_PIN_MUX PCIE_BASE_OFFSET
-	#define RESET_PIN_IOBASE (PCIE_BASE_OFFSET+4)
-	#define WPS_PIN_IOBASE (PCIE_BASE_OFFSET+4)
-	#define WPS_LED_IOBASE (PCIE_BASE_OFFSET)
-	#define PCIE_GPIO_IMR (PCIE_BASE_OFFSET+8)
-	#define MODE_MARSK 24
-	#define MODE_MARSK1 28
-	#define DIR_MASK 16
-	#define DIR_MASK1 24
-	#define IN_MASK 0
-	#define OUT_MASK 8
-	#define OUT_MASK1 20
-	
-	// GPIO A0
-	//#define RESET_PIN_IOBASE RESET_PIN_IOBASE 	//RTL_GPIO_PABCD_CNR
-	#define RESET_PIN_DIRBASE RESET_PIN_IOBASE	//RTL_GPIO_PABCD_DIR 
-	#define RESET_PIN_DATABASE RESET_PIN_IOBASE //RTL_GPIO_PABCD_DATA
-	#define RESET_PIN_NO 0 /*number of the ABCD*/
-
-	// GPIO C2
-	#define RESET_LED_IOBASE PABCD_CNR 	//RTL_GPIO_PABCD_CNR
-	#define RESET_LED_DIRBASE PABCD_DIR	//RTL_GPIO_PABCD_DIR 
-	#define RESET_LED_DATABASE PABCD_DAT //RTL_GPIO_PABCD_DATA
-	#define RESET_LED_NO 2 /*number of the ABCD*/
-
-	// GPIO C4
-	#define AUTOCFG_LED_IOBASE WPS_LED_IOBASE 	//RTL_GPIO_PABCD_CNR
-	#define AUTOCFG_LED_DIRBASE WPS_LED_IOBASE	//RTL_GPIO_PABCD_DIR 
-	#define AUTOCFG_LED_DATABASE WPS_LED_IOBASE //RTL_GPIO_PABCD_DATA
-	#define AUTOCFG_LED_NO 20 /*number of the ABCD*/
-
-	// GPIO A1
-	#define AUTOCFG_PIN_IOBASE WPS_PIN_IOBASE 	//RTL_GPIO_PABCD_CNR
-	#define AUTOCFG_PIN_DIRBASE WPS_PIN_IOBASE	//RTL_GPIO_PABCD_DIR 
-	#define AUTOCFG_PIN_DATABASE WPS_PIN_IOBASE //RTL_GPIO_PABCD_DATA
-	#define AUTOCFG_PIN_NO 2 /*number of the ABCD)*/
-	#define AUTOCFG_PIN_IMR PCIE_GPIO_IMR
-	#else
-	// GPIO A0
-	#define RESET_PIN_IOBASE PABCD_CNR 	//RTL_GPIO_PABCD_CNR
-	#define RESET_PIN_DIRBASE PABCD_DIR	//RTL_GPIO_PABCD_DIR 
-	#define RESET_PIN_DATABASE PABCD_DAT //RTL_GPIO_PABCD_DATA
-	#define RESET_PIN_NO 0 /*number of the ABCD*/
-
-	// GPIO C2
-	#define RESET_LED_IOBASE PABCD_CNR 	//RTL_GPIO_PABCD_CNR
-	#define RESET_LED_DIRBASE PABCD_DIR	//RTL_GPIO_PABCD_DIR 
-	#define RESET_LED_DATABASE PABCD_DAT //RTL_GPIO_PABCD_DATA
-	#define RESET_LED_NO 18 /*number of the ABCD*/
-
-	// GPIO C4
-	#define AUTOCFG_LED_IOBASE PABCD_CNR 	//RTL_GPIO_PABCD_CNR
-	#define AUTOCFG_LED_DIRBASE PABCD_DIR	//RTL_GPIO_PABCD_DIR 
-	#define AUTOCFG_LED_DATABASE PABCD_DAT //RTL_GPIO_PABCD_DATA
-	#define AUTOCFG_LED_NO 20 /*number of the ABCD*/
-
-	// GPIO A1
-	#define AUTOCFG_PIN_IOBASE PABCD_CNR 	//RTL_GPIO_PABCD_CNR
-	#define AUTOCFG_PIN_DIRBASE PABCD_DIR	//RTL_GPIO_PABCD_DIR 
-	#define AUTOCFG_PIN_DATABASE PABCD_DAT //RTL_GPIO_PABCD_DATA
-	#define AUTOCFG_PIN_NO 1 /*number of the ABCD)*/
-	#define AUTOCFG_PIN_IMR PAB_IMR
-	#endif
-#ifdef CONFIG_POCKET_ROUTER_SUPPORT
-	#define RTL_GPIO_MUX_GPIOA2	(3<<20)
-	#define RTL_GPIO_MUX_GPIOB3	(3<<2)
-	#define RTL_GPIO_MUX_GPIOB2	(3<<0)	
-	#define RTL_GPIO_MUX_GPIOC0	(3<<12)
-	#define RTL_GPIO_MUX_POCKETAP_DATA	(RTL_GPIO_MUX_GPIOA2 | RTL_GPIO_MUX_GPIOB3 | RTL_GPIO_MUX_GPIOB2 | RTL_GPIO_MUX_GPIOC0)
-
-	#define RTL_GPIO_CNR_GPIOA2	(1<<2)
-	#define RTL_GPIO_CNR_GPIOB3	(1<<11)
-	#define RTL_GPIO_CNR_GPIOB2	(1<<10)	
-	#define RTL_GPIO_CNR_GPIOC0	(1<<16)
-	#define RTL_GPIO_CNR_POCKETAP_DATA	(RTL_GPIO_CNR_GPIOA2 | RTL_GPIO_CNR_GPIOB3 | RTL_GPIO_CNR_GPIOB2 | RTL_GPIO_CNR_GPIOC0)
-
-	#define RTL_GPIO_DIR_GPIOA2	(1<<2) /* &- */
-	#define RTL_GPIO_DIR_GPIOB3	(1<<11) /* &- */
-	#define RTL_GPIO_DIR_GPIOB2	(1<<10) /* |*/	
-	#define RTL_GPIO_DIR_GPIOC0	(1<<16) /* &- */
-
-	#define RTL_GPIO_DAT_GPIOA2	(1<<2) 
-	#define RTL_GPIO_DAT_GPIOB3	(1<<11) 
-	#define RTL_GPIO_DAT_GPIOB2	(1<<10) 	
-	#define RTL_GPIO_DAT_GPIOC0	(1<<16) 
-
-	static int ap_cli_rou_time_state[2] = {0};
-	static char ap_cli_rou_state = 0;
-	static char ap_cli_rou_idx=0;
-	static char pocketAP_hw_set_flag='0';
-
-	static char dc_pwr_plugged_time_state = 0;
-	static char dc_pwr_plugged_state = 0;
-	static char dc_pwr_plugged_flag = '0';
-
-	static int pwr_saving_state=0;
-	static char pwr_saving_led_toggle = 0;
-#endif
-
-	
-#elif defined(CONFIG_RTL_8198)// || defined(CONFIG_RTL_819XD) //LZQ
-	// GPIO H1
-	#define RESET_PIN_IOBASE PEFGH_CNR 	//RTL_GPIO_PABCD_CNR
-	#define RESET_PIN_DIRBASE PEFGH_DIR	//RTL_GPIO_PABCD_DIR 
-	#define RESET_PIN_DATABASE PEFGH_DAT //RTL_GPIO_PABCD_DATA
-	#define RESET_PIN_NO 25 /*number of the ABCD*/
-
-	// GPIO H3
-	#define RESET_LED_IOBASE PEFGH_CNR 	//RTL_GPIO_PABCD_CNR
-	#define RESET_LED_DIRBASE PEFGH_DIR	//RTL_GPIO_PABCD_DIR 
-	#define RESET_LED_DATABASE PEFGH_DAT //RTL_GPIO_PABCD_DATA
-	#define RESET_LED_NO 27 /*number of the ABCD*/
-
-	// GPIO G4
-	#define AUTOCFG_LED_IOBASE PEFGH_CNR 	//RTL_GPIO_PABCD_CNR
-	#define AUTOCFG_LED_DIRBASE PEFGH_DIR	//RTL_GPIO_PABCD_DIR 
-	#define AUTOCFG_LED_DATABASE PEFGH_DAT //RTL_GPIO_PABCD_DATA
-	#define AUTOCFG_LED_NO 20 /*number of the ABCD*/
-
-	// GPIO E1
-	#define AUTOCFG_PIN_IOBASE PEFGH_CNR 	//RTL_GPIO_PABCD_CNR
-	#define AUTOCFG_PIN_DIRBASE PEFGH_DIR	//RTL_GPIO_PABCD_DIR 
-	#define AUTOCFG_PIN_DATABASE PEFGH_DAT //RTL_GPIO_PABCD_DATA
-	#define AUTOCFG_PIN_NO 1 /*number of the ABCD)*/
-	#define AUTOCFG_PIN_IMR PGH_IMR
-
-	
-#elif defined(CONFIG_RTL_819XD) || defined(CONFIG_RTL_8196E)	//LZQ
-	#if defined(CONFIG_RTL_8881A)
-	//V720B
-	#define RESET_PIN_IOBASE 	PABCD_CNR	//RTL_GPIO_PABCD_CNR
-	#define RESET_PIN_DIRBASE 	PABCD_DIR //RTL_GPIO_PABCD_DIR 
-	#define RESET_PIN_DATABASE 	PABCD_DAT //RTL_GPIO_PABCD_DATA
-	#define RESET_PIN_NO 4 /*number of the ABCD*/
-
-	#define RESET_LED_IOBASE 	PEFGH_CNR	//RTL_GPIO_PABCD_CNR
-	#define RESET_LED_DIRBASE 	PEFGH_DIR //RTL_GPIO_PABCD_DIR 
-	#define RESET_LED_DATABASE 	PEFGH_DAT //RTL_GPIO_PABCD_DATA
-	#define RESET_LED_NO 3 /*number of the ABCD*/
-
-	#define AUTOCFG_LED_IOBASE 	PEFGH_CNR	//RTL_GPIO_PABCD_CNR
-	#define AUTOCFG_LED_DIRBASE PEFGH_DIR	//RTL_GPIO_PABCD_DIR 
-	#define AUTOCFG_LED_DATABASE PEFGH_DAT //RTL_GPIO_PABCD_DATA
-	#define AUTOCFG_LED_NO 3 /*number of the ABCD*/
-
-	#define AUTOCFG_PIN_IOBASE 	PABCD_CNR	//RTL_GPIO_PABCD_CNR
-	#define AUTOCFG_PIN_DIRBASE PABCD_DIR	//RTL_GPIO_PABCD_DIR 
-	#define AUTOCFG_PIN_DATABASE PABCD_DAT 	//RTL_GPIO_PABCD_DATA
-	#define AUTOCFG_PIN_NO 3					/*number of the ABCD)*/
-	#define AUTOCFG_PIN_IMR 	PAB_IMR
-	
-	
-	#else
 	//V201 demo board 
 	#define RESET_PIN_IOBASE 	PABCD_CNR	//RTL_GPIO_PABCD_CNR
 	#define RESET_PIN_DIRBASE 	PABCD_DIR //RTL_GPIO_PABCD_DIR 
@@ -395,15 +93,7 @@ struct pid *wscd_pid_Ptr=NULL;
 	#define AUTOCFG_PIN_DATABASE PABCD_DAT 	//RTL_GPIO_PABCD_DATA
 	#define AUTOCFG_PIN_NO 1 					/*number of the ABCD)*/
 	#define AUTOCFG_PIN_IMR 	PAB_IMR
-	#endif
-	#if defined (CONFIG_RTL_8197D)
-		#define USB_MODE_DETECT_PIN_NO			1
-		#define USB_MODE_DETECT_PIN_IOBASE		PABCD_DAT
-	#elif defined(CONFIG_RTL_8196D) || defined(CONFIG_RTL_8196E)
-		#define USB_MODE_DETECT_PIN_NO			4
-		//#define USB_MODE_DETECT_PIN_IOBASE		PABCD_DAT
-	#endif
-#endif
+        #define USB_MODE_DETECT_PIN_NO                  4
 	// GPIO C3
 	#define WIFI_ONOFF_PIN_IOBASE PABCD_CNR 	//RTL_GPIO_PABCD_CNR
 	#define WIFI_ONOFF_PIN_DIRBASE PABCD_DIR	//RTL_GPIO_PABCD_DIR 
@@ -411,18 +101,6 @@ struct pid *wscd_pid_Ptr=NULL;
 	#define WIFI_ONOFF_PIN_NO 19/*umber of the ABCD)*/
 	#define WIFI_ONOFF_PIN_IMR PAB_IMR
 
-/*
-	#define RTL_GPIO_MUX 0xB8000030
-	#define RTL_GPIO_MUX_DATA 0x0FC00380//for WIFI ON/OFF and GPIO
-
-	
-
-	#define AUTOCFG_BTN_PIN	AUTOCFG_PIN_NO	// 1
-	#define AUTOCFG_LED_PIN		AUTOCFG_LED_NO//20
-	#define RESET_LED_PIN		RESET_LED_NO //18
-	#define RESET_BTN_PIN		RESET_PIN_NO //0
-	#define RTL_GPIO_WIFI_ONOFF	WIFI_ONOFF_PIN_NO
-*/
 	 #define RTL_GPIO_MUX 0xB8000040
 	#ifdef CONFIG_8198_PORT5_GMII
 		#define RTL_GPIO_MUX_DATA 0x00340000
@@ -431,29 +109,6 @@ struct pid *wscd_pid_Ptr=NULL;
 	#endif 
 	#define RTL_GPIO_WIFI_ONOFF     19
 
-#if defined(CONFIG_RTL_8196C)	 
-	#if  defined(CONFIG_RTL_8196CS)
-	 #define AUTOCFG_BTN_PIN         2
-	 #define AUTOCFG_LED_PIN         1
-	 #define RESET_LED_PIN           2
-	 #define RESET_BTN_PIN           0
-	#else
-	 #define AUTOCFG_BTN_PIN         3
-	 #define AUTOCFG_LED_PIN         4
-	 #define RESET_LED_PIN           6
-	 #define RESET_BTN_PIN           5
-	#endif
-	
-#elif defined(CONFIG_RTL_8198) //|| defined(CONFIG_RTL_819XD) LZQ
-	 #define AUTOCFG_BTN_PIN         24
-	 #define AUTOCFG_LED_PIN         26
-	 #define RESET_LED_PIN           27
-	 #define RESET_BTN_PIN           25
-
-#elif defined(CONFIG_RTL_819XD) || defined(CONFIG_RTL_8196E)
-    #if defined(CONFIG_RTL_8881A)
-    #define RTL_GPIO_MUX_GPIOE2 (3<<7)
-	#endif
 	#define RTL_GPIO_MUX_GPIOA2_6 (6<<0)
 	#define RTL_GPIO_MUX_GPIOA0_1 (3<<12)
 	#define RTL_GPIO_MUX_2_GPIOB7 (4<<15)	
@@ -486,90 +141,19 @@ struct pid *wscd_pid_Ptr=NULL;
 	#define RTL_GPIO_DAT_GPIOB7 (1<<15) 	
 	#define RTL_GPIO_DAT_GPIOC0 (1<<16) 
 
-	#if defined(CONFIG_RTL_8197D)
-		#define RTL_GPIO_MUX_POCKETAP_DATA		(RTL_GPIO_MUX_GPIOA0_1 | RTL_GPIO_MUX_GPIOA2_6)
-		#define RTL_GPIO_MUX_2_POCKETAP_DATA	(RTL_GPIO_MUX_2_GPIOB7 | RTL_GPIO_MUX_2_GPIOC0)
-		#define RTL_GPIO_CNR_POCKETAP_DATA		(RTL_GPIO_CNR_GPIOA1 | \
-												 RTL_GPIO_CNR_GPIOA2 | \
-												 RTL_GPIO_CNR_GPIOA3 | \
-												 RTL_GPIO_CNR_GPIOA4 | \
-												 RTL_GPIO_CNR_GPIOA5 | \
-												 RTL_GPIO_CNR_GPIOA6 | \
-												 RTL_GPIO_CNR_GPIOB7 | \
-												 RTL_GPIO_CNR_GPIOC0)
-
-	
-		#define AUTOCFG_LED_PIN 			6
-		#define AUTOCFG_BTN_PIN         	3
-		#define RESET_LED_PIN           	6//reset led will be turn off by timer function
-		#define RESET_BTN_PIN           	5
-	#elif defined(CONFIG_RTL_8197DL)
-		#define RTL_GPIO_MUX_POCKETAP_DATA		(RTL_GPIO_MUX_GPIOA2_6)
-		#define RTL_GPIO_CNR_POCKETAP_DATA		(RTL_GPIO_CNR_GPIOA2 | \
-								 RTL_GPIO_CNR_GPIOA3 | \
-								 RTL_GPIO_CNR_GPIOA4 | \
-								 RTL_GPIO_CNR_GPIOA5 | \
-								 RTL_GPIO_CNR_GPIOA6)
-
-	
-		#define AUTOCFG_LED_PIN 		6
-		#define AUTOCFG_BTN_PIN         	3
-		#define RESET_LED_PIN           	6//reset led will be turn off by timer function
-		#define RESET_BTN_PIN           	5
-	#elif defined(CONFIG_RTL_8196D) || defined(CONFIG_RTL_8196E)
-		#if defined(CONFIG_RTL_8881A)
-		#define RTL_GPIO_MUX_POCKETAP_DATA	(RTL_GPIO_MUX_GPIOE2)
-		#define RTL_GPIO_CNR_POCKETAP_DATA	(RTL_GPIO_CNR_GPIOA2 | \
-											 RTL_GPIO_CNR_GPIOA4 | \
-											 RTL_GPIO_CNR_GPIOA5 | \
-											 RTL_GPIO_CNR_GPIOA6)
-
-		#define AUTOCFG_LED_PIN 			2
-		#define AUTOCFG_BTN_PIN         	3
-		#define RESET_LED_PIN           	2
-		#define RESET_BTN_PIN           	4
-		#elif defined(CONFIG_RTL_8196E)
-			#define EU_VE3 4
-			#define E_VE3 7
-			#define RTL96E_BONDING 0xB800000C
-			#define RTL_GPIO_MUX_POCKETAP_DATA	(RTL_GPIO_MUX_GPIOA2_6)
-			#define RTL_GPIO_CNR_POCKETAP_DATA	(RTL_GPIO_CNR_GPIOA2 | \
-											 	RTL_GPIO_CNR_GPIOA4 | \
-											 	RTL_GPIO_CNR_GPIOA5 | \
-											 	RTL_GPIO_CNR_GPIOA6)
-			#define AUTOCFG_LED_PIN 			6
-			#define AUTOCFG_BTN_PIN         	2
-			#define RESET_LED_PIN           	6
-	#ifdef CONFIG_APPLE_MFI_SUPPORT 
-			#define RESET_BTN_PIN           	10  //mark_mfi ,B2 inApplecate 
-	#else		
-			#define RESET_BTN_PIN           	5
-	#endif		
-		#else
-		#define RTL_GPIO_MUX_POCKETAP_DATA	(RTL_GPIO_MUX_GPIOA2_6)
-		#define RTL_GPIO_CNR_POCKETAP_DATA	(RTL_GPIO_CNR_GPIOA2 | \
-											 RTL_GPIO_CNR_GPIOA4 | \
-											 RTL_GPIO_CNR_GPIOA5 | \
-											 RTL_GPIO_CNR_GPIOA6)
-
-	
-		#define AUTOCFG_LED_PIN 			6
-		#define AUTOCFG_BTN_PIN         	2
-		#define RESET_LED_PIN           	6
-#if defined(CONFIG_RTL_96E_GPIOB5_RESET)
-		#define RESET_BTN_PIN           	13		
-#else
-		#define RESET_BTN_PIN           	5			
+	#define EU_VE3 4
+	#define E_VE3 7
+	#define RTL96E_BONDING 0xB800000C
+	#define RTL_GPIO_MUX_POCKETAP_DATA	(RTL_GPIO_MUX_GPIOA2_6)
+	#define RTL_GPIO_CNR_POCKETAP_DATA	(RTL_GPIO_CNR_GPIOA2 | \
+									 	RTL_GPIO_CNR_GPIOA4 | \
+									 	RTL_GPIO_CNR_GPIOA5 | \
+									 	RTL_GPIO_CNR_GPIOA6)
+	#define AUTOCFG_LED_PIN 			6
+	#define AUTOCFG_BTN_PIN         	2
+	#define RESET_LED_PIN           	6
+	#define RESET_BTN_PIN           	5
 #endif
-		#endif
-	
-		
-	
-	#endif
-#endif	 
-
-#endif // CONFIG_RTK_VOIP
-#endif // CONFIG_RTL_8196C || CONFIG_RTL_8198
 
 // 2009-0414
 #ifdef USE_INTERRUPT_GPIO
@@ -627,7 +211,7 @@ struct gpio_wps_device priv_gpio_wps_device;
 static struct timer_list pocket_ap_timer;
 #endif
 
-#ifdef CONFIG_RTL_ULINKER
+#if 1//def CONFIG_RTL_ULINKER
 static struct timer_list ulinker_timer;
 static struct timer_list ulinker_ap_cl_timer;
 #endif
@@ -657,34 +241,6 @@ static unsigned int		AutoCfg_LED_Slow_Toggle;
 
 void autoconfig_gpio_init(void)
 {
-#ifdef CONFIG_RTL_8198B
-	//gpio58, WPS button
-	REG32(0xBB00011C) |= (1<<25); //EN_GPIO
-	REG32(0xBB0001D8) &= ~(1<<25); //SEL_GPIO select input mode
-
-	//gpio61, use wlan1 led as WPS led, for test
-	//REG32(0xBB00011C) |= (1<<28); //EN_GPIO
-	//REG32(0xBB0001D8) |= (1<<28); //SEL_GPIO select output mode
-
-	// turn off WPS led in the beginning
-	// Strange!! Off the led here cause "LLT Polling failed". So remove it.
-	//REG32(0xBB000108) = (1<<0); //CTRL_GPIO output 1, off
-	//REG32(0xBB000104) |= (1<<28); //CTRL_GPIO output 1, off, for test
-#elif defined(CONFIG_RTL_8196CS)
-	RTL_W32(AUTOCFG_PIN_IOBASE,(RTL_R32(AUTOCFG_PIN_IOBASE)&(~((1 << AUTOCFG_BTN_PIN)<<MODE_MARSK))));
-	RTL_W32(AUTOCFG_LED_IOBASE,(RTL_R32(AUTOCFG_LED_IOBASE)&(~((1 << AUTOCFG_LED_PIN)<<MODE_MARSK1))));
-
-	// Set GPIOA pin 1 as input pin for auto config button
-	RTL_W32(AUTOCFG_PIN_DIRBASE, (RTL_R32(AUTOCFG_PIN_DIRBASE) & (~(((1 << AUTOCFG_BTN_PIN))<<DIR_MASK1))));
-
-	// Set GPIOA ping 3 as output pin for auto config led
-	RTL_W32(AUTOCFG_LED_DIRBASE, (RTL_R32(AUTOCFG_LED_DIRBASE) | ((1 << AUTOCFG_LED_PIN)<<DIR_MASK1)));
-
-	// turn off auto config led in the beginning
-	RTL_W32(AUTOCFG_LED_DATABASE, (RTL_R32(AUTOCFG_LED_DATABASE) | ((1 << AUTOCFG_LED_PIN)<<OUT_MASK1)));
-	update_pcie_status();
-	//printk("LINE: %x d:%x *  %x****R:%x\n",__LINE__,RTL_R32(0xb8b00728),RTL_R32(PCIE_PIN_MUX),RTL_R32(RESET_PIN_DATABASE));
-#else
 	RTL_W32(AUTOCFG_PIN_IOBASE,(RTL_R32(AUTOCFG_PIN_IOBASE)&(~(1 << AUTOCFG_BTN_PIN))));
 #ifdef AUTOCFG_LED_NO
 	RTL_W32(AUTOCFG_LED_IOBASE,(RTL_R32(AUTOCFG_LED_IOBASE)&(~(1 << AUTOCFG_LED_PIN))));
@@ -699,7 +255,6 @@ void autoconfig_gpio_init(void)
 
 	// turn off auto config led in the beginning
 	RTL_W32(AUTOCFG_LED_DATABASE, (RTL_R32(AUTOCFG_LED_DATABASE) | (1 << AUTOCFG_LED_PIN)));
-#endif
 #endif
 }
 #ifdef CONFIG_RTL_8196C_GW_MP
@@ -1714,7 +1269,7 @@ static void pocket_ap_timer_func(unsigned long data)
 
 
 
-#if defined(CONFIG_RTL_ULINKER)
+#if 1//defined(CONFIG_RTL_ULINKER)
 static int pre_status = -1;
 static int nxt_status = -1;
 static int cur_status = -1;
@@ -1859,7 +1414,7 @@ enum {
 	RTL_GADGET_FSG,
 	RTL_GADGET_ETH,
 };
-
+#if 0
 int rtl_otg_gadget = RTL_GADGET_FSG;
 
 int otg_proc_read_gadget(char *buf, char **start, off_t offset, int count, int *eof, void *data)
@@ -1949,7 +1504,7 @@ int otg_proc_write_gadget(struct file *file, const char *buf, unsigned long coun
 
 	return count;
 }
-
+#endif
 
 char ulinker_rndis_mac[20];
 static int read_ulinker_rndis_mac(char *page, char **start, off_t off,
@@ -2138,13 +1693,15 @@ void system_led_control(unsigned long data)
 	unsigned int reg;
 
 	if (sysled_toggle == 1) {
-		reg = (REG32(PCIE0_EP_CFG_BASE + 0x18) & 0xffff0000) | 0xb0000000;
+		//reg = (REG32(PCIE0_EP_CFG_BASE + 0x18) & 0xffff0000) | 0xb0000000;
 		if (on == 1) {
-			(*(volatile u32 *)(reg + 0x44)) = 0x10100000;
+			//(*(volatile u32 *)(reg + 0x44)) = 0x10100000;
+			REG32(PABCD_DAT) = REG32(PABCD_DAT) & ~(0x00007800);
 			on = 0;
 		}
 		else {
-			(*(volatile u32 *)(reg + 0x44)) = 0x00000000;
+			//(*(volatile u32 *)(reg + 0x44)) = 0x00000000;
+			REG32(PABCD_DAT) = REG32(PABCD_DAT) | 0x00007800;
 			on = 1;
 		}
 
@@ -2190,8 +1747,9 @@ static int write_ulinker_led(struct file *file, const char *buffer,
 	if (buffer && !copy_from_user(tmp, buffer, 8)) {
 		if (tmp[0] == '0'){
 			sysled_toggle = 0;
-			RTLWIFINIC_GPIO_write(4, 0);
-			renable_sw_LED();
+			//RTLWIFINIC_GPIO_write(4, 0);
+			//renable_sw_LED();
+			REG32(PABCD_DAT) = REG32(PABCD_DAT) | 0x00007800;
 		}
 		else if (tmp[0] == '1'){
 			sysled_toggle = 1;
@@ -2229,133 +1787,16 @@ int __init rtl_gpio_init(void)
 {
 	struct proc_dir_entry *res=NULL;
 
-#if defined(CONFIG_RTL_ULINKER)
+#if 1//defined(CONFIG_RTL_ULINKER)
 	system_led_init();
 #endif
 
 	printk("Realtek GPIO Driver for Flash Reload Default\n");
 
-#ifdef CONFIG_RTL_8198B
-	//gpio65, system(reset)/WPS led
-	REG32(0xBB000120) |= (1<<0); //EN_GPIO
-	REG32(0xBB0001DC) |= (1<<0); //SEL_GPIO select output mode
-
-	//gpio56, reset/default button
-	REG32(0xBB00011C) |= (1<<23); //EN_GPIO
-	REG32(0xBB0001D8) &= ~(1<<23); //SEL_GPIO select input mode
-	
-	res = create_proc_entry("gpio", 0, NULL);
-	if (res) {
-		res->read_proc = read_proc;
-		res->write_proc = write_proc;
-	}
-	else {
-		printk("Realtek GPIO Driver, create proc failed!\n");
-	}
-#elif defined(CONFIG_RTL_819XD) || defined(CONFIG_RTL_8196E)
-	#if defined(CONFIG_RTL_8881A)
-	#ifdef CONFIG_SERIAL_RTL_UART1
-	    RTL_W32((PIN_MUX_SEL+0xC), ((RTL_R32(PIN_MUX_SEL+0xC)&(~0xFFFFF))|(0x00022222) ));
-	#else
-	    RTL_W32((PIN_MUX_SEL+0xC), ((RTL_R32(PIN_MUX_SEL+0xC)&(~0xFFFFF))|(0x00066666) ));
-		//panic_printk("===>%x\r\n",RTL_R32(PIN_MUX_SEL+0xC));
-	#endif
-	#endif
-	#if defined(CONFIG_RTK_VOIP_BOARD)
-		RTL_W32(RTL_GPIO_MUX, (RTL_R32(RTL_GPIO_MUX) | (RTL_GPIO_MUX_DATA))); 
-		#ifdef RESET_LED_NO
-		RTL_W32(RESET_LED_IOBASE, (RTL_R32(RESET_LED_IOBASE) | (((1 << RESET_LED_PIN)))));
-		RTL_W32(RESET_LED_DIRBASE, (RTL_R32(RESET_LED_DIRBASE) | ((1 << RESET_LED_PIN))));
-		#endif
-		RTL_W32(RESET_PIN_IOBASE,  (RTL_R32(RESET_PIN_IOBASE)  & (~(1 << RESET_BTN_PIN))));
-		RTL_W32(RESET_PIN_DIRBASE, (RTL_R32(RESET_PIN_DIRBASE) & (~(1 << RESET_BTN_PIN))));
-	#elif defined(CONFIG_RTL_8197D)
-		//reg_iocfg_jtag config as gpio mode,gpioA[0~1], gpioA[2~6]
-		#ifdef CONFIG_USING_JTAG
-		RTL_W32(PIN_MUX_SEL, (RTL_R32(RTL_GPIO_MUX) | RTL_GPIO_MUX_GPIOA0_1));
-		#else
-		RTL_W32(PIN_MUX_SEL, (RTL_R32(RTL_GPIO_MUX) | RTL_GPIO_MUX_POCKETAP_DATA));
-		#ifdef CONFIG_SERIAL_RTL_UART1
-		RTL_W32(PIN_MUX_SEL, (RTL_R32(RTL_GPIO_MUX) & (~0x7) | (0x2)));
-		#endif
-		#endif
-		//reg_iocfg_led_p1, reg_iocfg_led_p2, config as gpio mode,GPIOB[7], GPIOC[0]
-		RTL_W32(PIN_MUX_SEL_2, (RTL_R32(PIN_MUX_SEL_2) | RTL_GPIO_MUX_2_POCKETAP_DATA));  	
-		//set gpioA[1~6],gpioB[7],gpioC[0] as GPIO PIN
-		RTL_W32(PABCD_CNR, (RTL_R32(PABCD_CNR) & ~(RTL_GPIO_CNR_POCKETAP_DATA)));	
-		//set direction, GPIOA[1,3,4,5] INPUT, GPIOA[2,6] OUTPUT
-
-#ifdef CONFIG_RTL_8367R_SUPPORT
-		// for 8367r h/w reset pin
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) | ((RTL_GPIO_DIR_GPIOA1))));
-		RTL_W32(PABCD_DAT, (RTL_R32(PABCD_DAT) & (~(RTL_GPIO_DAT_GPIOA1))));
-#else		
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA1))));
-#endif
-
-
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA3))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA4))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA5))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) | ((RTL_GPIO_DIR_GPIOA2))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) | ((RTL_GPIO_DIR_GPIOA6))));
-		//set direction, GPIOB[7] INPUT, GPIOC[0] OUTPUT
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOB7))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) | ((RTL_GPIO_DIR_GPIOC0))));
-	#elif defined(CONFIG_RTL_8197DL)
-		//reg_iocfg_jtag config as gpio mode,gpioA[0~1], gpioA[2~6]
-		#ifdef CONFIG_USING_JTAG
-		RTL_W32(PIN_MUX_SEL, (RTL_R32(RTL_GPIO_MUX) | RTL_GPIO_MUX_GPIOA0_1));
-		#else
-		RTL_W32(PIN_MUX_SEL, (RTL_R32(RTL_GPIO_MUX) | RTL_GPIO_MUX_POCKETAP_DATA));
-		#ifdef CONFIG_SERIAL_RTL_UART1
-		RTL_W32(PIN_MUX_SEL, (RTL_R32(RTL_GPIO_MUX) & (~0x7) | (0x2)));
-		#endif
-		#endif
-		//set gpioA[2~6] as GPIO PIN
-		RTL_W32(PABCD_CNR, (RTL_R32(PABCD_CNR) & ~(RTL_GPIO_CNR_POCKETAP_DATA)));	
-		//set direction, GPIOA[3,4,5] INPUT, GPIOA[2,6] OUTPUT
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA3))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA4))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA5))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) | ((RTL_GPIO_DIR_GPIOA2))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) | ((RTL_GPIO_DIR_GPIOA6))));
-	#elif defined(CONFIG_RTL_8196D)
-		//reg_iocfg_jtag config as gpio mode,gpioA[2~6]
-		#ifndef CONFIG_USING_JTAG
-		RTL_W32(PIN_MUX_SEL, (RTL_R32(RTL_GPIO_MUX) | RTL_GPIO_MUX_POCKETAP_DATA));
-		#ifdef CONFIG_SERIAL_RTL_UART1
-		RTL_W32(PIN_MUX_SEL, (RTL_R32(RTL_GPIO_MUX) & (~0x7) | (0x2)));
-		#endif
-		#endif
-#if defined(CONFIG_RTL_96E_GPIOB5_RESET)
-		RTL_W32(PIN_MUX_SEL_2, (RTL_R32(PIN_MUX_SEL_2) | (3<<9)));	
-#endif
-		//set gpioA[2,4,5,6]as GPIO PIN
-		RTL_W32(PABCD_CNR, (RTL_R32(PABCD_CNR) & ~(RTL_GPIO_CNR_POCKETAP_DATA)));	
-#if defined(CONFIG_RTL_96E_GPIOB5_RESET)
-		RTL_W32(PABCD_CNR, (RTL_R32(PABCD_CNR) & ~(1<<RESET_BTN_PIN)));
-#endif		
-		//set direction, GPIOA[2,4,5] INPUT, GPIOA[6] OUTPUT
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA2))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA4))));
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA5))));
-#if defined(CONFIG_RTL_96E_GPIOB5_RESET)
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(1<<RESET_BTN_PIN))));
-#endif
-
-	#if defined(CONFIG_RTL_ULINKER)
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA6))));
-	#else
-		RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) | ((RTL_GPIO_DIR_GPIOA6))));
-	#endif
-	#elif defined(CONFIG_RTL_8196E)
+#if defined(CONFIG_RTL_819XD) || defined(CONFIG_RTL_8196E)
+	#if defined(CONFIG_RTL_8196E)
 		RTL96E_BOND=RTL_R32(RTL96E_BONDING);
-		#if defined(CONFIG_APPLE_MFI_SUPPORT)
-		RTL_W32(PIN_MUX_SEL_2, (RTL_R32(PIN_MUX_SEL_2) | 0x03)); //mark_mfi
-		RTL_W32(PABCD_CNR, (RTL_R32(PABCD_CNR) & ~(1<<RESET_BTN_PIN))); //for reset button
 
-		#else
 		#if !defined(CONFIG_USING_JTAG) && !defined(CONFIG_SERIAL_RTL_UART1)
 		RTL_W32(PIN_MUX_SEL, (RTL_R32(RTL_GPIO_MUX) | RTL_GPIO_MUX_POCKETAP_DATA));
 		#endif
@@ -2367,7 +1808,6 @@ int __init rtl_gpio_init(void)
 			RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA6))));
 		#else
 			RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) | ((RTL_GPIO_DIR_GPIOA6))));
-		#endif
 		#endif
 	#endif
 	res = create_proc_entry("gpio", 0, NULL);
@@ -2400,144 +1840,7 @@ int __init rtl_gpio_init(void)
 	}
 	#endif
 	//return;
-#else //defined CONFIG_RTL_819XD
-
-	// Set GPIOA pin 10(8181)/0(8186) as input pin for reset button
-
-#if  defined(CONFIG_RTL_8196C) || defined(CONFIG_RTL_8198)
-#ifndef CONFIG_USING_JTAG
-	RTL_W32(RTL_GPIO_MUX, (RTL_R32(RTL_GPIO_MUX) | (RTL_GPIO_MUX_DATA)));
-#endif	
-#if defined(CONFIG_RTL_8198)
-	RTL_W32(RTL_GPIO_MUX, (RTL_R32(RTL_GPIO_MUX) | 0xf));
 #endif
-#if defined(CONFIG_RTL_8196CS)
-extern int PCIE_reset_procedure(int PCIE_Port0and1_8196B_208pin, int Use_External_PCIE_CLK, int mdio_reset,unsigned long conf_addr);
-#define CLK_MANAGE	0xb8000010
-#define PCI_CONFIG_COMMAND		(0xB8B10000+4)
-#define PCI_CONFIG_LATENCY			(0xB8B10000+0x0c)
-#define PCI_CONFIG_BASE0			(0xB8B10000+0x10)
-#define PCI_CONFIG_BASE1			(0xB8B10000+0x18)
-	extern void setBaseAddressRegister(void);
-		RTL_W32(CLK_MANAGE, (RTL_R32(CLK_MANAGE) | BIT(11)));
-		mdelay(10);
-		PCIE_reset_procedure(0, 0, 1, 0xb8b10000);
-		setBaseAddressRegister();	
-		{
-
-			int i=0;
-			*((volatile unsigned long *)PCI_CONFIG_BASE1) = 0x19000000;
-			//DEBUG_INFO("...config_base1 = 0x%08lx\n", *((volatile unsigned long *)PCI_CONFIG_BASE1));
-			for(i=0; i<1000000; i++);
-			*((volatile unsigned char *)PCI_CONFIG_COMMAND) = 0x07;
-			//DEBUG_INFO("...command = 0x%08lx\n", *((volatile unsigned long *)PCI_CONFIG_COMMAND));
-			for(i=0; i<1000000; i++);
-			*((volatile unsigned short *)PCI_CONFIG_LATENCY) = 0x2000;
-			for(i=0; i<1000000; i++);
-			//DEBUG_INFO("...latency = 0x%08lx\n", *((volatile unsigned long *)PCI_CONFIG_LATENCY));
-		}
-		
-#endif
-#ifdef CONFIG_POCKET_ROUTER_SUPPORT
-
-//panic_printk("\r\n 0x%x__[%s-%u]",RTL_R32(RTL_GPIO_MUX),__FILE__,__LINE__);	
-#ifndef CONFIG_USING_JTAG
-	RTL_W32(RTL_GPIO_MUX, (RTL_R32(RTL_GPIO_MUX) | (RTL_GPIO_MUX_POCKETAP_DATA)));
-#endif	
-//panic_printk("\r\n 0x%x__[%s-%u]",RTL_R32(RTL_GPIO_MUX),__FILE__,__LINE__);	
-	RTL_W32(PABCD_CNR, (RTL_R32(PABCD_CNR) & (~(RTL_GPIO_CNR_POCKETAP_DATA))));
-
-
-
-
-
-	RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOA2))));
-
-	RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOB3))));
-
-	RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) | ((RTL_GPIO_DIR_GPIOB2))));
-
-	RTL_W32(PABCD_DIR, (RTL_R32(PABCD_DIR) & (~(RTL_GPIO_DIR_GPIOC0))));	
-
-#endif //end of CONFIG_POCKET_ROUTER_SUPPORT 
-#if defined(CONFIG_RTL_8196CS)
-	RTL_W32(PCIE_PIN_MUX,(RTL_R32(PCIE_PIN_MUX)&(~(1<<29)))|(1<<13) );
-	RTL_W32(RESET_PIN_IOBASE, (RTL_R32(RESET_PIN_IOBASE) & (~((1 << RESET_BTN_PIN)<<MODE_MARSK))));
-	RTL_W32(RESET_PIN_DIRBASE, (RTL_R32(RESET_PIN_DIRBASE) & (~((1 << RESET_BTN_PIN)<<DIR_MASK  ))));
-
-#else
-	RTL_W32(RESET_PIN_IOBASE, (RTL_R32(RESET_PIN_IOBASE) & (~(1 << RESET_BTN_PIN))));
-	RTL_W32(RESET_PIN_DIRBASE, (RTL_R32(RESET_PIN_DIRBASE) & (~(1 << RESET_BTN_PIN))));
-#endif
-#if defined(READ_RF_SWITCH_GPIO)
-	RTL_W32(WIFI_ONOFF_PIN_IOBASE, (RTL_R32(WIFI_ONOFF_PIN_DIRBASE) & ( ~(1<<RTL_GPIO_WIFI_ONOFF))));
-	RTL_W32(WIFI_ONOFF_PIN_DIRBASE, (RTL_R32(WIFI_ONOFF_PIN_DIRBASE) & (~(1<<RTL_GPIO_WIFI_ONOFF))));
-	RTL_W32(WIFI_ONOFF_PIN_DATABASE, (RTL_R32(WIFI_ONOFF_PIN_DATABASE) & (~(1<<RTL_GPIO_WIFI_ONOFF))));
-
-#endif // #if defined(READ_RF_SWITCH_GPIO)
-#endif // #if defined(CONFIG_RTL865X)
-#ifdef RESET_LED_NO
-#if  defined(CONFIG_RTL_8196CS)
-	RTL_W32(RESET_LED_IOBASE, (RTL_R32(RESET_LED_IOBASE) | (((1 << RESET_LED_PIN)))));
-	RTL_W32(RESET_LED_DIRBASE, (RTL_R32(RESET_LED_DIRBASE) | ((1 << RESET_LED_PIN))));
-#else
-	// Set GPIOA ping 2 as output pin for reset led
-	RTL_W32(RESET_LED_DIRBASE, (RTL_R32(RESET_LED_DIRBASE) | ((1 << RESET_LED_PIN))));
-#endif
-#endif
-#ifdef CONFIG_RTL_FLASH_DUAL_IMAGE_ENABLE	
-	res = create_proc_entry("bootbank", 0, NULL);
-	if (res) {
-		res->read_proc = read_bootbank_proc;
-		//res->write_proc = write_bootbank_proc;
-	}
-	else {
-		printk("read bootbank, create proc failed!\n");
-	}
-#endif
-#ifdef AUTO_CONFIG
-	res = create_proc_entry("gpio", 0, NULL);
-	if (res) {
-		res->read_proc = read_proc;
-		res->write_proc = write_proc;
-	}
-	else {
-		printk("Realtek GPIO Driver, create proc failed!\n");
-	}
-
-
-#ifdef	USE_INTERRUPT_GPIO
-#ifdef  IMMEDIATE_PBC
-	res = create_proc_entry("gpio_wscd_pid", 0, NULL);
-	if (res)
-	{
-		res->read_proc = read_gpio_wscd_pid;
-		res->write_proc = write_gpio_wscd_pid;
-		DPRINTK("create gpio_wscd_pid OK!!!\n\n");
-	}
-	else{
-		printk("create gpio_wscd_pid failed!\n\n");
-	}
-#endif	
-#endif
-
-
-// 2009-0414		
-#if defined(USE_INTERRUPT_GPIO)
-#if defined(CONFIG_RTL_8198) && !defined(CONFIG_RTK_VOIP)
-	RTL_R32(AUTOCFG_PIN_IMR) |= (0x01 << (AUTOCFG_BTN_PIN-16)*2); // enable interrupt in falling-edge		
-#else
-	RTL_R32(AUTOCFG_PIN_IMR) |= (0x01 << AUTOCFG_BTN_PIN*2); // enable interrupt in falling-edge	
-#endif
-	if (request_irq(BSP_GPIO_ABCD_IRQ, gpio_interrupt_isr, IRQF_SHARED, "rtl_gpio", (void *)&priv_gpio_wps_device)) {
-		printk("gpio request_irq(%d) error!\n", GPIO_IRQ_NUM);		
-   	}
-#endif
-// 2009-0414		
-#endif
-
-#endif//defined CONFIG_RTL_819XD
-
 	res = create_proc_entry("load_default", 0, NULL);
 	if (res) {
 		res->read_proc = default_read_proc;
@@ -2551,8 +1854,6 @@ extern int PCIE_reset_procedure(int PCIE_Port0and1_8196B_208pin, int Use_Externa
 		res->write_proc = NULL;
 	}
 #endif
-
-
 
 #ifdef CONFIG_POCKET_ROUTER_SUPPORT
 
@@ -2597,7 +1898,7 @@ extern int PCIE_reset_procedure(int PCIE_Port0and1_8196B_208pin, int Use_Externa
 	mod_timer(&pocket_ap_timer, jiffies + HZ);
 #endif
 
-#if defined(CONFIG_RTL_ULINKER)
+#if 1//defined(CONFIG_RTL_ULINKER)
 	res = create_proc_entry("ulinker_ap_cl", 0, NULL);
 	if (res)
 	{
@@ -2624,7 +1925,7 @@ extern int PCIE_reset_procedure(int PCIE_Port0and1_8196B_208pin, int Use_Externa
 		printk("create wlan_init failed!\n");
 #endif
 
-#if 1//OTG_MODE_SWITCH
+#if 0//OTG_MODE_SWITCH
 	res = create_proc_entry("otg_gadget", 0, NULL);
 	if (res)
 	{
@@ -2688,7 +1989,7 @@ extern int PCIE_reset_procedure(int PCIE_Port0and1_8196B_208pin, int Use_Externa
 		printk("create brsc failed!\n");
 #endif
 
-#if defined(CONFIG_RTL_ULINKER)
+#if 1//defined(CONFIG_RTL_ULINKER)
 		res = create_proc_entry("uled", 0, NULL);
 		if (res)
 		{

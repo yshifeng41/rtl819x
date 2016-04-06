@@ -225,8 +225,9 @@ int UART_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parity
     // Modify the output mode, the raw data output
     options.c_oflag &= ~OPOST;
 
-    //options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-    //options.c_lflag &= ~(ISIG | ICANON);
+    // Reading data ignore enter key input
+    options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+    options.c_lflag &= ~(ISIG | ICANON);
 
     // Set the wait time and minimum receive characters
     options.c_cc[VTIME] = 1; /* Reads a character waiting 1 * (1/10) s */
@@ -302,7 +303,7 @@ void uart_loop() {
     }
 
     fd = UART_Open(fd,PORT);
-    UART_Set(fd,38400,0,8,1,'N');
+    UART_Set(fd, 38400, 0, 8, 1, 'N');
     //dup2(fd,1);  //redirect fd to standout
 
     printf("uart_loop \n");
@@ -315,22 +316,26 @@ void uart_loop() {
     #endif
 
     int len = 0;
-    char rcv_buf[100]; 
+    char rcv_buf[255];
     int i;
     while(1) {
+        bzero(&rcv_buf, sizeof(rcv_buf));
         len = UART_Recv(fd, rcv_buf, sizeof(rcv_buf));
         if(len > 0) {
-           rcv_buf[len] = '\0';
+           //rcv_buf[len] = '\0';
            #ifdef SAVE_LOG_FILE
            if (fd_log > 0)
                 write(fd_log, rcv_buf, len);
            #endif
-           printf("receive data is %s\n", rcv_buf);
-           printf("len = %d\n",len);
+           printf("receive data is :\n");
+           for (i = 0; i < len; i++) {
+                printf("0x%02x ", (unsigned char)rcv_buf[i]);
+           }
+           printf("\nlen = %d\n",len);
            if (client_socket_fd > 0) {
                if(rcv_buf[strlen(rcv_buf) - 1] == '\n')
                     rcv_buf[strlen(rcv_buf) - 1] = '\0';
-               if(sendto(client_socket_fd, rcv_buf, strlen(rcv_buf), 0, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+               if(sendto(client_socket_fd, rcv_buf, len, 0, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
                     printf("Send File Name Failed:");
                }
            }

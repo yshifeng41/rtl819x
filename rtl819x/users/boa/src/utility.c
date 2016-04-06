@@ -3370,7 +3370,7 @@ while(head_offset <   upload_len) {
     else
        fh = open(FLASH_DEVICE_NAME, O_RDWR);
 
-    if ( fh == -1 ) {
+    if ( fh == -1 ) 
 #else
     if (flag == 1)
     	bn = "apcode.bin";
@@ -3379,8 +3379,9 @@ while(head_offset <   upload_len) {
     else
     	bn = "web.gz.up";
 
-    if ((fp = fopen((bn == NULL ? "upldForm.bin" : bn), "w+b")) == NULL) {
+    if ((fp = fopen((bn == NULL ? "upldForm.bin" : bn), "w+b")) == NULL) 
 #endif
+    {
        	strcpy(buffer, "File open failed!");
 	goto ret_upload;
     } else {

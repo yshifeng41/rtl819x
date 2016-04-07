@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+#include "rc_protocol.h"
 
 #define TRUE   1
 #define FALSE  0
@@ -332,6 +333,7 @@ void uart_loop() {
                 printf("0x%02x ", (unsigned char)rcv_buf[i]);
            }
            printf("\nlen = %d\n",len);
+           RC_ParseUartBuf(rcv_buf, len);
            if (client_socket_fd > 0) {
                if(rcv_buf[strlen(rcv_buf) - 1] == '\n')
                     rcv_buf[strlen(rcv_buf) - 1] = '\0';

@@ -4,13 +4,18 @@
 LDFLAGS = -s -Wall
 CFLAGS := -s -Wall -c -Os
 
+OBJECTS := ev_rcserver.o rc_protocol.o
+
 all:		ev_rcserver
 
-ev_rcserver:		ev_rcserver.o
-		$(CC) $(LDFLAGS) -o ev_rcserver ev_rcserver.o -pthread
+ev_rcserver:		$(OBJECTS)
+		$(CC) $(LDFLAGS) -o ev_rcserver $(OBJECTS) -pthread
 
-ev_rcserver.o:		ev_rcserver.c
+ev_rcserver.o:		ev_rcserver.c rc_protocol.h
 		$(CC) $(CFLAGS) -o ev_rcserver.o ev_rcserver.c
+
+rc_protocol.o:		rc_protocol.c rc_protocol.h
+		$(CC) $(CFLAGS) -o rc_protocol.o rc_protocol.c
 
 romfs:
 		$(ROMFSINST) ev_rcserver /bin/ev_rcserver

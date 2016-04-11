@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 #include "rc_protocol.h"
@@ -38,8 +39,8 @@
 #define FLAG_UDP 1
 #define FLAG_TCP 2
 
-#define SERVER_PORT 8000
-#define SERVER_IP "192.168.0.252"
+#define FC_SERVER_PORT 6666
+#define FC_SERVER_IP "192.168.1.254"
 
 //#define SAVE_LOG_FILE
 
@@ -105,7 +106,6 @@ void UART_Close(int fd)
 int UART_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parity)
 {
     int   i;
-    int   status;
     int   speed_arr[] = {B115200, B38400, B19200, B9600, B4800, B2400, B1200, B300};
     int   name_arr[] = {115200, 38400, 19200, 9600, 4800, 2400, 1200, 300};
 
@@ -230,8 +230,10 @@ int UART_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parity
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
     options.c_lflag &= ~(ISIG | ICANON);
 
+    options.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+
     // Set the wait time and minimum receive characters
-    options.c_cc[VTIME] = 1; /* Reads a character waiting 1 * (1/10) s */
+    options.c_cc[VTIME] = 0; /* Reads a character waiting 1 * (1/10) s */
     options.c_cc[VMIN] = 1; /* The minimum number of characters to read 1 */
 
     //If data overflow occurs, just flush data, without reading
@@ -248,7 +250,7 @@ int UART_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parity
 
 int UART_Recv(int fd, char *rcv_buf,int data_len)
 {
-    int len,fs_sel;
+    int len,fs_sel = 0;
     //fd_set fs_read;
 
     //struct timeval time;
@@ -288,15 +290,17 @@ int UART_Send(int fd, char *send_buf,int data_len)
 }
 
 void uart_loop() {
-    int fd, fd_log;
-    char send_buf[20]="tiger john";
+    int fd = -1;
+    #ifdef SAVE_LOG_FILE
+    int fd_log;
+    #endif
+    
+    //char send_buf[20]="tiger john";
 
-     struct sockaddr_in server_addr; 
-     int client_socket_fd;
      bzero(&server_addr, sizeof(server_addr)); 
      server_addr.sin_family = AF_INET; 
-     server_addr.sin_addr.s_addr = inet_addr(SERVER_IP); 
-     server_addr.sin_port = htons(SERVER_PORT);
+     server_addr.sin_addr.s_addr = inet_addr(FC_SERVER_IP); 
+     server_addr.sin_port = htons(FC_SERVER_PORT);
 
      client_socket_fd = socket(AF_INET, SOCK_DGRAM, 0);  
      if(client_socket_fd < 0) {
@@ -317,30 +321,19 @@ void uart_loop() {
     #endif
 
     int len = 0;
-    char rcv_buf[255];
+    char rcv_buf[MAX_DATA_LENGTH];
     int i;
     while(1) {
         bzero(&rcv_buf, sizeof(rcv_buf));
         len = UART_Recv(fd, rcv_buf, sizeof(rcv_buf));
         if(len > 0) {
-           //rcv_buf[len] = '\0';
-           #ifdef SAVE_LOG_FILE
-           if (fd_log > 0)
-                write(fd_log, rcv_buf, len);
-           #endif
-           printf("receive data is :\n");
-           for (i = 0; i < len; i++) {
-                printf("0x%02x ", (unsigned char)rcv_buf[i]);
-           }
-           printf("\nlen = %d\n",len);
-           RC_ParseUartBuf(rcv_buf, len);
-           if (client_socket_fd > 0) {
-               if(rcv_buf[strlen(rcv_buf) - 1] == '\n')
-                    rcv_buf[strlen(rcv_buf) - 1] = '\0';
-               if(sendto(client_socket_fd, rcv_buf, len, 0, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-                    printf("Send File Name Failed:");
-               }
-           }
+            //rcv_buf[len] = '\0';
+#ifdef SAVE_LOG_FILE
+            if (fd_log > 0)
+            write(fd_log, rcv_buf, len);
+#endif
+            //printBuf((uint8 *)rcv_buf, len, "uart_rec");
+            RC_ParseUartBuf(rcv_buf, len);
         } else {
            printf("cannot receive data\n");
         }
@@ -468,7 +461,7 @@ static void server_loop() {
                 continue;
                 //exit(1);
             }
-            if (!strncmp(&buf_recv, "system:", 7)) {
+            if (!strncmp((const char *)&buf_recv, "system:", 7)) {
                 system(buf_recv + 7);
                 printf("%s: do system cmd \n", __func__);
             }
@@ -585,7 +578,8 @@ static int create_udp_server() {
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY); // Default address
     server_addr.sin_port = htons(UDP_SERVER_PORT);
 
-    struct ifreq ifr = {0};
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
     strcpy(ifr.ifr_name, IF_NAME); // Default network name
     if (ioctl(socket_fd, SIOCGIFADDR, &ifr) < 0) {
         perror("UDP: ioctl error\n");
@@ -670,7 +664,8 @@ static int create_tcp_server() {
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY); // Default address
     server_addr.sin_port = htons(TCP_SERVER_PORT);
 
-    struct ifreq ifr = {0};
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
     strcpy(ifr.ifr_name, IF_NAME); // Default network name
     if (ioctl(socket_fd, SIOCGIFADDR, &ifr) < 0) {
         perror("TCP: ioctl error\n");

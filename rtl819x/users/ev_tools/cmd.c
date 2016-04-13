@@ -292,8 +292,8 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
     // wlan0 entering forwarding state need some time
     sleep(3);
 
-    system("sysconf wlanapp start wlan0 br0");
-    //system("sysconf init gw all");
+    //system("sysconf wlanapp start wlan0 br0");
+    system("sysconf init gw bridge");
     sleep(1);
     /*sysconf upnpd 1(isgateway) 1(opmode is bridge)*/
     system("sysconf upnpd 1 1");

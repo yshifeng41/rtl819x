@@ -293,6 +293,7 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
     sleep(3);
 
     system("sysconf wlanapp start wlan0 br0");
+    //system("sysconf init gw all");
     sleep(1);
     /*sysconf upnpd 1(isgateway) 1(opmode is bridge)*/
     system("sysconf upnpd 1 1");
@@ -417,6 +418,10 @@ static int set_profile_to_flash(char *wlan_if, char *ssid,char *passwd,int encry
                sprintf(config_prefix,"WLAN1_VXD_");
 
        sprintf(buffer, "flash setconf %sSSID %s", config_prefix,ssid);
+       system(buffer);
+       sprintf(buffer, "flash setconf %sWLAN_DISABLED 0", config_prefix);
+       system(buffer); 
+       sprintf(buffer, "flash setconf %sMODE 1", config_prefix);
        system(buffer); 
        switch(encrypt_type)
        {

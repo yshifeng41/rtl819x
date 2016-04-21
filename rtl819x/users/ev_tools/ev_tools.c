@@ -707,9 +707,9 @@ static void sigchld_handler(int signo)
     }
 }
 
-static void do_cmd_event(int argc, char *argv[])
+static int do_cmd_event(int argc, char *argv[])
 {
-	int ret, cmd_type, argNum;
+	int ret = 0, cmd_type, argNum;
       char tmpbuf[100];
       char tmpbuf2[100];
 
@@ -740,7 +740,7 @@ static void do_cmd_event(int argc, char *argv[])
       else
         ret = do_cmd(cmd_type,tmpbuf, strlen(tmpbuf), 0);
 
-	return;
+	return ret;
 }
 
 int main(int argc, char *argv[])
@@ -808,5 +808,5 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 #endif	
-	do_cmd_event(argc, argv);
+	return do_cmd_event(argc, argv);
 }

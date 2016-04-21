@@ -310,7 +310,7 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
         }
 
         if(res==STATE_Bss  || res==STATE_Ibss_Idle || res==STATE_Ibss_Active) { // completed 
-            printf("[%s:%d] connect success \n", __FUNCTION__,__LINE__);
+            printf("[%s:%d] join success res = %d \n", __FUNCTION__,__LINE__, res);
             break;
         } else {
             if (wait_time++ > max_wait_time) {
@@ -320,6 +320,28 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
             }
         }
         sleep(1);
+    }
+    if (encrypt) {
+        WLAN_BSS_INFO_T bss;
+        wait_time = 0;
+        max_wait_time = 15;
+
+        while (wait_time++ < max_wait_time) {
+            if (get_wlan_bssinfo(wlanifp, &bss) < 0){
+                printf("[%s:%d] get bssinfo failed \n", __FUNCTION__,__LINE__);
+                ret = -1;
+                break;
+            }
+            if (bss.state == STATE_CONNECTED){
+                printf("[%s:%d] check encrypt success \n", __FUNCTION__,__LINE__);
+                break;
+            }
+            sleep(1);
+        }
+        if (wait_time > max_wait_time){
+            printf("[%s:%d] connecting time out \n", __FUNCTION__,__LINE__);
+            ret = -1;
+        }
     }
     printf("[%s:%d]\n", __FUNCTION__,__LINE__);
     return ret;

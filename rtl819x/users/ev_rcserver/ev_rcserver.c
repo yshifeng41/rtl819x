@@ -14,9 +14,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
 #include "rc_protocol.h"
+#include "ev_utility.h"
 
 #define TRUE   1
 #define FALSE  0
@@ -28,10 +30,6 @@
 #define FAILED -1
 #define SUCCESS 0
 
-#define UDP_SERVER_PORT 8000
-#define TCP_SERVER_PORT 8080
-#define BACK_LOG 10
-
 #define IF_NAME "br0" //"eth0"
 #define BUFFER_SIZE 1024
 #define FILE_NAME_MAX_SIZE 512
@@ -39,13 +37,11 @@
 #define FLAG_UDP 1
 #define FLAG_TCP 2
 
-#define FC_SERVER_PORT 6666
-#define FC_SERVER_IP "192.168.1.254"
-
-//#define SAVE_LOG_FILE
+#define SEND_DATA_INTERVAL 1 //second
 
 int udp_server_socket_fd = 0;
 int tcp_server_socket_fd  = 0;
+int uart_fd = 0;
 int fd_tcp_accepted[BACK_LOG];
 
 fd_set fdsr;
@@ -57,7 +53,7 @@ int maxsock = 0;
 
 pthread_t th_udp_client;
 
-static void server_loop();
+static void main_loop();
 void output_data(int flag, char *buf, int len);
 
 static int create_udp_server();
@@ -251,29 +247,26 @@ int UART_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parity
 int UART_Recv(int fd, char *rcv_buf,int data_len)
 {
     int len,fs_sel = 0;
-    //fd_set fs_read;
+    fd_set fs_read;
 
-    //struct timeval time;
+    struct timeval time;
 
-    //FD_ZERO(&fs_read);
-    //FD_SET(fd,&fs_read);
+    FD_ZERO(&fs_read);
+    FD_SET(fd,&fs_read);
 
-    //time.tv_sec = 10;
-    //time.tv_usec = 0;
+    time.tv_sec = 10;
+    time.tv_usec = 0;
 
     //Use select Serial multiplex communication
-    //fs_sel = select(fd+1,&fs_read,NULL,NULL,&time);
-    //if(fs_sel)
-    //{
+    fs_sel = select(fd+1,&fs_read,NULL,NULL,&time);
+    if(fs_sel) {
         len = read(fd,rcv_buf,data_len);
         printf("I am right!(version1.2) len = %d fs_sel = %d\n", len, fs_sel);
         return len;
-    /*}
-    else
-    {
+    } else {
         printf("Sorry,I am wrong!");
         return FAILED;
-    }*/
+    }
 }
 
 int UART_Send(int fd, char *send_buf,int data_len)
@@ -289,67 +282,33 @@ int UART_Send(int fd, char *send_buf,int data_len)
     }   
 }
 
-void uart_loop() {
+static void init_all_fd() {
     int fd = -1;
-    #ifdef SAVE_LOG_FILE
-    int fd_log;
-    #endif
-    
-    //char send_buf[20]="tiger john";
 
-     bzero(&server_addr, sizeof(server_addr)); 
-     server_addr.sin_family = AF_INET; 
-     server_addr.sin_addr.s_addr = inet_addr(FC_SERVER_IP); 
-     server_addr.sin_port = htons(FC_SERVER_PORT);
+    uart_fd = UART_Open(fd,PORT);
 
-     client_socket_fd = socket(AF_INET, SOCK_DGRAM, 0);  
-     if(client_socket_fd < 0) {
+    fc_client_socket_fd = socket(AF_INET, SOCK_DGRAM, 0);  
+    if(fc_client_socket_fd < 0) {
         printf("Create Socket Failed:");
     }
 
-    fd = UART_Open(fd,PORT);
-    UART_Set(fd, 38400, 0, 8, 1, 'N');
-    //dup2(fd,1);  //redirect fd to standout
-
-    printf("uart_loop \n");
-
-    #ifdef SAVE_LOG_FILE
-    fd_log = open("/var/tmp/rcserver.log", O_CREAT|O_APPEND|O_RDWR);
-    if (fd_log < 0) {
-        perror("Can't Open /var/tmp/rcserver.log");
-    }
-    #endif
-
-    int len = 0;
-    char rcv_buf[MAX_DATA_LENGTH];
-    int i;
-    while(1) {
-        bzero(&rcv_buf, sizeof(rcv_buf));
-        len = UART_Recv(fd, rcv_buf, sizeof(rcv_buf));
-        if(len > 0) {
-            //rcv_buf[len] = '\0';
-#ifdef SAVE_LOG_FILE
-            if (fd_log > 0)
-            write(fd_log, rcv_buf, len);
-#endif
-            //printBuf((uint8 *)rcv_buf, len, "uart_rec");
-            RC_ParseUartBuf(rcv_buf, len);
+    if (udp_server_socket_fd <= 0) {
+        udp_server_socket_fd = create_udp_server();
+        if (FAILED == udp_server_socket_fd) {
+            close(udp_server_socket_fd);
         } else {
-           printf("cannot receive data\n");
+            printf("UDP: create success\n");
         }
     }
 
-    /*for(i = 0;i < 10;i++)
-     {
-            len = UART_Send(fd,send_buf,10);
-            if(len > 0)
-                   printf(" %d send data successful\n",i);
-            else
-                   printf("send data failed!\n");
-      
-            sleep(2);
-     }
-     UART_Close(fd); */
+    if (tcp_server_socket_fd <= 0) {
+        tcp_server_socket_fd = create_tcp_server();
+        if (FAILED == tcp_server_socket_fd) {
+            close(tcp_server_socket_fd);
+        } else {
+            printf("TCP: create success\n");
+        }
+    }
 }
 
 int main() 
@@ -386,11 +345,8 @@ int main()
     }
 
     if (getpid() == cpid) { // Only child
-        pid = fork();
-        if (pid == 0)
-            server_loop();
-        else if (pid > 0)
-            uart_loop();
+        init_all_fd();
+        main_loop();
     } else {
         printf("Not child, exit!");
     }
@@ -398,23 +354,24 @@ int main()
     return 0;
 }
 
-static void server_loop() {
-    if (udp_server_socket_fd <= 0) {
-        udp_server_socket_fd = create_udp_server();
-        if (FAILED == udp_server_socket_fd) {
-            close(udp_server_socket_fd);
-        } else {
-            printf("UDP: create success\n");
-        }
+/*void rtl_status_thread(void *arg) {
+    struct sockaddr *client_addr = (struct sockaddr *)arg;
+    socklen_t client_addr_len = sizeof(client_addr);
+    if (socklen_t client_addr_len = sizeof(client_addr); > 0) {
+        if (sendto(udp_server_socket_fd, ret < 0? "Failed":"Success", BUFFER_SIZE, 0, (struct sockaddr *)&client_addr, client_addr_len) < 0)
+            printf("UDP: Send Data Failed\n");
     }
-    if (tcp_server_socket_fd <= 0) {
-        tcp_server_socket_fd = create_tcp_server();
-        if (FAILED == tcp_server_socket_fd) {
-            close(tcp_server_socket_fd);
-        } else {
-            printf("TCP: create success\n");
-        }
-    }
+}*/
+
+static void main_loop() {
+    int isFCWifiConnected = 0;
+    static struct timeval prev;
+    struct timeval now;
+
+    bzero(&fc_server_addr, sizeof(fc_server_addr)); 
+    fc_server_addr.sin_family = AF_INET; 
+    fc_server_addr.sin_addr.s_addr = inet_addr(FC_SERVER_IP); 
+    fc_server_addr.sin_port = htons(FC_SERVER_PORT);
 
     // Init client and data buffer
     struct sockaddr_in client_addr;
@@ -422,12 +379,16 @@ static void server_loop() {
     char buf_recv[BUFFER_SIZE];
 
     int i = 0;
+    int ret = 0;
     int conn_amount = 0;
     int close_cnt = 0;
     // timeout setting
     struct timeval tv;
-    tv.tv_sec = 30;
+    tv.tv_sec = 5;
     tv.tv_usec = 0;
+
+    UART_Set(uart_fd, 38400, 0, 8, 1, 'N');
+    //dup2(fd,1);  //redirect fd to standout
 
     /* Data transmission */
     while (1) {
@@ -435,6 +396,7 @@ static void server_loop() {
         fds_reset();
         fds_add(udp_server_socket_fd);
         fds_add(tcp_server_socket_fd);
+        fds_add(uart_fd);
         // add active connection to fd set
         for (i = 0; i < BACK_LOG; i++) {
             if (fd_tcp_accepted[i] > 0) {
@@ -443,17 +405,39 @@ static void server_loop() {
         }
 
         // select, delay timeout: tv
-        int ret = select(maxsock + 1, &fdsr, NULL, NULL, &tv);
+        gettimeofday(&now, NULL);
+        ret = select(maxsock + 1, &fdsr, NULL, NULL, &tv);
         if (ret < 0) {
             perror("select");
             break;
         } else if (ret == 0) {
             //printf("TCP: select timeout\n");
+            if (udp_server_socket_fd > 0 && (now.tv_sec - prev.tv_sec) > SEND_DATA_INTERVAL) { // update status to app
+                char send_buf[256];
+                sprintf(send_buf, "status:FCwifi=%s", (isFCWifiConnected == 1)? "Connected":"None");
+                printf("send_buf = %s \n", send_buf);
+                if (sendto(udp_server_socket_fd, send_buf, 256, 0, (struct sockaddr *)&client_addr, client_addr_len) < 0)
+                    printf("UDP: Send Data Failed\n");
+                prev = now;
+            }
             continue;
         }
 
         // check every fd in the set
+        if (fds_isset(uart_fd)) { // uart
+            int len;
+            char uart_recv[MAX_DATA_LENGTH];
+            bzero(uart_recv, MAX_DATA_LENGTH);
+            len = read(uart_fd, uart_recv, MAX_DATA_LENGTH);
+            if(len > 0) {
+                RC_ParseUartBuf(uart_recv, len);
+            } else {
+                printf("Uart cannot receive data\n");
+            }
+        }
+
         if (fds_isset(udp_server_socket_fd)) { // udp
+            char ssid_buf[64], psk_buf[64], cmd_buf[256];
             /* Receive data */
             bzero(buf_recv, BUFFER_SIZE);
             if (recvfrom(udp_server_socket_fd, buf_recv, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_addr_len) == FAILED) {
@@ -461,12 +445,31 @@ static void server_loop() {
                 continue;
                 //exit(1);
             }
+            printf("new client[%d] %s:%d \n", conn_amount, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
             if (!strncmp((const char *)&buf_recv, "system:", 7)) {
-                system(buf_recv + 7);
-                printf("%s: do system cmd \n", __func__);
+                ret = do_system(buf_recv + 7);
+                printf("%s: do system cmd  cmd = %s \n", __func__, buf_recv + 7);
+            } else if (sscanf(buf_recv, "connect:ssid=%[^,],wpa_psk=%[^;]", ssid_buf, psk_buf) == 2) {
+                sprintf(cmd_buf, "ev_tools -ssid %s -wpa_psk %s -encrypted %s", ssid_buf, psk_buf, strcmp(psk_buf, "0")? "1":"0");
+                printf("ssid = %s, wpa_psk = %s cmd_buf = %s \n", ssid_buf, psk_buf, cmd_buf);
+                ret = do_system(cmd_buf);
+                if (!ret)
+                    isFCWifiConnected = 1;
+                else
+                    isFCWifiConnected = 0;
             }
             output_data(FLAG_UDP, buf_recv, strlen(buf_recv));
         }
+
+        if (udp_server_socket_fd > 0 && (now.tv_sec - prev.tv_sec) > SEND_DATA_INTERVAL) { // update status to app
+            char send_buf[256];
+            sprintf(send_buf, "status:FCwifi=%s;", (isFCWifiConnected == 1)? "Connected":"None");
+            printf("send_buf = %s \n", send_buf);
+            if (sendto(udp_server_socket_fd, send_buf, 256, 0, (struct sockaddr *)&client_addr, client_addr_len) < 0)
+                printf("UDP: Send Data Failed\n");
+            prev = now;
+        }
+
         if (fds_isset(tcp_server_socket_fd)) { // tcp new
             int new_fd = accept(tcp_server_socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
             if (new_fd <= 0) {
@@ -525,20 +528,6 @@ static void server_loop() {
 
     }
 
-    /*
-    // Create thread func
-    if (pthread_create(&th_udp_client, NULL, (void *)&udp_client, NULL) != 0) {
-        printf("pthread_create error!\n");
-        exit(1);
-    }
-    // Wait thread exit
-    if (pthread_join(th_udp_client, NULL) != 0) {
-        printf("pthread_join error!\n");
-        exit(1);
-    }else {
-        printf("pthread_join success!\n");
-    }
-    */
 }
 
 void output_data(int flag, char *buf, int len) {

@@ -39,6 +39,8 @@
 
 #define SEND_DATA_INTERVAL 1 //second
 
+#define NEED_TCP_SERVER 0
+
 int udp_server_socket_fd = 0;
 int tcp_server_socket_fd  = 0;
 int uart_fd = 0;
@@ -52,6 +54,12 @@ int maxsock = 0;
 #define fds_clr(fd) FD_CLR(fd, &fdsr)
 
 pthread_t th_udp_client;
+
+struct rtl_state {
+    struct timeval prev_time;
+    struct sockaddr_in client_addr;
+    int isFCWifiConnected;
+} g_rtl_state;
 
 static void main_loop();
 void output_data(int flag, char *buf, int len);
@@ -301,6 +309,7 @@ static void init_all_fd() {
         }
     }
 
+#if NEED_TCP_SERVER
     if (tcp_server_socket_fd <= 0) {
         tcp_server_socket_fd = create_tcp_server();
         if (FAILED == tcp_server_socket_fd) {
@@ -309,6 +318,7 @@ static void init_all_fd() {
             printf("TCP: create success\n");
         }
     }
+#endif
 }
 
 int main() 
@@ -354,28 +364,35 @@ int main()
     return 0;
 }
 
-/*void rtl_status_thread(void *arg) {
-    struct sockaddr *client_addr = (struct sockaddr *)arg;
-    socklen_t client_addr_len = sizeof(client_addr);
-    if (socklen_t client_addr_len = sizeof(client_addr); > 0) {
-        if (sendto(udp_server_socket_fd, ret < 0? "Failed":"Success", BUFFER_SIZE, 0, (struct sockaddr *)&client_addr, client_addr_len) < 0)
-            printf("UDP: Send Data Failed\n");
+static void response_to_app() {
+    struct timeval now;
+    uint8 send_buf[5];
+    socklen_t client_addr_len = sizeof(g_rtl_state.client_addr);
+    g_rtl_state.isFCWifiConnected = is_wlan_connected("wlan0-vxd");
+
+    gettimeofday(&now, NULL);
+    bzero(send_buf, 5);
+    send_buf[0] = 0x99;
+    send_buf[1] = 0x05;
+    send_buf[2] = 0x44;
+    send_buf[3] = g_rtl_state.isFCWifiConnected;
+    send_buf[4] = 0xff;
+    if (udp_server_socket_fd > 0 && (now.tv_sec - g_rtl_state.prev_time.tv_sec) > SEND_DATA_INTERVAL) { // update status to app
+        printBuf(send_buf, 5, "send_buf");
+        if (sendto(udp_server_socket_fd, send_buf, 5, 0, (struct sockaddr *)&g_rtl_state.client_addr, client_addr_len) < 0)
+            //printf("UDP: Send Data Failed\n");
+        g_rtl_state.prev_time = now;
     }
-}*/
+}
 
 static void main_loop() {
-    int isFCWifiConnected = 0;
-    static struct timeval prev;
-    struct timeval now;
-
     bzero(&fc_server_addr, sizeof(fc_server_addr)); 
     fc_server_addr.sin_family = AF_INET; 
     fc_server_addr.sin_addr.s_addr = inet_addr(FC_SERVER_IP); 
     fc_server_addr.sin_port = htons(FC_SERVER_PORT);
 
     // Init client and data buffer
-    struct sockaddr_in client_addr;
-    socklen_t client_addr_len = sizeof(client_addr);
+    socklen_t client_addr_len = sizeof(g_rtl_state.client_addr);
     char buf_recv[BUFFER_SIZE];
 
     int i = 0;
@@ -395,31 +412,25 @@ static void main_loop() {
         // initialize file descriptor set
         fds_reset();
         fds_add(udp_server_socket_fd);
-        fds_add(tcp_server_socket_fd);
         fds_add(uart_fd);
+ #if NEED_TCP_SERVER
+        fds_add(tcp_server_socket_fd);
         // add active connection to fd set
         for (i = 0; i < BACK_LOG; i++) {
             if (fd_tcp_accepted[i] > 0) {
                 fds_add(fd_tcp_accepted[i]);
             }
         }
+ #endif
 
         // select, delay timeout: tv
-        gettimeofday(&now, NULL);
         ret = select(maxsock + 1, &fdsr, NULL, NULL, &tv);
         if (ret < 0) {
             perror("select");
             break;
         } else if (ret == 0) {
             //printf("TCP: select timeout\n");
-            if (udp_server_socket_fd > 0 && (now.tv_sec - prev.tv_sec) > SEND_DATA_INTERVAL) { // update status to app
-                char send_buf[256];
-                sprintf(send_buf, "status:FCwifi=%s", (isFCWifiConnected == 1)? "Connected":"None");
-                printf("send_buf = %s \n", send_buf);
-                if (sendto(udp_server_socket_fd, send_buf, 256, 0, (struct sockaddr *)&client_addr, client_addr_len) < 0)
-                    printf("UDP: Send Data Failed\n");
-                prev = now;
-            }
+            response_to_app();
             continue;
         }
 
@@ -440,12 +451,12 @@ static void main_loop() {
             char ssid_buf[64], psk_buf[64], cmd_buf[256];
             /* Receive data */
             bzero(buf_recv, BUFFER_SIZE);
-            if (recvfrom(udp_server_socket_fd, buf_recv, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_addr_len) == FAILED) {
+            if (recvfrom(udp_server_socket_fd, buf_recv, BUFFER_SIZE, 0, (struct sockaddr*)&g_rtl_state.client_addr, &client_addr_len) == FAILED) {
                 perror("UDP: Receive Data Failed\n");
                 continue;
                 //exit(1);
             }
-            printf("new client[%d] %s:%d \n", conn_amount, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+            printf("new client[%d] %s:%d \n", conn_amount, inet_ntoa(g_rtl_state.client_addr.sin_addr), ntohs(g_rtl_state.client_addr.sin_port));
             if (!strncmp((const char *)&buf_recv, "system:", 7)) {
                 ret = do_system(buf_recv + 7);
                 printf("%s: do system cmd  cmd = %s \n", __func__, buf_recv + 7);
@@ -454,22 +465,16 @@ static void main_loop() {
                 printf("ssid = %s, wpa_psk = %s cmd_buf = %s \n", ssid_buf, psk_buf, cmd_buf);
                 ret = do_system(cmd_buf);
                 if (!ret)
-                    isFCWifiConnected = 1;
+                    g_rtl_state.isFCWifiConnected = 1;
                 else
-                    isFCWifiConnected = 0;
+                    g_rtl_state.isFCWifiConnected = 0;
             }
             output_data(FLAG_UDP, buf_recv, strlen(buf_recv));
         }
 
-        if (udp_server_socket_fd > 0 && (now.tv_sec - prev.tv_sec) > SEND_DATA_INTERVAL) { // update status to app
-            char send_buf[256];
-            sprintf(send_buf, "status:FCwifi=%s;", (isFCWifiConnected == 1)? "Connected":"None");
-            printf("send_buf = %s \n", send_buf);
-            if (sendto(udp_server_socket_fd, send_buf, 256, 0, (struct sockaddr *)&client_addr, client_addr_len) < 0)
-                printf("UDP: Send Data Failed\n");
-            prev = now;
-        }
-
+        response_to_app();
+        
+#if NEED_TCP_SERVER
         if (fds_isset(tcp_server_socket_fd)) { // tcp new
             int new_fd = accept(tcp_server_socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
             if (new_fd <= 0) {
@@ -525,6 +530,7 @@ static void main_loop() {
             close_cnt--;
             conn_amount--;
         }
+#endif
 
     }
 

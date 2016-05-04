@@ -18,9 +18,8 @@ void printBuf(uint8 *data, int len, const char *name) {
 }
 
 void printBufandSend(uint8 *data, int len, const char *name) {
-    printBuf(data, len, name);
+    //printBuf(data, len, name);
     if (fc_client_socket_fd > 0) {
-        printf("Send data start! \n");
        if(sendto(fc_client_socket_fd, data, len, 0, (struct sockaddr*)&fc_server_addr, sizeof(fc_server_addr)) < 0) {
             printf("Send data Failed! \n");
        }

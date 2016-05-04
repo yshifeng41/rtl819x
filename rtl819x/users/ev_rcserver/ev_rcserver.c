@@ -378,7 +378,7 @@ static void response_to_app() {
     send_buf[3] = g_rtl_state.isFCWifiConnected;
     send_buf[4] = 0xff;
     if (udp_server_socket_fd > 0 && (now.tv_sec - g_rtl_state.prev_time.tv_sec) > SEND_DATA_INTERVAL) { // update status to app
-        printBuf(send_buf, 5, "send_buf");
+        //printBuf(send_buf, 5, "send_buf");
         if (sendto(udp_server_socket_fd, send_buf, 5, 0, (struct sockaddr *)&g_rtl_state.client_addr, client_addr_len) < 0)
             //printf("UDP: Send Data Failed\n");
         g_rtl_state.prev_time = now;
@@ -404,7 +404,7 @@ static void main_loop() {
     tv.tv_sec = 5;
     tv.tv_usec = 0;
 
-    UART_Set(uart_fd, 38400, 0, 8, 1, 'N');
+    UART_Set(uart_fd, 115200, 0, 8, 1, 'N');
     //dup2(fd,1);  //redirect fd to standout
 
     /* Data transmission */

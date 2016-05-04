@@ -51,7 +51,7 @@ uint8 generateCrc8(uint8 *ptr, uint8 len) {
 
 uint8 checkUartdataCrc(int head_index, uint8 *data) {
     if (UART_PACKAGE_LEN(data + head_index) > MAX_DATA_LENGTH) return 0;
-    uint8 pSize =UART_PACKAGE_LEN(data + head_index) + 3; // + siezof(0x5555) + sizeof(len)
+    uint8 pSize =UART_PACKAGE_LEN(data + head_index); // + siezof(0x5555) + sizeof(len)
     uint8 calcCrc = generateCrc8(&data[head_index + 3], (pSize -4));
     return (calcCrc == UART_PACKAGE_CRC(data + head_index));
 }
@@ -72,23 +72,24 @@ uint8 checkFCdataCrc(uint8 *data) {
 
 void formatUartdataToFCdata(int head_index, uint8 *data) {
     int i;
-    int FCdata_len = *(data + (head_index + MCU_UART_HEADER_LEN));
+    int FCdata_len = *(data + (head_index + MCU_UART_HEADER_LEN ));
     uint8 *FCdata = malloc(FCdata_len*sizeof(uint8));
     *FCdata = 0x99;  //preamble(0x99)
-    for(i = 1; i < FCdata_len; i++) {
-          *(FCdata + i) = *(data + (head_index + MCU_UART_HEADER_LEN + i -1));
+    for(i = 0; i < FCdata_len + 1; i++) {
+          *(FCdata + i + 1) = *(data + (head_index + MCU_UART_HEADER_LEN + i));
     }
     if (checkFCdataCrc(FCdata)) {
         uint8 *UDPdata = malloc(UDP_DATA_LENGTH*sizeof(uint8));
         UDPdata[0] = 0x01;
         UDPdata[1] = 0x0c;
         UDPdata[2] = 0xa9;
-        for(i = 3; i < UDP_DATA_LENGTH; i++) {
-            UDPdata[i] = data[head_index + MCU_UART_HEADER_LEN + i -3 + 4];
+        for(i = 0; i < UDP_DATA_LENGTH - 3; i++) {
+            UDPdata[i + 3] = data[head_index + MCU_UART_HEADER_LEN + i + 4]; // +4 for fc header 0x12 0xa9 0x35 0x00
         }
         printBufandSend(UDPdata, UDP_DATA_LENGTH, "UDPdata");
         free(UDPdata);
     } else {
+        printBuf(FCdata, FCdata_len, "FCdataCrc fail");
         printf("FCdate Crc check failed!\n");
     }
     free(FCdata);
@@ -105,13 +106,14 @@ void RC_ParseUartBuf(char *rec_buf, int len) {
     i = 0;
     while(i < len) {
         if ((i + 1 < len) && pUart1RxData[i] == 0x55 && pUart1RxData[i + 1] == 0x55) {
-            if ((i + 2 < len) && ((UART_PACKAGE_LEN(&pUart1RxData[i]) + i + 2) < len)) {
+            if ((i + 2 < len) && ((UART_PACKAGE_LEN(&pUart1RxData[i]) + i) <= len)) {
                 if (checkUartdataCrc(i, pUart1RxData)) {
                     formatUartdataToFCdata(i, pUart1RxData);
                 } else {
                     printf("Uart Crc check failed!\n");
+                    printBuf(pUart1RxData, len, "CrcFail");
                 }
-                i += UART_PACKAGE_LEN(&pUart1RxData[i]) + 3; //Point to Next Uart Package header
+                i += UART_PACKAGE_LEN(&pUart1RxData[i]); //Point to Next Uart Package header
             } else {
                 while(i < len) {
                     if (lastRemainDate_index < MAX_DATA_LENGTH) {
@@ -128,16 +130,17 @@ void RC_ParseUartBuf(char *rec_buf, int len) {
                 j = 0;
                 while(j < lastRemainDate_index) {
                     if ((j + 1 < lastRemainDate_index) && pUart1RxLastRemainData[j] == 0x55 && pUart1RxLastRemainData[j + 1] == 0x55) {
-                        if ((j + 2 < lastRemainDate_index) && ((UART_PACKAGE_LEN(&pUart1RxLastRemainData[j]) + j + 2) < lastRemainDate_index)) {
+                        if ((j + 2 < lastRemainDate_index) && ((UART_PACKAGE_LEN(&pUart1RxLastRemainData[j]) + j) < lastRemainDate_index)) {
                             if (checkUartdataCrc(j, pUart1RxLastRemainData)) {
                                 formatUartdataToFCdata(j, pUart1RxLastRemainData);
                             }  else {
                                 printf("Uart Crc check failed!\n");
+                                printBuf(pUart1RxLastRemainData, len, "CrcFail remain");
                             }
                             hasPendingRemainDate = 0;
                             lastRemainDate_index = 0;
                             bzero(pUart1RxLastRemainData, sizeof(pUart1RxLastRemainData));
-                        } 
+                        }
                         break;
                     } else {
                         j++;

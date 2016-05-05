@@ -372,11 +372,11 @@ static void response_to_app() {
 
     gettimeofday(&now, NULL);
     bzero(send_buf, 5);
-    send_buf[0] = 0x99;
-    send_buf[1] = 0x05;
-    send_buf[2] = 0x44;
-    send_buf[3] = g_rtl_state.isFCWifiConnected;
-    send_buf[4] = 0xff;
+    send_buf[0] = 0x99;  //header
+    send_buf[1] = 0x05;  //lenght
+    send_buf[2] = 0x44;  //msg_id
+    send_buf[3] = g_rtl_state.isFCWifiConnected; //wifi state
+    send_buf[4] = 0xff;  //reserved
     if (udp_server_socket_fd > 0 && (now.tv_sec - g_rtl_state.prev_time.tv_sec) > SEND_DATA_INTERVAL) { // update status to app
         //printBuf(send_buf, 5, "send_buf");
         if (sendto(udp_server_socket_fd, send_buf, 5, 0, (struct sockaddr *)&g_rtl_state.client_addr, client_addr_len) < 0)

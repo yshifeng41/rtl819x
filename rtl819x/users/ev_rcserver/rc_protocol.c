@@ -72,7 +72,7 @@ uint8 checkFCdataCrc(uint8 *data) {
 void formatUartdataToFCdata(int head_index, uint8 *data) {
     int i;
     int FCdata_len = *(data + (head_index + MCU_UART_HEADER_LEN ));
-    uint8 *FCdata = malloc(FCdata_len*sizeof(uint8));
+    uint8 *FCdata = malloc((FCdata_len + 1)*sizeof(uint8));
     *FCdata = 0x99;  //preamble(0x99)
     for(i = 0; i < FCdata_len + 1; i++) {
           *(FCdata + i + 1) = *(data + (head_index + MCU_UART_HEADER_LEN + i));
@@ -108,11 +108,12 @@ void RC_ParseUartBuf(char *rec_buf, int len) {
             if ((i + 2 < len) && ((UART_PACKAGE_LEN(&pUart1RxData[i]) + i) <= len)) {
                 if (checkUartdataCrc(i, pUart1RxData)) {
                     formatUartdataToFCdata(i, pUart1RxData);
+                    i += UART_PACKAGE_LEN(&pUart1RxData[i]); //Point to Next Uart Package header
                 } else {
                     printf("Uart Crc check failed!\n");
                     printBuf(pUart1RxData, len, "CrcFail");
+                    i++;
                 }
-                i += UART_PACKAGE_LEN(&pUart1RxData[i]); //Point to Next Uart Package header
             } else {
                 while(i < len) {
                     if (lastRemainDate_index < MAX_DATA_LENGTH) {

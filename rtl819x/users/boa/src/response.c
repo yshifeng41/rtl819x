@@ -472,6 +472,18 @@ void send_redirect_perm(request * req, const char *url)
 		free(buff);
 }
 
+void send_coustom_msg_ok(request * req, const char *msg)
+{
+    SQUASH_KA(req);
+    req->response_status = R_REQUEST_OK;
+    req_write(req, http_ver_string(req->http_version));
+    req_write(req, " 200 OK" CRLF);
+    print_http_headers(req);
+    req_write(req, "Content-Type: " HTML CRLF CRLF); /* terminate header */
+    req_write(req, msg);
+    req_flush(req);
+}
+
 /* R_MOVED_TEMP: 302 */
 void send_r_moved_temp(request * req, const char *url, const char *more_hdr)
 {

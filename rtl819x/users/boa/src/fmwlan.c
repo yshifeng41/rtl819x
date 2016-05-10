@@ -9625,6 +9625,23 @@ void formWlanRedirect2(request *wp, char *redirectUrl, char *strWlanId)
                 send_redirect_perm(wp,redirectUrl);
 }
 
+void formWlanConnectResponse(request *wp, const char *ssid)
+{
+        if (checkexit("/var/ev_tools.pid") == -3) {
+            send_coustom_msg_ok(wp, "CONNECTING");
+            return;
+        }
+
+        int ret = 0;
+        ret = is_wlan_connected("wlan0-vxd", ssid);
+        if (ret)
+            send_coustom_msg_ok(wp, "CONNECTED");
+        else if (ret == 0)
+            send_coustom_msg_ok(wp, "UNCONNECTED");
+        else
+            send_coustom_msg_ok(wp, "FAILED");
+}
+
 #ifdef CONFIG_RTL_WAPI_SUPPORT
 void formWapiReKey(request *wp, char * path, char * query)
 {

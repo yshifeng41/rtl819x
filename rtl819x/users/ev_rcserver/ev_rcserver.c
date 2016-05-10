@@ -366,23 +366,32 @@ int main()
 
 static void response_to_app() {
     struct timeval now;
-    uint8 send_buf[5];
+    uint8 send_buf[6];
     socklen_t client_addr_len = sizeof(g_rtl_state.client_addr);
     g_rtl_state.isFCWifiConnected = is_wlan_connected("wlan0-vxd");
 
     gettimeofday(&now, NULL);
-    bzero(send_buf, 5);
+    bzero(send_buf, 6);
     send_buf[0] = 0x99;  //header
-    send_buf[1] = 0x05;  //lenght
-    send_buf[2] = 0x44;  //msg_id
-    send_buf[3] = g_rtl_state.isFCWifiConnected; //wifi state
-    send_buf[4] = 0xff;  //reserved
+    send_buf[1] = 0x06;  //lenght
+    send_buf[2] = 0x00;  //unknown
+    send_buf[3] = 0x44;  //msg_id
+    send_buf[4] = g_rtl_state.isFCWifiConnected; //wifi state
+    send_buf[5] = 0xff;  //reserved
     if (udp_server_socket_fd > 0 && (now.tv_sec - g_rtl_state.prev_time.tv_sec) > SEND_DATA_INTERVAL) { // update status to app
         //printBuf(send_buf, 5, "send_buf");
-        if (sendto(udp_server_socket_fd, send_buf, 5, 0, (struct sockaddr *)&g_rtl_state.client_addr, client_addr_len) < 0)
+        if (sendto(udp_server_socket_fd, send_buf, 6, 0, (struct sockaddr *)&g_rtl_state.client_addr, client_addr_len) < 0)
             //printf("UDP: Send Data Failed\n");
         g_rtl_state.prev_time = now;
     }
+    /*if (udp_server_socket_fd > 0 && (now.tv_sec - g_rtl_state.prev_time.tv_sec) > SEND_DATA_INTERVAL) { // update status to app
+        //printf("UDP: Send Data back start\n");
+        if(g_rtl_state.isFCWifiConnected)
+            sendto(udp_server_socket_fd, "connected", 10, 0, (struct sockaddr *)&g_rtl_state.client_addr, client_addr_len);
+        else
+            sendto(udp_server_socket_fd, "no connect", 10, 0, (struct sockaddr *)&g_rtl_state.client_addr, client_addr_len);
+        g_rtl_state.prev_time = now;
+    }*/
 }
 
 static void main_loop() {

@@ -27,10 +27,12 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <sys/ioctl.h>
+#include <sys/file.h>
 //#include <net/if.h>
 #include <linux/wireless.h>
 #include <dirent.h>
 #include <time.h>
+#include <fcntl.h>
 /*-- Local include files --*/
 #include "apmib.h"
 #include "utility.h"
@@ -4237,3 +4239,26 @@ int write_line_to_file(char *filename, int mode, char *line_data)
     return 1;
 }
 
+int is_wlan_connected(const char *wlan_if, const char *ssid)
+{
+	bss_info bss;
+	if ( getWlBssInfo(wlan_if, &bss) < 0)
+			return -1;
+
+	return (bss.state == STATE_CONNECTED) && !strcmp(bss.ssid, ssid);
+}
+
+int checkexit(char* pfile)
+{
+    int ret = 0;
+    if (pfile == NULL)
+          return -1;
+    int lockfd = open(pfile, O_RDWR);
+    if (lockfd == -1)
+          return -2;
+    int iret = lockf(lockfd, F_TEST, 0);
+    if (iret == -1)
+          ret = -3;
+    close(lockfd);
+    return ret;
+}

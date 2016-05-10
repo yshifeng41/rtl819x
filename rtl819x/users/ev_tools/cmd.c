@@ -264,11 +264,21 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
     const char *wlanifp = "wlan0-vxd";
     int vxd_wisp_wan = 1;
     int encrypt_type;
+    WLAN_BSS_INFO_T bss;
 
     if (encrypt)
         encrypt_type = 11;
     else
         encrypt_type = 0;
+
+    if (get_wlan_bssinfo(wlanifp, &bss) < 0){
+        printf("[%s:%d] check  failed, ignored \n", __FUNCTION__,__LINE__);
+    } else {
+        if (bss.state == STATE_CONNECTED && !strcmp(bss.ssid, ssid)) {
+            printf("[%s:%d] already connected %s \n", __FUNCTION__,__LINE__, ssid);
+            return ret;
+        }
+    }
 
     set_profile_to_flash(wlanifp, ssid, wpa_key, encrypt_type);
     printf("[%s:%d]\n", __FUNCTION__,__LINE__);
@@ -300,7 +310,7 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
     sleep(1);
 
     int wait_time = 0;
-    int max_wait_time = 30;
+    int max_wait_time = 15;
     unsigned char res;
     while (1)  {
         if (getWlJoinResult(wlanifp, &res) < 0) {
@@ -321,8 +331,7 @@ int do_connect(char *ssid, char *wpa_key, int encrypt)
         }
         sleep(1);
     }
-    if (encrypt) {
-        WLAN_BSS_INFO_T bss;
+    if (encrypt && ret == 0) {
         wait_time = 0;
         max_wait_time = 15;
 

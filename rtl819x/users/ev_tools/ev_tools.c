@@ -747,7 +747,7 @@ int main(int argc, char *argv[])
 { 	
 	int pid_fd, pid, scr;
 	char tmpbuf[100];
-	int chan;
+	int chan, ret;
 	/* INBAND_HOST ---> */
 	struct iwreq wrq;
 	/* INBAND_HOST <--- */
@@ -769,7 +769,7 @@ int main(int argc, char *argv[])
 		printf("Create PID file failed!\n");
 		return 0;
 	}
-	pidfile_write_release(pid_fd);
+	//pidfile_write_release(pid_fd);
 
 	//DISPLAY_BANNER;
 	
@@ -807,6 +807,8 @@ int main(int argc, char *argv[])
         syslog(LOG_DEBUG, "apmib init fail in inband");
 		return 0;
 	}
-#endif	
-	return do_cmd_event(argc, argv);
+#endif
+        ret = do_cmd_event(argc, argv);
+	pidfile_write_release(pid_fd);
+	return ret;
 }

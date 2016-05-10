@@ -410,7 +410,8 @@ typedef struct REG_DOMAIN_TABLE {
 } REG_DOMAIN_TABLE_ELEMENT_T;
 
 int write_line_to_file(char *filename, int mode, char *line_data);
-
+int is_wlan_connected(const char *wlan_if, const char *ssid);
+int checkexit(char* pfile);
 #ifdef CONFIG_APP_TR069
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define IFNAMSIZ        16

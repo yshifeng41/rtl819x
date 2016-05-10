@@ -421,6 +421,20 @@ int init_get(request * req)
 		}
 	}
 
+    /* A special GET request: "GET /boaform/getWifiState?ssid=Cicada_S_xxxxxxxx HTTP/1.1" */
+    if (strstr(req->request_uri, "getWifiState")) {
+        char *ssid, *ptr;
+        extern void formWlanConnectResponse(request *wp, const char *ssid);
+        if ((ptr = strstr(req->client_stream, "ssid="))) {
+            ssid = ptr + strlen("ssid=");
+            if ((ptr = strstr(ssid, " HTTP"))) {
+                *ptr = '\0';
+                formWlanConnectResponse(req, ssid);
+            }
+        }
+	return 0;
+    }
+
     data_fd = open(req->pathname, O_RDONLY);
     saved_errno = errno;        /* might not get used */
 
